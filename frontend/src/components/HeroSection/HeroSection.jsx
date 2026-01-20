@@ -9,9 +9,8 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-// ✅ Configuración de URL base ultra-robusta
-const API_URL = import.meta.env.VITE_API_URL || '';
-const BASE_URL = API_URL.endsWith('/api') ? API_URL.replace('/api', '') : API_URL;
+// ✅ Forzamos la URL de Render para que no haya margen de error
+const RENDER_BACKEND = "https://blackmichi-backend-latest.onrender.com";
 
 export default function HeroSection() {
     const navigate = useNavigate();
@@ -26,15 +25,21 @@ export default function HeroSection() {
 
                 if (data && Array.isArray(data)) {
                     const formattedData = data.map(slide => {
-                        const imgPath = slide.image_url || slide.image || '';
+                        const rawPath = slide.image_url || slide.image || '';
 
-                        // ✅ Nueva lógica: Si no es una URL externa (http), concatenamos con BASE_URL
-                        let finalImage = imgPath;
-                        if (imgPath && !imgPath.startsWith('http')) {
-                            // Aseguramos que empiece con una sola /
-                            const cleanPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
-                            finalImage = `${BASE_URL}${cleanPath}`;
-                        }
+                        // 1. Limpiamos cualquier rastro de localhost si viene en el string
+                        let pathWithoutLocalhost = rawPath.replace(/^http:\/\/localhost:\d+/, '');
+
+                        // 2. Quitamos el prefijo /api si existe en la ruta de la imagen
+                        pathWithoutLocalhost = pathWithoutLocalhost.replace(/^\/api/, '');
+
+                        // 3. Aseguramos que la ruta empiece con /
+                        const cleanPath = pathWithoutLocalhost.startsWith('/')
+                            ? pathWithoutLocalhost
+                            : `/${pathWithoutLocalhost}`;
+
+                        // 4. Construimos la URL final apuntando SÍ O SÍ a Render
+                        const finalImage = `${RENDER_BACKEND}${cleanPath}`;
 
                         return {
                             ...slide,
@@ -77,10 +82,9 @@ export default function HeroSection() {
                     {slides.map((slide) => (
                         <SwiperSlide key={slide.id}>
                             <div className="relative h-[300px] sm:h-[460px] xl:h-[560px] flex items-center">
-                                {/* Fondo con gradiente y la imagen de fondo con opacidad */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary/20 to-background" />
                                 <div
-                                    className="absolute inset-0 opacity-20 bg-cover bg-center"
+                                    className="absolute inset-0 opacity-20 bg-cover bg-center transition-all duration-700"
                                     style={{ backgroundImage: `url(${slide.displayImage})` }}
                                 />
 
@@ -107,8 +111,10 @@ export default function HeroSection() {
                                             <img
                                                 src={slide.displayImage}
                                                 alt={slide.title}
-                                                className="relative w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-white/10 object-cover aspect-video lg:aspect-square"
-                                                onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1550745165-9bc0b252726f"; }}
+                                                className="relative w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-white/10 object-cover aspect-video"
+                                                onError={(e) => {
+                                                    e.target.src = "https://images.unsplash.com/photo-1550745165-9bc0b252726f";
+                                                }}
                                             />
                                         </div>
                                     </div>
