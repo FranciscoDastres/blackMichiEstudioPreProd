@@ -262,24 +262,30 @@ export default function SecondaryHeroSection() {
             Horario de 9:00 a 18:00 hrs. Respuesta en menos de 24 hrs.
           </p>
 
-          <div className="flex justify-center mt-auto">
+          <div className="flex justify-center mt-auto px-2">
             <button
               onClick={handleWhatsAppClick}
               className="
-        px-4 sm:px-6 py-2.5 sm:py-3 
-        bg-transparent text-[#25D366] font-bold rounded-full 
-        hover:shadow-xl hover:shadow-[#25D366]/30 hover:-translate-y-0.5 
-        transition-all duration-300 
-        border-2 border-[#25D366]/50 hover:border-[#25D366] 
-        inline-flex items-center justify-center gap-2 
-        text-sm sm:text-base leading-none 
-        w-full xs:w-auto sm:w-fit max-w-xs
-      "
+              flex items-center justify-center gap-2
+              w-full sm:w-auto
+              px-5 py-3
+              text-sm sm:text-base font-semibold
+              text-[#25D366]
+              border-2 border-[#25D366]/60
+              rounded-full
+              transition-all duration-300
+              hover:bg-[#25D366]/10
+              hover:border-[#25D366]
+              hover:shadow-lg hover:shadow-[#25D366]/30
+              active:scale-95
+              whitespace-nowrap
+              max-w-xs"
             >
-              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <MessageCircle className="w-5 h-5" />
               Consultar por WhatsApp
             </button>
           </div>
+
         </div>
 
       </div>
