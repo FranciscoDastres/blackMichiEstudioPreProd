@@ -15,24 +15,44 @@ const paymentRoutes = require('./routes/payments');
 const featuredRoutes = require('./routes/featuredRoutes');
 const { requireAuth, requireAdmin } = require('./middleware/auth');
 const reviewsRoutes = require('./routes/reviews');
-const app = express();
-const PORT = process.env.PORT || 3000;
 
+const app = express();
+
+// Render asigna dinámicamente un puerto, usualmente el 10000. 
+// Es vital que el servidor escuche en process.env.PORT.
+const PORT = process.env.PORT || 10000;
+
+// ✅ ASEGURAR CARPETAS DE UPLOADS (Importante en Docker)
+const uploadDirs = [
+  path.join(__dirname, 'uploads'),
+  path.join(__dirname, 'uploads/hero')
+];
+
+uploadDirs.forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`📁 Carpeta creada: ${dir}`);
+  }
+});
+
+// Configuración de CORS
 const allowedOrigins = [
-  'http://localhost',
   'http://localhost:3000',
   'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1',
+  'https://tu-proyecto-frontend.vercel.app', // SUSTITUIR POR TU URL DE VERCEL CUANDO LA TENGAS
   'https://sandbox.flow.cl',
   'https://www.flow.cl'
 ];
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Permitir peticiones sin origen (como apps móviles o curl)
     if (!origin) return callback(null, true);
-    callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true
 };
@@ -40,57 +60,54 @@ const corsOptions = {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Aplicar CORS excepto retorno Flow
+// Aplicar CORS con excepción para el retorno de Flow si es necesario
 app.use((req, res, next) => {
   if (req.path === '/api/payments/flow/return') return next();
   cors(corsOptions)(req, res, next);
 });
 
-// ✅ SERVIR ARCHIVOS ESTÁTICOS (SOLO UNA VEZ)
+// ✅ SERVIR ARCHIVOS ESTÁTICOS
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith(".webp")) {
-      res.setHeader("Content-Type", "image/webp");
-    } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
-      res.setHeader("Content-Type", "image/jpeg");
-    } else if (filePath.endsWith(".png")) {
-      res.setHeader("Content-Type", "image/png");
-    }
+    if (filePath.endsWith(".webp")) res.setHeader("Content-Type", "image/webp");
+    else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) res.setHeader("Content-Type", "image/jpeg");
+    else if (filePath.endsWith(".png")) res.setHeader("Content-Type", "image/png");
+
+    // Crucial para que el Frontend en Vercel pueda leer las imágenes del Backend en Render
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   }
 }));
 
 const publicPath = path.join(__dirname, 'public');
-app.use(express.static(publicPath));
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+}
 
-// Endpoints de prueba y debug
+// --- Endpoints de prueba y debug ---
 app.get("/", (req, res) => {
-  res.json({ message: "Backend funcionando correctamente", timestamp: new Date().toISOString() });
+  res.json({
+    status: "online",
+    message: "BlackMichie Studio API",
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
     res.json({
-      message: "Conexión a la base de datos exitosa",
+      message: "Conexión exitosa a la DB",
       timestamp: result.rows[0].now,
-      dbConfig: {
-        host: process.env.DB_HOST,
-        database: process.env.DB_NAME,
-        user: process.env.DB_USER,
-        hasPassword: !!process.env.DB_PASSWORD,
-        hasDatabaseUrl: !!process.env.DATABASE_URL
+      env: {
+        database_configured: !!process.env.DATABASE_URL
       }
     });
   } catch (error) {
-    res.status(500).json({
-      error: "Error de conexión a la base de datos",
-      details: error.message
-    });
+    res.status(500).json({ error: "Error de DB", details: error.message });
   }
 });
 
-// Rutas de API
+// --- Rutas de API ---
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', requireAuth, requireAdmin, adminRoutes);
 app.use('/api/client', requireAuth, clientRoutes);
@@ -99,12 +116,17 @@ app.use('/api/categorias', categoriasRouter);
 app.use('/api/payments', paymentRoutes);
 app.use("/api/featured", featuredRoutes);
 app.use("/api/admin/hero-images", heroImagesRoutes);
-app.use("/api/hero-images", require("./routes/heroImages"));
+app.use("/api/hero-images", heroImagesRoutes);
 app.use('/reviews', reviewsRoutes);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📁 Sirviendo archivos estáticos desde: ${publicPath}`);
-  console.log(`📁 Uploads: ${path.join(__dirname, "uploads")}`);
-  console.log(`📁 ¿Existe uploads/hero/? ${fs.existsSync(path.join(__dirname, 'uploads/hero')) ? '✅ SÍ' : '❌ NO'}`);
+// ✅ MANEJO DE ERRORES GLOBAL
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({ error: 'Algo salió mal en el servidor' });
+});
+
+// ✅ INICIO DEL SERVIDOR (Escuchando en 0.0.0.0 para Docker)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Servidor corriendo en puerto: ${PORT}`);
+  console.log(`🌍 Entorno: ${process.env.NODE_ENV || 'development'}`);
 });
