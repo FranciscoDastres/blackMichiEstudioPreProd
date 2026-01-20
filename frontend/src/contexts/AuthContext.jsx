@@ -1,6 +1,6 @@
-//AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/axios"
+// Importamos ApiService para centralizar las llamadas y no duplicar lógica de axios
+import ApiService from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -16,10 +16,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar sesión desde localStorage
+  // Cargar sesión desde localStorage al iniciar la app
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const token = localStorage.getItem("token");
+
+    if (storedUser && token) {
       setUser(JSON.parse(storedUser));
     }
     setLoading(false);
@@ -28,18 +30,24 @@ export function AuthProvider({ children }) {
   // LOGIN
   const login = async (email, password) => {
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      // IMPORTANTE: Usamos ApiService.login para mantener consistencia con las rutas /api/
+      const data = await ApiService.login({ email, password });
+
       const { token, user: userData } = data;
 
+      // Guardamos credenciales
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));
+
       setUser(userData);
 
-      return { success: true };
+      // RETORNO: Agregamos 'user' para que el Login.jsx pueda leer res.user.rol
+      return { success: true, user: userData };
     } catch (error) {
+      console.error("Error en login context:", error);
       return {
         success: false,
-        error: error.response?.data?.error || "Error al iniciar sesión",
+        error: error.response?.data?.error || "Credenciales inválidas o error de conexión",
       };
     }
   };
@@ -47,7 +55,8 @@ export function AuthProvider({ children }) {
   // REGISTER
   const register = async (nombre, email, password) => {
     try {
-      const { data } = await api.post("/auth/register", {
+      // Asumiendo que añades register a ApiService o usas la ruta correcta aquí
+      const { data } = await ApiService.api.post("/api/auth/register", {
         nombre,
         email,
         password,
@@ -59,7 +68,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
 
-      return { success: true };
+      return { success: true, user: userData };
     } catch (error) {
       return {
         success: false,
@@ -73,6 +82,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
+    window.location.href = "/login"; // Redirección limpia
   };
 
   const value = {
@@ -88,7 +98,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
