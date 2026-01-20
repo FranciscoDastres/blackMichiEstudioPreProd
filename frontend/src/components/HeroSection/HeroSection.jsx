@@ -5,20 +5,18 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { ChevronRight } from 'lucide-react';
 
-// Importación de estilos corregida para Vite
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-// ✅ Configuración de URL base
+// ✅ Configuración de URL base ultra-robusta
 const API_URL = import.meta.env.VITE_API_URL || '';
-const BASE_URL = API_URL.replace('/api', '');
+const BASE_URL = API_URL.endsWith('/api') ? API_URL.replace('/api', '') : API_URL;
 
 export default function HeroSection() {
     const navigate = useNavigate();
     const [slides, setSlides] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeIndex, setActiveIndex] = useState(0);
 
     useEffect(() => {
         const fetchHeroImages = async () => {
@@ -29,18 +27,24 @@ export default function HeroSection() {
                 if (data && Array.isArray(data)) {
                     const formattedData = data.map(slide => {
                         const imgPath = slide.image_url || slide.image || '';
+
+                        // ✅ Nueva lógica: Si no es una URL externa (http), concatenamos con BASE_URL
+                        let finalImage = imgPath;
+                        if (imgPath && !imgPath.startsWith('http')) {
+                            // Aseguramos que empiece con una sola /
+                            const cleanPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
+                            finalImage = `${BASE_URL}${cleanPath}`;
+                        }
+
                         return {
                             ...slide,
-                            displayImage: imgPath.startsWith('/uploads')
-                                ? `${BASE_URL}${imgPath}`
-                                : imgPath
+                            displayImage: finalImage
                         };
                     });
                     setSlides(formattedData.slice(0, 3));
                 }
             } catch (error) {
                 console.error("Error cargando hero:", error);
-                // Fallback robusto
                 setSlides([{
                     id: "default",
                     title: "Black Michi Studio",
@@ -66,7 +70,6 @@ export default function HeroSection() {
                     slidesPerView={1}
                     loop={slides.length > 1}
                     autoplay={{ delay: 5000, disableOnInteraction: false }}
-                    onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
                     navigation
                     pagination={{ clickable: true }}
                     className="w-full"
@@ -74,7 +77,7 @@ export default function HeroSection() {
                     {slides.map((slide) => (
                         <SwiperSlide key={slide.id}>
                             <div className="relative h-[300px] sm:h-[460px] xl:h-[560px] flex items-center">
-                                {/* Fondo */}
+                                {/* Fondo con gradiente y la imagen de fondo con opacidad */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary/20 to-background" />
                                 <div
                                     className="absolute inset-0 opacity-20 bg-cover bg-center"
@@ -104,7 +107,8 @@ export default function HeroSection() {
                                             <img
                                                 src={slide.displayImage}
                                                 alt={slide.title}
-                                                className="relative w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-white/10"
+                                                className="relative w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-white/10 object-cover aspect-video lg:aspect-square"
+                                                onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1550745165-9bc0b252726f"; }}
                                             />
                                         </div>
                                     </div>
