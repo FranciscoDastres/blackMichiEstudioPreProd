@@ -1,4 +1,3 @@
-// ProductDetail.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import RelatedProducts from "../components/RelatedProducts/RelatedProducts";
@@ -19,11 +18,12 @@ import {
   Package,
   User,
   MessageSquare,
-  Clock
+  Zap
 } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
+// Hook de autenticación local simplificado
 function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +40,7 @@ function useAuth() {
   return { user, loading, isLoggedIn: !!localStorage.getItem("token") };
 }
 
+// Utilidad para asegurar rutas .webp
 function toWebpPath(path) {
   if (!path) return null;
   return path.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
@@ -62,11 +63,10 @@ export default function ProductDetail() {
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [isZoomed, setIsZoomed] = useState(false);
 
-  // 👇 NUEVO: estado para reseñas
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
-  const { user, loading: authLoading, isLoggedIn } = useAuth();
+  const { user, isLoggedIn } = useAuth();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -83,7 +83,6 @@ export default function ProductDetail() {
         setSelectedImgIndex(0);
         setQuantity(1);
 
-        // 👇 CARGAR RESEÑAS
         setLoadingReviews(true);
         const reviewsData = await ApiService.getReviewsByProduct(productId);
         setReviews(Array.isArray(reviewsData) ? reviewsData : []);
@@ -107,7 +106,6 @@ export default function ProductDetail() {
     setSubmitError(null);
 
     try {
-      // 👇 Ajustado para tu ApiService con axios
       await ApiService.submitReview({
         producto_id: productId,
         usuario_id: user?.id,
@@ -115,7 +113,6 @@ export default function ProductDetail() {
         comentario: reviewText.trim(),
       });
 
-      // Recargar reseñas
       const updatedReviews = await ApiService.getReviewsByProduct(productId);
       setReviews(Array.isArray(updatedReviews) ? updatedReviews : []);
 
@@ -123,84 +120,11 @@ export default function ProductDetail() {
       setRating(0);
       alert("¡Gracias por tu reseña!");
     } catch (error) {
-      console.error("Error al enviar la reseña:", error);
-      setSubmitError(
-        error.message || "Hubo un problema al enviar tu reseña. Por favor, inténtalo de nuevo."
-      );
+      setSubmitError(error.message || "No se pudo enviar la reseña.");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="absolute inset-0 animate-pulse bg-primary/20 rounded-full blur-xl"></div>
-            <div className="relative animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-primary mx-auto mb-6"></div>
-          </div>
-          <p className="text-lg text-muted font-light animate-pulse">Cargando producto...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="glass-panel rounded-2xl p-8 text-center max-w-md">
-          <div className="text-6xl mb-4 text-rose-400">❌</div>
-          <div className="text-xl font-display font-extrabold text-foreground mb-4">Error: {error}</div>
-          <button
-            onClick={() => window.location.reload()}
-            className="btn-add-cart"
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="glass-panel rounded-2xl p-8 text-center max-w-md">
-          <div className="text-6xl mb-4 text-muted">🔍</div>
-          <h2 className="text-2xl font-display font-extrabold text-foreground mb-4">Producto no encontrado</h2>
-          <Link
-            to="/"
-            className="btn-add-cart"
-          >
-            Ver todos los productos
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const rawImages = [toWebpPath(product.imagen_principal)].filter(Boolean);
-  if (product.imagenes_adicionales && product.imagenes_adicionales.length > 0) {
-    rawImages.push(...product.imagenes_adicionales.map(toWebpPath).filter(Boolean));
-  }
-
-  const images = rawImages.map((img) =>
-    img
-      ? `${API_BASE_URL}${img.startsWith("/") ? "" : "/"}${img}`
-      : `${API_BASE_URL}/images/placeholder.svg`
-  );
-
-  const mainImage = images[selectedImgIndex] || `${API_BASE_URL}/images/placeholder.svg`;
-
-  const CLP = new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  });
-
-  const stock = product.stock ?? 99;
-  const maxQty = Math.max(1, stock);
 
   const handleImageZoom = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -209,503 +133,222 @@ export default function ProductDetail() {
     setZoomPosition({ x, y });
   };
 
-  // Calcular promedio de reseñas
-  const avgRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + r.calificacion, 0) / reviews.length
-    : 0;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <h2 className="text-2xl font-bold mb-4">{error || "Producto no encontrado"}</h2>
+        <Link to="/" className="text-primary hover:underline">Volver a la tienda</Link>
+      </div>
+    );
+  }
+
+  // Preparación de Imágenes
+  const rawImages = [toWebpPath(product.imagen_principal)].filter(Boolean);
+  if (product.imagenes_adicionales?.length > 0) {
+    rawImages.push(...product.imagenes_adicionales.map(toWebpPath).filter(Boolean));
+  }
+  const images = rawImages.map(img => `${API_BASE_URL}/${img}`);
+  const mainImage = images[selectedImgIndex] || "/placeholder.svg";
+
+  const CLP = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+  const stock = product.stock ?? 0;
+  const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.calificacion, 0) / reviews.length : 0;
 
   return (
-    <div className="min-h-screen py-12 px-4">
-      {/* Elementos decorativos de fondo */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
-      </div>
+    <div className="min-h-screen py-12 px-4 bg-background">
+      <div className="max-w-7xl mx-auto">
+        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-8 transition-colors">
+          <ArrowLeft size={18} /> <span>Volver a la tienda</span>
+        </Link>
 
-      <div className="relative max-w-7xl mx-auto">
-        {/* Botón de retroceso */}
-        <div className="mb-6">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-muted hover:text-primary transition-colors group"
-          >
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Volver a productos</span>
-          </Link>
-        </div>
-
-        {/* Contenedor principal */}
-        <div className="glass-panel rounded-2xl overflow-hidden border border-border shadow-2xl mb-8">
-          <div className="p-6 md:p-8">
-            {/* Contenido principal: Imagen + Detalles */}
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-              {/* Galería de imágenes */}
-              <div className="space-y-4">
-                {/* Imagen principal con zoom */}
-                <div
-                  className="relative overflow-hidden rounded-xl bg-secondary/30 aspect-square group"
-                  onMouseMove={handleImageZoom}
-                  onMouseEnter={() => setIsZoomed(true)}
-                  onMouseLeave={() => setIsZoomed(false)}
+        {/* Sección Principal */}
+        <div className="grid lg:grid-cols-2 gap-12 mb-16 items-start">
+          {/* Galería */}
+          <div className="space-y-4">
+            <div
+              className="relative aspect-square rounded-3xl overflow-hidden bg-card border border-border/50 cursor-zoom-in"
+              onMouseMove={handleImageZoom}
+              onMouseEnter={() => setIsZoomed(true)}
+              onMouseLeave={() => setIsZoomed(false)}
+            >
+              <img
+                src={mainImage}
+                alt={product.titulo}
+                className={`w-full h-full object-contain transition-transform duration-500 ${isZoomed ? 'scale-150' : 'scale-100'}`}
+                style={isZoomed ? { transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%` } : {}}
+              />
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedImgIndex(idx)}
+                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${selectedImgIndex === idx ? "border-primary scale-105 shadow-lg" : "border-transparent opacity-60 hover:opacity-100"}`}
                 >
-                  <img
-                    src={mainImage}
-                    alt={product.titulo}
-                    className={`w-full h-full object-contain transition-transform duration-300 ${isZoomed ? 'scale-150' : ''}`}
-                    style={{
-                      transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
-                    }}
-                    onError={(e) => {
-                      e.target.src = "/placeholder.svg";
-                    }}
-                  />
-                  {isZoomed && (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-black/10"></div>
-                  )}
+                  <img src={img} alt="Miniatura" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Información */}
+          <div className="flex flex-col h-full">
+            <div className="mb-6">
+              <span className="text-primary font-bold text-xs uppercase tracking-widest">{product.categoria_nombre}</span>
+              <h1 className="text-4xl font-black mt-2 mb-4 leading-tight">{product.titulo}</h1>
+              <div className="flex items-center gap-3">
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => <Star key={i} size={16} className={i < Math.round(avgRating) ? "fill-current" : "text-muted"} />)}
                 </div>
+                <span className="text-sm text-muted-foreground">({reviews.length} reseñas)</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${stock > 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"}`}>
+                  {stock > 0 ? `${stock} en stock` : "Agotado"}
+                </span>
+              </div>
+            </div>
 
-                {/* Miniaturas */}
-                {images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {images.map((img, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImgIndex(index)}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${selectedImgIndex === index
-                          ? "border-primary shadow-lg shadow-primary/20 scale-105"
-                          : "border-border hover:border-muted/50"
-                          }`}
-                        aria-label={`Ver imagen ${index + 1}`}
-                      >
-                        <img
-                          src={img}
-                          alt={`${product.titulo} ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "/placeholder.svg";
-                          }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Navegación de imágenes */}
-                {images.length > 1 && (
-                  <div className="flex items-center justify-center gap-4">
-                    <button
-                      onClick={() => setSelectedImgIndex(prev => prev > 0 ? prev - 1 : images.length - 1)}
-                      className="p-2 rounded-full bg-secondary/50 border border-border hover:bg-secondary transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5 text-foreground" />
-                    </button>
-                    <span className="text-sm text-muted">
-                      {selectedImgIndex + 1} / {images.length}
-                    </span>
-                    <button
-                      onClick={() => setSelectedImgIndex(prev => prev < images.length - 1 ? prev + 1 : 0)}
-                      className="p-2 rounded-full bg-secondary/50 border border-border hover:bg-secondary transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5 text-foreground" />
-                    </button>
-                  </div>
+            <div className="mb-8">
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-black text-foreground">{CLP.format(product.precio)}</span>
+                {product.precio_anterior && (
+                  <span className="text-xl text-muted-foreground line-through">{CLP.format(product.precio_anterior)}</span>
                 )}
               </div>
+            </div>
 
-              {/* Detalles del producto */}
-              <div className="space-y-6">
-                {/* Categoría */}
-                {product.categoria_nombre && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-                    <Package className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-primary">{product.categoria_nombre}</span>
-                  </div>
-                )}
+            <p className="text-muted-foreground leading-relaxed mb-8">{product.descripcion}</p>
 
-                {/* Título */}
-                <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground leading-tight">
-                  {product.titulo}
-                </h1>
-
-                {/* Calificación */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-5 h-5 fill-current ${star <= Math.round(avgRating) ? 'text-yellow-400' : 'text-muted/30'}`}
-                        />
-                      ))}
-                    </div>
-                    {reviews.length > 0 ? (
-                      <span className="text-sm text-muted">
-                        {avgRating.toFixed(1)} ({reviews.length} reseña{reviews.length !== 1 ? 's' : ''})
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted">Sin reseñas</span>
-                    )}
-                  </div>
-                  <div className="w-px h-4 bg-border"></div>
-                  <span className={`text-sm font-medium ${stock > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {stock > 0 ? "✓ En stock" : "✗ Agotado"}
-                  </span>
+            <div className="space-y-6 mt-auto">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center bg-secondary/50 rounded-2xl p-1 border border-border">
+                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="p-3 hover:text-primary"><Minus size={18} /></button>
+                  <span className="w-10 text-center font-bold text-lg">{quantity}</span>
+                  <button onClick={() => setQuantity(q => Math.min(stock, q + 1))} className="p-3 hover:text-primary"><Plus size={18} /></button>
                 </div>
+                <button
+                  disabled={stock <= 0 || isStockExceeded(product)}
+                  onClick={() => {
+                    for (let i = 0; i < quantity; i++) addToCart(product);
+                  }}
+                  className="flex-1 bg-sky-600 hover:bg-sky-500 text-white h-14 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  <ShoppingBag size={20} />
+                  {stock > 0 ? "Agregar al Carrito" : "Agotado"}
+                </button>
+              </div>
 
-                {/* Descripción corta */}
-                {product.descripcion && (
-                  <p className="text-muted leading-relaxed">
-                    {product.descripcion}
-                  </p>
-                )}
-
-                {/* Precios */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="price-text text-4xl">{CLP.format(product.precio)}</span>
-                    {product.precio_anterior && (
-                      <span className="line-through text-muted">{CLP.format(product.precio_anterior)}</span>
-                    )}
-                  </div>
-                  {product.descuento && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
-                      <span className="text-sm font-bold text-emerald-400">
-                        {product.descuento} OFF
-                      </span>
-                    </div>
-                  )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border/50">
+                  <Truck className="text-primary" />
+                  <div><p className="text-xs font-bold uppercase">Envío Rápido</p><p className="text-[10px] text-muted-foreground">3-5 días hábiles</p></div>
                 </div>
-
-                {/* Beneficios */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg">
-                    <Truck className="w-5 h-5 text-primary" />
-                    <span className="text-sm text-foreground">Envío en 3-5 días</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg">
-                    <Shield className="w-5 h-5 text-primary" />
-                    <span className="text-sm text-foreground">Garantía 30 días</span>
-                  </div>
-                </div>
-
-                {/* Cantidad y botón */}
-                <div className="space-y-4 pt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-muted mb-2">Cantidad</label>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center border border-border rounded-xl bg-secondary/30 h-12">
-                        <button
-                          aria-label="Restar cantidad"
-                          className="h-full w-12 flex items-center justify-center text-foreground rounded-l-xl hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          onClick={() => setQuantity((q) => Math.max(q - 1, 1))}
-                          disabled={quantity === 1}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-12 text-center text-base font-semibold text-foreground">{quantity}</span>
-                        <button
-                          aria-label="Sumar cantidad"
-                          className="h-full w-12 flex items-center justify-center text-foreground rounded-r-xl hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          onClick={() => setQuantity((q) => Math.min(q + 1, maxQty))}
-                          disabled={quantity === maxQty}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="text-sm text-muted">
-                        <span className="text-emerald-400">{stock} disponibles</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    className={`btn-add-cart w-full !px-6 !py-4 !text-lg group relative overflow-hidden ${isStockExceeded(product) ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                    onClick={() => {
-                      if (!isStockExceeded(product)) {
-                        for (let i = 0; i < quantity; i++) {
-                          addToCart({
-                            id: product.id,
-                            titulo: product.titulo,
-                            precio: product.precio,
-                            imagen: toWebpPath(product.imagen_principal),
-                            stock: product.stock,
-                          });
-                        }
-                        const btn = document.activeElement;
-                        btn.classList.add('bg-emerald-500');
-                        setTimeout(() => {
-                          btn.classList.remove('bg-emerald-500');
-                        }, 300);
-                      }
-                    }}
-                    disabled={isStockExceeded(product)}
-                  >
-                    {isStockExceeded(product) ? (
-                      "Sin stock disponible"
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        Agregar al carrito
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Info adicional */}
-                <div className="pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 text-sm text-muted mb-2">
-                    <Check className="w-4 h-4" />
-                    <span>Impuesto incluido · Envío calculado al checkout</span>
-                  </div>
+                <div className="flex items-center gap-3 p-4 bg-card rounded-2xl border border-border/50">
+                  <Shield className="text-primary" />
+                  <div><p className="text-xs font-bold uppercase">Seguridad</p><p className="text-[10px] text-muted-foreground">Garantía total</p></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Pestañas de Descripción y Reseñas */}
-        <div className="glass-panel rounded-2xl overflow-hidden border border-border mb-8">
-          {/* Navegación de pestañas */}
-          <div className="border-b border-border">
-            <nav className="flex space-x-1 px-6" role="tablist">
+        {/* Pestañas (Descripción/Reseñas) */}
+        <div className="bg-card rounded-3xl border border-border/50 overflow-hidden mb-20">
+          <div className="flex border-b border-border">
+            {["description", "reviews"].map(tab => (
               <button
-                onClick={() => setActiveTab("description")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "description"
-                  ? "text-primary border-primary"
-                  : "text-muted border-transparent hover:text-foreground"
-                  }`}
-                role="tab"
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-8 py-5 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === tab ? "text-primary border-b-2 border-primary bg-primary/5" : "text-muted-foreground"}`}
               >
-                Descripción
+                {tab === "description" ? "Descripción" : "Reseñas"}
               </button>
-              <button
-                onClick={() => setActiveTab("specs")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "specs"
-                  ? "text-primary border-primary"
-                  : "text-muted border-transparent hover:text-foreground"
-                  }`}
-                role="tab"
-              >
-                Especificaciones
-              </button>
-              <button
-                onClick={() => setActiveTab("reviews")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "reviews"
-                  ? "text-primary border-primary"
-                  : "text-muted border-transparent hover:text-foreground"
-                  }`}
-                role="tab"
-              >
-                Reseñas
-              </button>
-            </nav>
+            ))}
           </div>
-
-          {/* Contenido de pestañas */}
-          <div className="p-6 md:p-8">
-            {activeTab === "description" && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-display font-extrabold text-foreground">Descripción del Producto</h3>
-                <div className="prose prose-invert max-w-none text-muted leading-relaxed">
-                  {product.descripcion_larga || product.descripcion ||
-                    "Producto personalizado impreso en 3D, ideal para regalos únicos y decoraciones especiales. Fabricado con materiales de alta calidad y atención al detalle."}
-                </div>
-
-                {/* Características */}
-                <div className="grid md:grid-cols-2 gap-4 mt-6">
-                  <div className="flex items-start gap-3 p-4 bg-secondary/30 rounded-xl">
-                    <Sparkles className="w-5 h-5 text-primary mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-foreground">Impresión 3D de alta calidad</h4>
-                      <p className="text-sm text-muted mt-1">Detalles precisos y acabado profesional</p>
-                    </div>
+          <div className="p-8">
+            {activeTab === "description" ? (
+              <div className="prose prose-invert max-w-none">
+                <p className="text-muted-foreground leading-loose">{product.descripcion_larga || product.descripcion}</p>
+                <div className="mt-8 grid md:grid-cols-2 gap-6">
+                  <div className="p-4 bg-background rounded-xl flex items-start gap-4">
+                    <Zap className="text-yellow-400 shrink-0" />
+                    <div><h4 className="font-bold">Alta Calidad</h4><p className="text-sm text-muted-foreground">Impresión en PLA Premium con post-procesado manual.</p></div>
                   </div>
-                  <div className="flex items-start gap-3 p-4 bg-secondary/30 rounded-xl">
-                    <Shield className="w-5 h-5 text-primary mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-foreground">Material duradero</h4>
-                      <p className="text-sm text-muted mt-1">Resistente y de larga duración</p>
-                    </div>
+                  <div className="p-4 bg-background rounded-xl flex items-start gap-4">
+                    <Sparkles className="text-sky-400 shrink-0" />
+                    <div><h4 className="font-bold">Diseño Único</h4><p className="text-sm text-muted-foreground">Cada pieza es revisada para asegurar detalles perfectos.</p></div>
                   </div>
                 </div>
               </div>
-            )}
-
-            {activeTab === "specs" && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-display font-extrabold text-foreground">Especificaciones Técnicas</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-secondary/30 rounded-xl">
-                      <p className="text-sm text-muted">Material</p>
-                      <p className="font-semibold text-foreground">PLA Premium</p>
-                    </div>
-                    <div className="p-4 bg-secondary/30 rounded-xl">
-                      <p className="text-sm text-muted">Tiempo de impresión</p>
-                      <p className="font-semibold text-foreground">6-8 horas</p>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-secondary/30 rounded-xl">
-                    <p className="text-sm text-muted">Dimensiones aproximadas</p>
-                    <p className="font-semibold text-foreground">10cm x 10cm x 10cm</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "reviews" && (
-              <div className="space-y-8">
-                {/* Encabezado reseñas */}
-                <div>
-                  <h3 className="text-xl font-display font-extrabold text-foreground mb-4">Reseñas de clientes</h3>
-
-                  {loadingReviews ? (
-                    <p className="text-muted">Cargando reseñas...</p>
-                  ) : reviews.length > 0 ? (
-                    <div className="space-y-6">
-                      {reviews.map((review) => (
-                        <div key={review.id} className="glass-panel p-5 rounded-xl border border-border">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="w-5 h-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-foreground">
-                                  {review.usuario_nombre || "Anónimo"}
-                                </p>
-                                <div className="flex items-center gap-1 mt-1">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${i < review.calificacion ? 'text-yellow-400 fill-current' : 'text-muted'}`}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                            <span className="text-xs text-muted">
-                              {new Date(review.created_at).toLocaleDateString("es-CL")}
-                            </span>
-                          </div>
-                          <p className="text-muted">{review.comentario}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    !isLoggedIn ? (
-                      <div className="glass-panel p-4 rounded-xl">
-                        <p className="text-sm text-primary">
-                          Por favor, <Link to="/login" className="font-bold underline">inicia sesión</Link> para ver y dejar reseñas.
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-muted">No hay reseñas aún. ¡Sé el primero en dejar una!</p>
-                    )
-                  )}
-                </div>
-
-                {/* Formulario para dejar reseña */}
-                {isLoggedIn && (
-                  <div className="glass-panel p-6 rounded-xl border border-border">
-                    <h4 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5" />
-                      Escribe tu reseña
-                    </h4>
-
-                    <form onSubmit={(e) => { e.preventDefault(); handleReviewSubmit(); }} className="space-y-6">
-                      {/* Calificación */}
-                      <div className="space-y-3">
-                        <label className="block text-sm font-medium text-foreground">Tu calificación</label>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setRating(star)}
-                              className={`text-3xl focus:outline-none transition-transform hover:scale-110 ${star <= rating ? "text-yellow-400" : "text-muted/30"
-                                }`}
-                              aria-label={`Calificar con ${star} estrellas`}
-                            >
-                              ★
-                            </button>
+            ) : (
+              <div className="space-y-10">
+                <div className="grid lg:grid-cols-3 gap-10">
+                  <div className="lg:col-span-1 space-y-6">
+                    <h3 className="text-xl font-bold">Reseñas de la comunidad</h3>
+                    {isLoggedIn ? (
+                      <div className="space-y-4 p-6 bg-background rounded-2xl border border-border">
+                        <p className="text-sm font-bold uppercase text-primary">Deja tu opinión</p>
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <button key={s} onClick={() => setRating(s)} className={`text-2xl ${s <= rating ? "text-yellow-400" : "text-muted"}`}>★</button>
                           ))}
                         </div>
-                        {rating === 0 && (
-                          <p className="text-sm text-rose-400">Por favor, selecciona una calificación</p>
-                        )}
-                      </div>
-
-                      {/* Texto de la reseña */}
-                      <div className="space-y-3">
-                        <label htmlFor="review-text" className="block text-sm font-medium text-foreground">
-                          Tu opinión
-                        </label>
                         <textarea
-                          id="review-text"
-                          rows={4}
+                          className="w-full bg-card border border-border rounded-xl p-4 text-sm focus:ring-2 ring-primary outline-none"
+                          rows="4"
+                          placeholder="Tu mensaje..."
                           value={reviewText}
                           onChange={(e) => setReviewText(e.target.value)}
-                          className="glass-panel w-full px-4 py-3 rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
-                          placeholder="¿Qué te pareció este producto? Comparte tu experiencia..."
                         />
-                        {reviewText.trim().length === 0 && (
-                          <p className="text-sm text-rose-400">Por favor, escribe tu reseña</p>
-                        )}
+                        <button
+                          onClick={handleReviewSubmit}
+                          disabled={isSubmitting}
+                          className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+                        >
+                          {isSubmitting ? "Enviando..." : "Publicar Reseña"}
+                        </button>
                       </div>
-
-                      {/* Error de envío */}
-                      {submitError && (
-                        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-sm">
-                          {submitError}
-                        </div>
-                      )}
-
-                      {/* Botón */}
-                      <button
-                        type="submit"
-                        disabled={isSubmitting || rating === 0 || reviewText.trim().length === 0}
-                        className={`btn-add-cart !px-8 !py-3 ${isSubmitting || rating === 0 || reviewText.trim().length === 0
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                          }`}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent"></div>
-                            Enviando...
-                          </>
-                        ) : (
-                          <>
-                            <User className="w-5 h-5" />
-                            Publicar reseña
-                          </>
-                        )}
-                      </button>
-                    </form>
+                    ) : (
+                      <div className="p-6 bg-secondary/20 rounded-2xl text-center">
+                        <p className="text-sm text-muted-foreground">Debes <Link to="/login" className="text-primary font-bold">iniciar sesión</Link> para dejar una reseña.</p>
+                      </div>
+                    )}
                   </div>
-                )}
+
+                  <div className="lg:col-span-2 space-y-6">
+                    {reviews.length > 0 ? reviews.map(rev => (
+                      <div key={rev.id} className="p-6 bg-background rounded-2xl border border-border/50">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center"><User size={20} className="text-primary" /></div>
+                            <div>
+                              <p className="font-bold text-sm">{rev.usuario_nombre || "Cliente"}</p>
+                              <div className="flex text-yellow-400 text-xs">
+                                {[...Array(5)].map((_, i) => <Star key={i} size={10} className={i < rev.calificacion ? "fill-current" : "text-muted"} />)}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{new Date(rev.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{rev.comentario}</p>
+                      </div>
+                    )) : <p className="text-muted-foreground text-center py-10">Aún no hay reseñas para este producto.</p>}
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Productos relacionados */}
-        {product.categoria_nombre && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-display font-extrabold text-foreground">Productos relacionados</h2>
-              <Link
-                to={`/categoria/${product.categoria_nombre}`}
-                className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
-              >
-                Ver todos →
-              </Link>
-            </div>
-            <RelatedProducts category={product.categoria_nombre} />
-          </div>
-        )}
+        {/* Productos Relacionados */}
+        <RelatedProducts category={product.categoria_nombre} />
       </div>
     </div>
   );

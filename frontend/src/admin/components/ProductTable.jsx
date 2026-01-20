@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Eye } from "lucide-react";
 import useProducts from "../hooks/useProducts";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:10000";
 
 export default function ProductTable() {
     const { products, loading, deleteProduct } = useProducts();
@@ -96,7 +96,6 @@ export default function ProductTable() {
                                             className="w-16 h-16 object-cover rounded-lg shadow-sm"
                                             onError={(e) => {
                                                 e.target.src = "/placeholder.svg";
-                                                e.target.className = "w-16 h-16 object-cover rounded-lg bg-muted/20";
                                             }}
                                         />
                                     ) : (
@@ -143,10 +142,10 @@ export default function ProductTable() {
                                 {/* Stock */}
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${p.stock > 10
-                                            ? 'bg-green-100 text-green-800'
-                                            : p.stock > 0
-                                                ? 'bg-yellow-100 text-yellow-800'
-                                                : 'bg-red-100 text-red-800'
+                                        ? 'bg-green-100 text-green-800'
+                                        : p.stock > 0
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : 'bg-red-100 text-red-800'
                                         }`}>
                                         {p.stock > 0 ? `${p.stock} unidades` : 'Agotado'}
                                     </span>

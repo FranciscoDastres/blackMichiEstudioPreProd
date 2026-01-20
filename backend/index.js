@@ -39,7 +39,7 @@ uploadDirs.forEach(dir => {
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  'https://tu-proyecto-frontend.vercel.app', // SUSTITUIR POR TU URL DE VERCEL CUANDO LA TENGAS
+  'https://black-michi-estudio-pre-prod.vercel.app',
   'https://sandbox.flow.cl',
   'https://www.flow.cl'
 ];

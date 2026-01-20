@@ -46,7 +46,7 @@ exports.getPublicHeroImages = async (req, res) => {
             title: row.title,
             subtitle: row.subtitle,
             buttonText: row.button_text,
-            image: `http://localhost:3000${row.image_url}`,
+            image: `${baseUrl}${row.image_url}`,
             categoria: row.categoria
         }));
 
