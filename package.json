@@ -1,0 +1,14 @@
+{
+  "name": "blackmichiestudio",
+  "private": true,
+  "scripts": {
+    "frontend": "npm run dev --prefix frontend",
+    "backend": "npm run dev --prefix backend",
+    "ngrok": "ngrok http 3000",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\" \"npm run ngrok\"",
+    "dev:clear": "concurrently --kill-others-on-fail \"npm run frontend\" \"npm run backend\" \"npm run ngrok\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

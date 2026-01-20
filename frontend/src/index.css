@@ -1,0 +1,87 @@
+/* frontend/src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* FONDO: Gris Antracita (Un poco más claro para que los elementos respiren) */
+        --background: 240 6% 12%;
+
+        /* TEXTO: Blanco puro y plata Frost (Legibilidad total) */
+        --foreground: 0 0% 100%;
+        --muted: 210 15% 90%;
+        --muted-foreground: 210 15% 90%;
+
+        /* COLOR "MICHI": Celeste Eléctrico (Limpio y Tecnológico) */
+        --primary: 195 100% 50%;
+        --primary-foreground: 195 100% 5%;
+
+        /* UI ELEMENTS */
+        --secondary: 240 5% 18%;
+        /* Fondo de las cards un poco más claro */
+        --secondary-foreground: 0 0% 100%;
+        --border: 240 5% 25%;
+        --radius: 0.8rem;
+    }
+
+    body {
+        /* Fuente Trebuchet MS para el cuerpo */
+        font-family: 'Trebuchet MS', sans-serif;
+        @apply bg-background text-foreground antialiased;
+        /* REJILLA TÉCNICA - Ahora está en App.jsx */
+        /* No pongas background aquí, déjalo en el componente App */
+    }
+
+    h1,
+    h2,
+    h3,
+    .font-display {
+        font-family: 'Outfit', sans-serif;
+        @apply font-extrabold tracking-tight uppercase;
+    }
+}
+
+@layer components {
+
+    /* Botón de Carrito: Ahora resalta más sobre el fondo gris claro */
+    .btn-add-cart {
+        @apply bg-primary text-primary-foreground font-bold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2;
+        box-shadow: 0 0 25px rgba(0, 212, 255, 0.4);
+    }
+
+    .btn-add-cart:hover {
+        box-shadow: 0 0 35px rgba(0, 212, 255, 0.6);
+    }
+
+    .glass-panel {
+        @apply bg-secondary/50 backdrop-blur-lg border border-white/10 shadow-2xl transition-all hover:border-primary/40;
+    }
+
+    .price-text {
+        @apply text-primary font-display font-extrabold text-2xl tracking-tighter;
+    }
+
+    @layer utilities {
+        .pattern-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+
+        .bg-blur-effect {
+            position: relative;
+        }
+
+        .bg-blur-effect::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+    }
+}
