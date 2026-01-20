@@ -221,18 +221,28 @@ export default function SecondaryHeroSection() {
         </div>
 
         {/* --- Sidebar Promocional (1/3) --- */}
-        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-6 flex flex-col justify-between h-[380px]">
-
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-bold text-foreground">¿Quieres algo único?</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+        <div
+          className="
+    relative rounded-3xl border border-border shadow-2xl 
+    bg-gradient-to-b from-background via-secondary/5 to-background 
+    p-4 sm:p-6 flex flex-col justify-between 
+    min-h-[260px] sm:min-h-[320px] lg:h-[380px]
+  "
+        >
+          <div className="text-center mb-4 sm:mb-6">
+            <h3 className="text-lg sm:text-xl font-bold text-foreground">
+              ¿Quieres algo único?
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Diseñamos productos personalizados solo para ti.
             </p>
           </div>
 
-          <div className="space-y-4 text-center text-muted-foreground text-sm mb-6">
-            <p>¿Tienes una idea en mente? ¡Hagámosla realidad!</p>
-            <ul className="space-y-2 text-left text-sm">
+          <div className="space-y-3 sm:space-y-4 text-center text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
+            <p className="px-2">
+              ¿Tienes una idea en mente? ¡Hagámosla realidad!
+            </p>
+            <ul className="space-y-2 text-left text-xs sm:text-sm">
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                 <span>Diseño 100% personalizado</span>
@@ -247,26 +257,31 @@ export default function SecondaryHeroSection() {
               </li>
             </ul>
           </div>
-          <p className="text-xs text-center text-muted-foreground mt-3">
+
+          <p className="text-[10px] sm:text-xs text-center text-muted-foreground mb-3">
             Horario de 9:00 a 18:00 hrs. Respuesta en menos de 24 hrs.
           </p>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center mt-auto">
             <button
               onClick={handleWhatsAppClick}
-              className="px-6 sm:px-8 py-2.5 sm:py-3.5 
-             bg-transparent text-[#25D366] font-bold rounded-full 
-             hover:shadow-xl hover:shadow-[#25D366]/30 hover:-translate-y-0.5 
-             transition-all duration-300 
-             border-2 border-[#25D366]/50 hover:border-[#25D366] 
-             inline-flex items-center justify-center gap-2 
-             text-sm sm:text-base md:text-lg leading-none w-fit"
+              className="
+        px-4 sm:px-6 py-2.5 sm:py-3 
+        bg-transparent text-[#25D366] font-bold rounded-full 
+        hover:shadow-xl hover:shadow-[#25D366]/30 hover:-translate-y-0.5 
+        transition-all duration-300 
+        border-2 border-[#25D366]/50 hover:border-[#25D366] 
+        inline-flex items-center justify-center gap-2 
+        text-sm sm:text-base leading-none 
+        w-full xs:w-auto sm:w-fit max-w-xs
+      "
             >
-              <MessageCircle className="w-4 sm:w-5 h-4 sm:h-5" />
+              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               Consultar por WhatsApp
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
