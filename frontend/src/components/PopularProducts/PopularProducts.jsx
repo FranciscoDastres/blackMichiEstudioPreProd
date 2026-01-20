@@ -4,16 +4,17 @@ import ApiService from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ChevronRight, ChevronLeft, ShoppingCart, Star, Zap } from "lucide-react";
 
-// ✅ URL base corregida para las fotos (quitando el /api si existe)
+// ✅ Corregimos la URL base para que las imágenes apunten a la raíz de Render
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-const IMAGE_BASE_URL = API_URL.replace('/api', '');
+const IMAGE_SERVER_URL = API_URL.replace('/api', '');
 
 const formatTitle = (text) => {
   if (!text) return "";
   return text.replace(/-/g, " ").split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
 };
 
-export default function PopularProducts() { // ✅ Agregado export default
+// ✅ Agregamos el export para que Vercel no llore
+export default function PopularProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("todos");
@@ -26,9 +27,8 @@ export default function PopularProducts() { // ✅ Agregado export default
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true);
         const allProducts = await ApiService.getProductos();
-        // Aseguramos que sea un array antes de hacer slice
+        // Validación simple para evitar errores de .slice
         setProducts(Array.isArray(allProducts) ? allProducts.slice(0, 20) : []);
       } catch (err) {
         console.error("Error:", err);
@@ -83,14 +83,7 @@ export default function PopularProducts() { // ✅ Agregado export default
 
         <div ref={scrollRef} className="flex gap-6 overflow-x-auto scrollbar-hide pb-8 snap-x">
           {visibleProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              navigate={navigate}
-              addToCart={addToCart}
-              isStockExceeded={isStockExceeded}
-              CLP={CLP}
-            />
+            <ProductCard key={product.id} product={product} navigate={navigate} addToCart={addToCart} isStockExceeded={isStockExceeded} CLP={CLP} />
           ))}
         </div>
 
@@ -105,16 +98,10 @@ export default function PopularProducts() { // ✅ Agregado export default
 function ProductCard({ product, navigate, addToCart, isStockExceeded, CLP }) {
   const outOfStock = isStockExceeded(product);
 
-  // ✅ Lógica de imagen corregida para producción
-  const getImgUrl = () => {
-    if (!product.imagen_principal) return "/placeholder.svg";
-
-    const path = product.imagen_principal.startsWith('/')
-      ? product.imagen_principal
-      : `/${product.imagen_principal}`;
-
-    return `${IMAGE_BASE_URL}${path}`;
-  };
+  // ✅ Arreglo de la URL: Quitamos el replace de .webp (por si acaso) y usamos IMAGE_SERVER_URL
+  const imgUrl = product.imagen_principal
+    ? `${IMAGE_SERVER_URL}${product.imagen_principal.startsWith('/') ? '' : '/'}${product.imagen_principal}`
+    : "/placeholder.svg";
 
   return (
     <div
@@ -122,12 +109,7 @@ function ProductCard({ product, navigate, addToCart, isStockExceeded, CLP }) {
       className="min-w-[280px] group bg-card border border-border/50 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-500 cursor-pointer snap-start"
     >
       <div className="relative aspect-square overflow-hidden">
-        <img
-          src={getImgUrl()}
-          alt={product.titulo}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          loading="lazy"
-        />
+        <img src={imgUrl} alt={product.titulo} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
         {product.descuento && (
           <span className="absolute top-4 right-4 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full">-{product.descuento}%</span>
         )}
@@ -136,9 +118,7 @@ function ProductCard({ product, navigate, addToCart, isStockExceeded, CLP }) {
         <span className="text-[10px] font-bold text-accent uppercase tracking-widest">{product.categoria_nombre}</span>
         <h3 className="font-bold text-lg line-clamp-1 mt-1">{formatTitle(product.titulo)}</h3>
         <div className="flex items-center gap-1 my-2">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} className={`w-3 h-3 ${i < Math.round(product.promedio_calificacion || 0) ? "fill-yellow-400 text-yellow-400" : "text-muted"}`} />
-          ))}
+          {[...Array(5)].map((_, i) => <Star key={i} className={`w-3 h-3 ${i < Math.round(product.promedio_calificacion || 0) ? "fill-yellow-400 text-yellow-400" : "text-muted"}`} />)}
         </div>
         <div className="flex items-baseline gap-2 mt-4">
           <span className="text-2xl font-black text-foreground">{CLP.format(product.precio)}</span>
@@ -147,7 +127,7 @@ function ProductCard({ product, navigate, addToCart, isStockExceeded, CLP }) {
         <button
           disabled={outOfStock}
           onClick={(e) => { e.stopPropagation(); addToCart(product); }}
-          className={`w-full mt-4 py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:bg-primary/90"
+          className={`w-full mt-4 py-3 rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${outOfStock ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"
             }`}
         >
           <ShoppingCart size={18} /> {outOfStock ? "Agotado" : "Agregar"}
