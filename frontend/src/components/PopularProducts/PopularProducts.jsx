@@ -4,7 +4,7 @@ import ApiService from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ChevronRight, ChevronLeft, ShoppingCart, Star, Zap } from "lucide-react";
 
-// ✅ Solo saneamos la URL para que las fotos carguen de Render
+// ✅ Saneamos la URL para producción sin alterar nada más
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 const API_BASE_URL = API_URL.endsWith('/api') ? API_URL.replace('/api', '') : API_URL;
 
@@ -22,6 +22,7 @@ function PopularProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState("todos");
+  const [hoveredProduct, setHoveredProduct] = useState(null);
   const navigate = useNavigate();
   const { addToCart, isStockExceeded } = useCart();
 
@@ -103,6 +104,7 @@ function PopularProducts() {
 
   return (
     <section className="w-full max-w-7xl mx-auto mt-4 mb-4 px-4 sm:px-6 lg:px-8 bg-grid rounded-xl">
+      {/* Header y Filtros */}
       <div className="mb-10">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
           <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
@@ -128,6 +130,7 @@ function PopularProducts() {
         </div>
       </div>
 
+      {/* Contenedor del carousel */}
       <div className="relative">
         <button
           className="absolute -left-4 sm:-left-8 top-1/2 -translate-y-1/2 z-20 text-foreground/50 hover:text-accent transition-all duration-300 group/arrow"
@@ -144,9 +147,11 @@ function PopularProducts() {
             const outOfStock = isStockExceeded(product);
             const primaryImage = product.imagen_principal;
             const additionalImages = product.imagenes_adicionales || [];
-            const avgRating = product.promedio_calificacion ? Math.round(parseFloat(product.promedio_calificacion)) : 0;
+            const avgRating = product.promedio_calificacion
+              ? Math.round(parseFloat(product.promedio_calificacion))
+              : 0;
 
-            // ✅ Función interna para limpiar la ruta de imagen
+            // ✅ Función interna para que la imagen no se rompa en producción
             const getImageUrl = (path) => {
               if (!path) return "/placeholder.svg";
               const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -159,6 +164,7 @@ function PopularProducts() {
                 className="group relative min-w-[300px] max-w-[300px] h-[550px] bg-card rounded-2xl border border-border/50 overflow-hidden cursor-pointer hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 flex flex-col"
                 onClick={() => navigate(`/producto/${product.id}`)}
               >
+                {/* Imagen */}
                 <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
                   <img
                     src={getImageUrl(primaryImage)}
@@ -182,33 +188,44 @@ function PopularProducts() {
                   )}
                 </div>
 
+                {/* Contenido */}
                 <div className="p-5 flex flex-col flex-1">
+                  {/* Categoría */}
                   <span className="text-[10px] uppercase tracking-tighter text-accent font-bold h-4 mb-1">
                     {product.categoria_nombre ? formatTitle(product.categoria_nombre) : ""}
                   </span>
 
+                  {/* Título */}
                   <h3 className="font-bold text-base text-foreground line-clamp-2 mb-2 group-hover:text-accent transition-colors duration-300 h-12 overflow-hidden">
                     {formatTitle(product.titulo)}
                   </h3>
 
+                  {/* Rating - Dinámico desde DB */}
                   <div className="flex items-center gap-1 mb-3 h-5">
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-3.5 h-3.5 ${i < avgRating ? "fill-yellow-500 text-yellow-500" : "text-muted"}`}
+                          className={`w-3.5 h-3.5 ${i < avgRating
+                            ? "fill-yellow-500 text-yellow-500"
+                            : "text-muted"
+                            }`}
                         />
                       ))}
                     </div>
                     {product.total_valoraciones > 0 && (
-                      <span className="text-xs text-muted ml-1">({product.total_valoraciones})</span>
+                      <span className="text-xs text-muted ml-1">
+                        ({product.total_valoraciones})
+                      </span>
                     )}
                   </div>
 
+                  {/* Descripción */}
                   <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8 overflow-hidden">
                     {product.descripcion || "Sin descripción disponible"}
                   </p>
 
+                  {/* Precios */}
                   <div className="mt-auto mb-4">
                     <div className="flex flex-col">
                       <span className="text-xl font-bold text-primary">
@@ -224,6 +241,7 @@ function PopularProducts() {
                     </div>
                   </div>
 
+                  {/* Botón */}
                   <button
                     className={`group/btn relative w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden ${outOfStock
                       ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-muted"
@@ -238,8 +256,12 @@ function PopularProducts() {
                     {!outOfStock && (
                       <div className="absolute inset-0 bg-gradient-to-r from-sky-400/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
                     )}
+
                     <ShoppingCart className={`w-4 h-4 relative z-10 ${outOfStock ? "" : "group-hover/btn:scale-110 transition-transform"}`} />
-                    <span className="relative z-10">{outOfStock ? "Agotado" : "Agregar"}</span>
+                    <span className="relative z-10">
+                      {outOfStock ? "Agotado" : "Agregar"}
+                    </span>
+
                     {!outOfStock && (
                       <ChevronRight className="w-4 h-4 relative z-10 opacity-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all duration-300" />
                     )}
