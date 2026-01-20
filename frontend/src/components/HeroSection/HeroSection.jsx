@@ -1,13 +1,16 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Autoplay } from 'swiper/modules';
+import { Navigation, Autoplay, Pagination } from 'swiper/modules';
 import { useState, useEffect } from 'react';
-import 'swiper/css';
-import 'swiper/css/navigation';
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { ChevronRight } from 'lucide-react';
 
-// ✅ Definir BASE_URL de forma ultra-segura
+// Importación de estilos corregida para Vite
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+
+// ✅ Configuración de URL base
 const API_URL = import.meta.env.VITE_API_URL || '';
 const BASE_URL = API_URL.replace('/api', '');
 
@@ -23,71 +26,86 @@ export default function HeroSection() {
                 setLoading(true);
                 const { data } = await api.get("/hero-images/public");
 
-                const rawSlides = Array.isArray(data) ? data : [];
-
-                // ✅ Formatear rutas de imágenes
-                const formattedData = rawSlides.map(slide => {
-                    const imgPath = slide.image_url || slide.image || '';
-                    return {
-                        ...slide,
-                        displayImage: imgPath.startsWith('/uploads')
-                            ? `${BASE_URL}${imgPath}`
-                            : imgPath
-                    };
-                });
-
-                setSlides(formattedData.slice(0, 3));
+                if (data && Array.isArray(data)) {
+                    const formattedData = data.map(slide => {
+                        const imgPath = slide.image_url || slide.image || '';
+                        return {
+                            ...slide,
+                            displayImage: imgPath.startsWith('/uploads')
+                                ? `${BASE_URL}${imgPath}`
+                                : imgPath
+                        };
+                    });
+                    setSlides(formattedData.slice(0, 3));
+                }
             } catch (error) {
                 console.error("Error cargando hero:", error);
-                setSlides([
-                    {
-                        id: "fallback-1",
-                        title: "Black Michi Studio",
-                        subtitle: "Diseños exclusivos para gamers",
-                        displayImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800",
-                        buttonText: "Explorar Colección"
-                    }
-                ]);
+                // Fallback robusto
+                setSlides([{
+                    id: "default",
+                    title: "Black Michi Studio",
+                    subtitle: "Diseños exclusivos",
+                    displayImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f",
+                    buttonText: "Explorar"
+                }]);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchHeroImages();
     }, []);
 
-    if (loading) return <div className="h-[400px] animate-pulse bg-secondary/20 rounded-3xl m-8" />;
+    if (loading) return <div className="w-full h-[400px] bg-secondary/20 animate-pulse rounded-3xl" />;
 
     return (
         <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
             <div className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border">
                 <Swiper
-                    modules={[Navigation, Autoplay]}
-                    navigation
-                    autoplay={{ delay: 5000 }}
+                    modules={[Navigation, Autoplay, Pagination]}
+                    spaceBetween={0}
+                    slidesPerView={1}
+                    loop={slides.length > 1}
+                    autoplay={{ delay: 5000, disableOnInteraction: false }}
                     onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+                    navigation
+                    pagination={{ clickable: true }}
                     className="w-full"
                 >
                     {slides.map((slide) => (
                         <SwiperSlide key={slide.id}>
-                            <div className="relative h-[300px] sm:h-[460px] xl:h-[560px] overflow-hidden">
-                                <div className="absolute inset-0 bg-cover bg-center opacity-20"
-                                    style={{ backgroundImage: `url(${slide.displayImage})` }} />
+                            <div className="relative h-[300px] sm:h-[460px] xl:h-[560px] flex items-center">
+                                {/* Fondo */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary/20 to-background" />
+                                <div
+                                    className="absolute inset-0 opacity-20 bg-cover bg-center"
+                                    style={{ backgroundImage: `url(${slide.displayImage})` }}
+                                />
 
-                                <div className="relative z-10 h-full flex items-center px-6 md:px-24">
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 items-center w-full">
+                                <div className="container mx-auto px-6 md:px-24 relative z-10">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                                         <div className="space-y-6">
-                                            <h1 className="text-4xl md:text-6xl font-bold text-foreground">{slide.title}</h1>
-                                            <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                                            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                                                {slide.title}
+                                            </h1>
+                                            <p className="text-xl text-muted-foreground max-w-xl">
+                                                {slide.subtitle}
+                                            </p>
                                             <button
                                                 onClick={() => navigate("/productos")}
-                                                className="px-8 py-4 bg-accent text-accent-foreground rounded-full flex items-center gap-2 hover:scale-105 transition-transform"
+                                                className="group inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground rounded-full font-bold hover:scale-105 transition-all shadow-lg"
                                             >
-                                                {slide.buttonText || "Ver más"} <ChevronRight />
+                                                {slide.buttonText || "Explorar Colección"}
+                                                <ChevronRight className="group-hover:translate-x-1 transition-transform" />
                                             </button>
                                         </div>
-                                        <div className="hidden lg:block">
-                                            <img src={slide.displayImage} alt={slide.title} className="max-w-md mx-auto rounded-2xl shadow-2xl" />
+
+                                        <div className="hidden lg:block relative">
+                                            <div className="absolute -inset-10 bg-accent/20 blur-[100px] rounded-full" />
+                                            <img
+                                                src={slide.displayImage}
+                                                alt={slide.title}
+                                                className="relative w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-white/10"
+                                            />
                                         </div>
                                     </div>
                                 </div>
