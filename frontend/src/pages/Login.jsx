@@ -24,6 +24,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Enviando al backend:", { email: formData.email, password: formData.password });
     let newErrors = {};
     if (!formData.email) newErrors.email = "El correo es obligatorio";
     if (!formData.password) newErrors.password = "La contraseña es obligatoria";
