@@ -360,7 +360,9 @@ function ProductList() {
                           <div className="w-full h-full relative">
                             <img
                               src={
-                                primaryImage ? primaryImage : "/placeholder.svg"
+                                primaryImage
+                                  ? `${API_BASE_URL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}`
+                                  : "/placeholder.svg"
                               }
                               alt={product.titulo || product.nombre}
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -372,7 +374,9 @@ function ProductList() {
                             {additionalImages.length > 0 && (
                               <img
                                 src={
-                                  additionalImages[0] ? additionalImages[0] : "/placeholder.svg"
+                                  additionalImages[0]
+                                    ? `${API_BASE_URL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')
+                                    : `${API_BASE_URL}/images/placeholder.svg`
                                 }
                                 alt={`${product.titulo || product.nombre} (vista alternativa)`}
                                 className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"

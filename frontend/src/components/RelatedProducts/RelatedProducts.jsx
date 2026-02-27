@@ -116,14 +116,14 @@ function RelatedProducts({ category = "vasos3d" }) {
                 {/* Imagen */}
                 <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
                   <img
-                    src={primaryImage ? primaryImage : "/placeholder.svg"}
+                    src={primaryImage ? `${API_BASE_URL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}` : "/placeholder.svg"}
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />
                   {additionalImages.length > 0 && (
                     <img
-                      src={additionalImages[0]}
+                      src={`${API_BASE_URL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Hover view"
                     />
@@ -156,8 +156,8 @@ function RelatedProducts({ category = "vasos3d" }) {
                         <Star
                           key={i}
                           className={`w-3.5 h-3.5 ${i < avgRating
-                            ? "fill-yellow-500 text-yellow-500"
-                            : "text-muted"
+                              ? "fill-yellow-500 text-yellow-500"
+                              : "text-muted"
                             }`}
                         />
                       ))}
