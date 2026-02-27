@@ -53,7 +53,7 @@ export default function Settings() {
                     // Si existe data para esta sección en la API
                     const section = data[key];
                     newPreviews[key] = section.imageUrl
-                        ? `${import.meta.env.VITE_API_URL || "http://localhost:10000"}${section.imageUrl}`
+                        ? `http://localhost:3000${section.imageUrl}`
                         : null;
 
                     newFormData[key] = {
@@ -121,10 +121,9 @@ export default function Settings() {
     };
 
     const handleUpload = async (section) => {
-        if (data.data.imageUrl) {
-            const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:10000";
-            const fullUrl = `${baseUrl}${data.data.imageUrl}`;
-            setPreviews(prev => ({ ...prev, [section]: fullUrl }));
+        if (!heroImages[section] && !formData[section].title) {
+            setMessage({ type: "error", text: "Selecciona una imagen o actualiza los textos" });
+            return;
         }
 
         setLoading(true);

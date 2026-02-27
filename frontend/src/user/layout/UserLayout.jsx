@@ -1,22 +1,27 @@
 import { NavLink, Outlet } from "react-router-dom";
 
+const linkBase =
+    "relative px-3 py-2 text-sm font-medium transition-colors";
+
 export default function UserLayout() {
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gray-50">
             {/* Header */}
             <header className="bg-white border-b">
-                <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-                    <h1 className="text-lg font-bold">
+                <div className="max-w-6xl mx-auto px-4 py-5">
+                    <h1 className="text-xl font-semibold text-gray-900">
                         Mi cuenta
                     </h1>
 
-                    <nav className="flex gap-4 text-sm">
+                    {/* Navigation */}
+                    <nav className="mt-4 flex gap-6 border-b">
                         <NavLink
                             to="/user/orders"
                             className={({ isActive }) =>
-                                isActive
-                                    ? "font-semibold text-black"
+                                `${linkBase} ${isActive
+                                    ? "text-black after:absolute after:left-0 after:-bottom-[1px] after:h-[2px] after:w-full after:bg-black"
                                     : "text-gray-500 hover:text-black"
+                                }`
                             }
                         >
                             Mis pedidos
@@ -25,9 +30,10 @@ export default function UserLayout() {
                         <NavLink
                             to="/user/account/profile"
                             className={({ isActive }) =>
-                                isActive
-                                    ? "font-semibold text-black"
+                                `${linkBase} ${isActive
+                                    ? "text-black after:absolute after:left-0 after:-bottom-[1px] after:h-[2px] after:w-full after:bg-black"
                                     : "text-gray-500 hover:text-black"
+                                }`
                             }
                         >
                             Perfil
@@ -36,9 +42,10 @@ export default function UserLayout() {
                         <NavLink
                             to="/user/account/security"
                             className={({ isActive }) =>
-                                isActive
-                                    ? "font-semibold text-black"
+                                `${linkBase} ${isActive
+                                    ? "text-black after:absolute after:left-0 after:-bottom-[1px] after:h-[2px] after:w-full after:bg-black"
                                     : "text-gray-500 hover:text-black"
+                                }`
                             }
                         >
                             Seguridad
@@ -48,8 +55,10 @@ export default function UserLayout() {
             </header>
 
             {/* Content */}
-            <main className="max-w-6xl mx-auto px-4 py-6">
-                <Outlet />
+            <main className="max-w-6xl mx-auto px-4 py-8">
+                <div className="bg-white rounded-xl shadow-sm p-6">
+                    <Outlet />
+                </div>
             </main>
         </div>
     );

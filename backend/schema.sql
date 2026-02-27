@@ -294,3 +294,6 @@ CREATE TABLE IF NOT EXISTS valoraciones (
 
 -- Índice para mejorar rendimiento
 CREATE INDEX idx_valoraciones_producto ON valoraciones(producto_id);
+
+-- eliminar productos para evitar conflictos con el nuevo esquema
+DELETE FROM productos;

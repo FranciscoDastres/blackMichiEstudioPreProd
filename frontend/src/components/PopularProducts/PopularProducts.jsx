@@ -4,9 +4,7 @@ import ApiService from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ChevronRight, ChevronLeft, ShoppingCart, Star, Zap } from "lucide-react";
 
-// ✅ Saneamos la URL para producción sin alterar nada más
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-const API_BASE_URL = API_URL.endsWith('/api') ? API_URL.replace('/api', '') : API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 const formatTitle = (text) => {
   if (!text) return "";
@@ -38,7 +36,7 @@ function PopularProducts() {
         setLoading(true);
         setError(null);
         const allProducts = await ApiService.getProductos();
-        const limited = Array.isArray(allProducts) ? allProducts.slice(0, 20) : [];
+        const limited = allProducts.slice(0, 20);
         setProducts(limited);
       } catch (err) {
         console.error("❌ Error cargando populares:", err);
@@ -147,16 +145,11 @@ function PopularProducts() {
             const outOfStock = isStockExceeded(product);
             const primaryImage = product.imagen_principal;
             const additionalImages = product.imagenes_adicionales || [];
+
+            // 👇 Calificación promedio desde la base de datos
             const avgRating = product.promedio_calificacion
               ? Math.round(parseFloat(product.promedio_calificacion))
               : 0;
-
-            // ✅ Función interna para que la imagen no se rompa en producción
-            const getImageUrl = (path) => {
-              if (!path) return "/placeholder.svg";
-              const cleanPath = path.startsWith('/') ? path : `/${path}`;
-              return `${API_BASE_URL}${cleanPath}`.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-            };
 
             return (
               <article
@@ -167,14 +160,14 @@ function PopularProducts() {
                 {/* Imagen */}
                 <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
                   <img
-                    src={getImageUrl(primaryImage)}
+                    src={primaryImage ? `${API_BASE_URL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}` : "/placeholder.svg"}
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />
                   {additionalImages.length > 0 && (
                     <img
-                      src={getImageUrl(additionalImages[0])}
+                      src={`${API_BASE_URL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Hover view"
                     />
@@ -207,8 +200,8 @@ function PopularProducts() {
                         <Star
                           key={i}
                           className={`w-3.5 h-3.5 ${i < avgRating
-                            ? "fill-yellow-500 text-yellow-500"
-                            : "text-muted"
+                              ? "fill-yellow-500 text-yellow-500"
+                              : "text-muted"
                             }`}
                         />
                       ))}

@@ -1,316 +1,456 @@
-import { useState, useEffect, useMemo } from "react";
+// ProductList.jsx
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import ApiService from "../services/api";
 import useCart from "../hooks/useCart";
-import { ChevronLeft, ChevronRight, ShoppingCart, Star, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function ProductList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  // Estados de datos
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Estados de filtros locales
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(12);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [minPrice, setMinPrice] = useState(0);
-  const [selectedRating, setSelectedRating] = useState(0);
-
   const { addToCart, isStockExceeded } = useCart();
-
-  // Parámetros de URL
+  const [searchQuery, setSearchQuery] = useState("");
   const categoriaParam = searchParams.get("categoria");
   const busquedaParam = searchParams.get("busqueda");
-
   const CLP = new Intl.NumberFormat("es-CL", {
     style: "currency",
     currency: "CLP",
     maximumFractionDigits: 0,
   });
 
-  const maxPriceLimit = 100000;
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPriceLimit] = useState(100000);
+  const [selectedRating, setSelectedRating] = useState(0);
 
-  // 1. Cargar Categorías una sola vez
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await ApiService.getCategorias();
-        setCategories(data);
-      } catch (err) {
-        console.error("Error cargando categorías:", err);
-      }
-    };
-    loadCategories();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // 2. Cargar Productos cuando cambie la URL (Búsqueda o Categoría)
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        let data;
+
+        const categoriesData = await ApiService.getCategorias();
+        setCategories(categoriesData);
+
+        let productsData;
 
         if (busquedaParam) {
-          data = await ApiService.buscarProductos(busquedaParam);
+          productsData = await ApiService.buscarProductos(busquedaParam);
+          setSearchQuery(busquedaParam);
+          setSelectedCategory("");
         } else if (categoriaParam) {
-          data = await ApiService.getProductosPorCategoria(categoriaParam);
+          productsData = await ApiService.getProductosPorCategoria(categoriaParam);
+          setSelectedCategory(categoriaParam);
+          setSearchQuery("");
         } else {
-          data = await ApiService.getProductos();
+          productsData = await ApiService.getProductos();
+          setSelectedCategory("");
+          setSearchQuery("");
         }
-        setProducts(data);
-        setCurrentPage(1); // Resetear página al cambiar fuente de datos
+
+        setProducts(productsData);
       } catch (err) {
-        setError("No se pudieron cargar los productos");
+        setError("Error al cargar productos");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchProducts();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    fetchData();
   }, [categoriaParam, busquedaParam]);
 
-  // 3. Lógica de Filtrado y Ordenamiento (useMemo para rendimiento)
-  const filteredProducts = useMemo(() => {
-    return products
-      .filter((product) => {
-        const price = Number(product.precio) || 0;
-        const rating = product.rating || 0;
-        return price >= minPrice && rating >= selectedRating;
-      })
-      .sort((a, b) => {
-        switch (sortBy) {
-          case "price-low": return a.precio - b.precio;
-          case "price-high": return b.precio - a.precio;
-          case "name": return a.titulo.localeCompare(b.titulo);
-          default: return new Date(b.created_at) - new Date(a.created_at);
-        }
-      });
-  }, [products, minPrice, selectedRating, sortBy]);
+  const filteredProducts = products
+    .filter((product) => {
+      if (busquedaParam) return true;
+      if (!selectedCategory || selectedCategory === "todas") return true;
+      return (
+        (product.categoria_nombre || "").toLowerCase() ===
+        selectedCategory.toLowerCase()
+      );
+    })
+    .filter((product) => {
+      if (busquedaParam) return true;
+      const price = Number(product.precio) || 0;
+      return price >= minPrice;
+    })
+    .filter((product) => {
+      if (busquedaParam) return true;
+      if (selectedRating === 0) return true;
+      const rating = product.rating || 0;
+      return rating >= selectedRating;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "price-low":
+          return a.precio - b.precio;
+        case "price-high":
+          return b.precio - a.precio;
+        case "name":
+          return a.titulo.localeCompare(b.titulo);
+        case "newest":
+        default:
+          return new Date(b.created_at) - new Date(a.created_at);
+      }
+    });
 
-  // Paginación
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  // Handlers
-  const handleCategoryChange = (categoryNombre) => {
-    if (!categoryNombre) {
-      navigate("/productos");
-    } else {
-      navigate(`/productos?categoria=${encodeURIComponent(categoryNombre)}`);
+  const handleCategoryChange = async (category) => {
+    setCurrentPage(1);
+    setSelectedCategory(category);
+    setLoading(true);
+    try {
+      let productsData;
+      if (!category || category === "") {
+        productsData = await ApiService.getProductos();
+      } else {
+        productsData = await ApiService.getProductosPorCategoria(category);
+      }
+      setProducts(productsData);
+    } catch (err) {
+      setError("Error al cargar productos");
+    } finally {
+      setLoading(false);
     }
   };
 
   const clearFilters = () => {
+    setSelectedCategory("");
     setSortBy("newest");
+    setCurrentPage(1);
     setMinPrice(0);
     setSelectedRating(0);
-    setCurrentPage(1);
+    setSearchQuery("");
     navigate("/productos");
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 font-bold mb-4">Error: {error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
+    <div className="min-h-screen w-full bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {/* Header de Resultados */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        {/* Encabezado superior */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">
-              {busquedaParam ? `Resultados para "${busquedaParam}"` :
-                categoriaParam ? `Categoría: ${categoriaParam}` : "Nuestra Colección"}
+            <h1 className="text-2xl font-bold text-foreground">
+              {busquedaParam
+                ? `Resultados para "${busquedaParam}"`
+                : categoriaParam
+                  ? `Productos en ${categoriaParam}`
+                  : "Todos los productos"}
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Mostrando {filteredProducts.length} producto{filteredProducts.length !== 1 && "s"}
+            <p className="text-sm text-muted">
+              {filteredProducts.length} producto
+              {filteredProducts.length !== 1 && "s"} encontrado
+              {filteredProducts.length !== 1 && "s"}.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium whitespace-nowrap">Ordenar por:</label>
+          {/* Ordenar por */}
+          <div className="mt-4 md:mt-0">
+            <label className="mr-2 text-sm text-muted">Ordenar por:</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-card border border-border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+              className="px-3 py-2 border border-border rounded-lg bg-background text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="newest">Más recientes</option>
-              <option value="price-low">Precio: Menor a Mayor</option>
-              <option value="price-high">Precio: Mayor a Menor</option>
-              <option value="name">Nombre: A-Z</option>
+              <option value="price-low">Precio: menor a mayor</option>
+              <option value="price-high">Precio: mayor a menor</option>
+              <option value="name">Nombre A-Z</option>
             </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr] gap-8">
+        {/* Layout principal */}
+        <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-6">
+          {/* Sidebar filtros */}
+          <aside className="bg-background rounded-2xl shadow-sm border border-border p-5 h-fit">
+            <h2 className="text-sm font-semibold text-foreground mb-4">
+              Filtrar por categoría
+            </h2>
 
-          {/* Sidebar de Filtros */}
-          <aside className="space-y-8">
-            {/* Categorías */}
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <h2 className="font-semibold mb-4 flex items-center gap-2">Categorías</h2>
-              <div className="space-y-1">
+            <div className="space-y-2 mb-6">
+              <button
+                onClick={() => handleCategoryChange("")}
+                className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${!selectedCategory
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-foreground hover:bg-muted/20"
+                  }`}
+              >
+                Todas las categorías
+              </button>
+              {categories.map((category) => (
                 <button
-                  onClick={() => handleCategoryChange(null)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${!categoriaParam ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"}`}
+                  key={category.id}
+                  onClick={() => handleCategoryChange(category.nombre)}
+                  className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${selectedCategory === category.nombre
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "text-foreground hover:bg-muted/20"
+                    }`}
                 >
-                  Todas las categorías
+                  {category.nombre}
                 </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategoryChange(cat.nombre)}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${categoriaParam === cat.nombre ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"}`}
-                  >
-                    {cat.nombre}
-                  </button>
-                ))}
+              ))}
+            </div>
+
+            {/* Slider de precio */}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs font-semibold text-foreground mb-3">
+                Filtrar por precio
+              </p>
+
+              <div className="flex flex-col gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPriceLimit}
+                  step={500}
+                  value={minPrice}
+                  onChange={(e) => {
+                    setCurrentPage(1);
+                    setMinPrice(Number(e.target.value));
+                  }}
+                  className="w-full accent-primary"
+                />
+
+                <div className="flex justify-between text-xs text-muted">
+                  <span>
+                    Desde:{" "}
+                    <span className="font-semibold">
+                      {CLP.format(minPrice)}
+                    </span>
+                  </span>
+                  <span>
+                    Hasta:{" "}
+                    <span className="font-semibold">
+                      {CLP.format(maxPriceLimit)}
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Precio */}
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <h2 className="font-semibold mb-4">Rango de Precio</h2>
-              <input
-                type="range"
-                min={0}
-                max={maxPriceLimit}
-                step={1000}
-                value={minPrice}
-                onChange={(e) => setMinPrice(Number(e.target.value))}
-                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <div className="flex justify-between mt-2 text-xs font-medium text-muted-foreground">
-                <span>Min: {CLP.format(minPrice)}</span>
-                <span>Max: {CLP.format(maxPriceLimit)}</span>
-              </div>
-            </div>
+            {/* Filtro por rating */}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs font-semibold text-foreground mb-3">
+                Filtrar por calificación
+              </p>
 
-            {/* Rating */}
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <h2 className="font-semibold mb-4">Calificación mínima</h2>
-              <div className="space-y-2">
-                {[5, 4, 3, 2].map((star) => (
-                  <label key={star} className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      type="radio"
-                      name="rating"
-                      checked={selectedRating === star}
-                      onChange={() => setSelectedRating(star)}
-                      className="w-4 h-4 accent-primary"
-                    />
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} className={i < star ? "fill-yellow-400 text-yellow-400" : "text-muted"} />
-                      ))}
-                      <span className="text-xs ml-1 text-muted-foreground">o más</span>
-                    </div>
+              {[5, 4, 3, 2, 1].map((rating) => (
+                <div key={rating} className="flex items-center gap-2 mb-2">
+                  <input
+                    type="radio"
+                    id={`rating-${rating}`}
+                    name="rating"
+                    checked={selectedRating === rating}
+                    onChange={() => {
+                      setCurrentPage(1);
+                      setSelectedRating(rating);
+                    }}
+                    className="accent-primary"
+                  />
+                  <label htmlFor={`rating-${rating}`} className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg
+                        key={i}
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`w-4 h-4 ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-muted fill-muted"
+                          }`}
+                        viewBox="0 0 24 24"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.16 12 17.77 5.82 21.16 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    ))}
                   </label>
-                ))}
-                <button
-                  onClick={() => setSelectedRating(0)}
-                  className="text-xs text-primary hover:underline mt-2"
-                >
-                  Mostrar todas
-                </button>
+                </div>
+              ))}
+
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="radio"
+                  id="rating-0"
+                  name="rating"
+                  checked={selectedRating === 0}
+                  onChange={() => {
+                    setCurrentPage(1);
+                    setSelectedRating(0);
+                  }}
+                  className="accent-primary"
+                />
+                <label htmlFor="rating-0" className="text-xs text-muted">
+                  Sin calificación
+                </label>
               </div>
             </div>
 
-            <button
-              onClick={clearFilters}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-lg hover:bg-destructive/10 transition-colors text-sm font-medium"
-            >
-              <Trash2 size={16} /> Limpiar Filtros
-            </button>
+            {(selectedCategory ||
+              sortBy !== "newest" ||
+              minPrice !== 0 ||
+              selectedRating !== 0 ||
+              busquedaParam) && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 w-full text-xs font-semibold px-3 py-2 rounded-lg border border-border text-foreground hover:bg-muted/20"
+                >
+                  Limpiar filtros
+                </button>
+              )}
           </aside>
 
-          {/* Grid de Productos */}
+          {/* Contenido principal */}
           <main>
             {currentProducts.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 auto-rows-fr">
                   {currentProducts.map((product) => {
                     const outOfStock = isStockExceeded(product);
-                    const imgUrl = product.imagen_principal
-                      ? `${API_BASE_URL}${product.imagen_principal.startsWith("/") ? "" : "/"}${product.imagen_principal.replace(/\.(jpg|jpeg|png)$/i, '.webp')}`
-                      : "/placeholder.svg";
+                    const primaryImage = product.imagen_principal;
+                    const additionalImages = product.imagenes_adicionales || [];
 
                     return (
                       <div
                         key={product.id}
-                        className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
+                        className="group bg-background rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-300 flex flex-col"
+                        onClick={() => navigate(`/producto/${product.id}`)}
                       >
-                        {/* Contenedor Imagen */}
-                        <div
-                          className="relative h-64 overflow-hidden cursor-pointer"
-                          onClick={() => navigate(`/producto/${product.id}`)}
-                        >
-                          <img
-                            src={imgUrl}
-                            alt={product.titulo}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            onError={(e) => (e.target.src = "/placeholder.svg")}
-                          />
-                          {product.descuento > 0 && (
-                            <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                              -{product.descuento}%
-                            </div>
-                          )}
-                        </div>
+                        {/* Imagen con hover */}
+                        <div className="relative w-full h-56 bg-muted/20 overflow-hidden group">
+                          <div className="w-full h-full relative">
+                            <img
+                              src={
+                                primaryImage
+                                  ? `${API_BASE_URL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}`
+                                  : "/placeholder.svg"
+                              }
+                              alt={product.titulo || product.nombre}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              onError={(e) => {
+                                e.target.src = "/placeholder.svg";
+                              }}
+                            />
 
-                        {/* Información */}
-                        <div className="p-5 flex flex-col flex-grow">
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                              {product.categoria_nombre || "General"}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <Star size={12} className="fill-yellow-400 text-yellow-400" />
-                              <span className="text-xs font-medium">{product.rating || "N/A"}</span>
-                            </div>
+                            {additionalImages.length > 0 && (
+                              <img
+                                src={
+                                  additionalImages[0]
+                                    ? `${API_BASE_URL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')
+                                    : `${API_BASE_URL}/images/placeholder.svg`
+                                }
+                                alt={`${product.titulo || product.nombre} (vista alternativa)`}
+                                className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                onError={(e) => {
+                                  e.target.src = "/placeholder.svg";
+                                }}
+                              />
+                            )}
                           </div>
 
-                          <h3 className="font-bold text-lg mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                          {product.descuento && (
+                            <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full shadow-sm z-10">
+                              -{product.descuento}%
+                            </span>
+                          )}
+                        </div>
+                        {/* Contenido */}
+                        <div className="p-4 flex flex-col flex-grow">
+                          <h3 className="font-semibold text-sm text-foreground line-clamp-2 mb-2">
                             {product.titulo}
                           </h3>
 
-                          <div className="flex items-baseline gap-2 mb-4">
-                            <span className="text-xl font-black text-primary">
-                              {CLP.format(product.precio)}
+                          <div className="flex items-center mb-2">
+                            {[...Array(5)].map((_, i) => (
+                              <svg
+                                key={i}
+                                xmlns="http://www.w3.org/2000/svg"
+                                className={`w-4 h-4 ${i < 4 ? "text-yellow-500 fill-yellow-500" : "text-muted fill-muted"
+                                  }`}
+                                viewBox="0 0 24 24"
+                              >
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.16 12 17.77 5.82 21.16 7 14.14 2 9.27 8.91 8.26 12 2" />
+                              </svg>
+                            ))}
+                            <span className="text-[11px] text-muted ml-1">
+                              {product.rating ? `(${product.rating} calif.)` : "(Sin calificación)"}
                             </span>
+                          </div>
+
+                          <div className="flex items-end gap-2 mb-3">
+                            <span className="text-lg font-bold text-primary">{CLP.format(product.precio)}</span>
                             {product.precio_anterior && (
-                              <span className="text-sm line-through text-muted-foreground">
+                              <span className="line-through text-muted text-xs">
                                 {CLP.format(product.precio_anterior)}
                               </span>
                             )}
                           </div>
 
                           <button
-                            disabled={outOfStock}
-                            onClick={() => addToCart(product)}
-                            className={`w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${outOfStock
-                                ? "bg-muted text-muted-foreground cursor-not-allowed"
-                                : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20"
+                            className={`w-full py-2 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-1.5 mt-auto ${outOfStock
+                              ? "bg-muted text-muted cursor-not-allowed"
+                              : "border border-primary text-primary hover:bg-primary/10"
                               }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              !outOfStock && addToCart(product);
+                            }}
+                            disabled={outOfStock}
                           >
-                            <ShoppingCart size={18} />
-                            {outOfStock ? "Agotado" : "Añadir al carrito"}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-5 h-5"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M2.25 3h1.384c1.45 0 2.3 1.68 1.25 2.95C6.5 8.04 9.5 10.5 12 10.5c2.5 0 5.5-2.46 7.25-4.5C20.5 4.68 21.35 3 22.75 3H24m-10 3v6m0 0l-3-3m3 3 3-3m-3 3v6"
+                              />
+                            </svg>
+                            {outOfStock ? "Sin stock" : "Agregar al carrito"}
                           </button>
                         </div>
                       </div>
@@ -320,39 +460,46 @@ function ProductList() {
 
                 {/* Paginación */}
                 {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-12">
+                  <div className="flex justify-center items-center gap-1 mt-4">
                     <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
-                      className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30"
+                      className="p-2 rounded-full border border-border bg-background hover:bg-muted/20 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm"
                     >
-                      <ChevronLeft />
+                      <ChevronLeft className="w-4 h-4" />
                     </button>
-                    {[...Array(totalPages)].map((_, i) => (
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                       <button
-                        key={i + 1}
-                        onClick={() => setCurrentPage(i + 1)}
-                        className={`w-10 h-10 rounded-lg border font-medium transition-colors ${currentPage === i + 1 ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-2 py-1 rounded-lg border text-xs font-medium ${currentPage === page
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "border-border bg-background hover:bg-muted/20"
                           }`}
                       >
-                        {i + 1}
+                        {page}
                       </button>
                     ))}
                     <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
-                      className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30"
+                      className="p-2 rounded-full border border-border bg-background hover:bg-muted/20 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm"
                     >
-                      <ChevronRight />
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                 )}
               </>
             ) : (
-              <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
-                <p className="text-muted-foreground text-lg mb-6">No hay productos que coincidan con tu búsqueda</p>
-                <button onClick={clearFilters} className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-bold">
-                  Ver todos los productos
+              <div className="text-center py-12">
+                <div className="text-muted text-lg mb-4">
+                  No se encontraron productos que coincidan con los filtros.
+                </div>
+                <button
+                  onClick={clearFilters}
+                  className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm font-semibold"
+                >
+                  Limpiar filtros
                 </button>
               </div>
             )}

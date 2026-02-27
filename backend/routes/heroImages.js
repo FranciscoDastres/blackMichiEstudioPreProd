@@ -2,19 +2,13 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs"); // <--- ESTO ES NECESARIO
 const heroController = require("../controllers/heroImagesController");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
 
-// Configurar multer
+// Configurar multer (igual que antes)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = "uploads/hero/";
-        // Si la carpeta no existe en Render, la creamos para que no explote (Error 500)
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir);
+        cb(null, "uploads/hero/");
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

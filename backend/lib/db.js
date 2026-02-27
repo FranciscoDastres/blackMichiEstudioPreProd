@@ -1,13 +1,14 @@
 const { Pool } = require("pg");
 require("dotenv").config();
 
+// Prioriza DATABASE_URL, luego PG_URI
 const connectionString = process.env.DATABASE_URL || process.env.PG_URI;
 
 const config = connectionString
   ? {
     connectionString,
     ssl: {
-      rejectUnauthorized: false // Requerido para Render/Supabase
+      rejectUnauthorized: false
     }
   }
   : {
@@ -21,26 +22,32 @@ const config = connectionString
     } : false
   };
 
+console.log('Database config:', {
+  mode: connectionString ? 'URL' : 'local/manual',
+  connectionString: connectionString ? 'used' : 'not used',
+  host: config.host || 'connectionString'
+});
+
 const pool = new Pool(config);
 
-// Handlers de conexión
+// Event handlers
 pool.on('connect', () => {
   console.log('✅ Conectado a PostgreSQL');
 });
 
 pool.on('error', (err) => {
-  console.error('❌ Error inesperado en el pool de PostgreSQL:', err);
+  console.error('❌ Error inesperado en PostgreSQL:', err);
 });
 
-// Función helper para queries (Mantiene el log y manejo de errores)
+// Función helper para queries (compatible con tu código de payments.js)
 const query = async (text, params) => {
   const start = Date.now();
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('📊 Query ejecutada:', { duration: `${duration}ms`, rows: res.rowCount });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Query ejecutada:', { duration: `${duration}ms`, rows: res.rowCount });
     }
 
     return res;
@@ -50,9 +57,10 @@ const query = async (text, params) => {
   }
 };
 
-// EXPORTACIÓN CORRECTA
-// Exportamos el pool directamente y la función query
+// Exportar tanto el pool como la función query
 module.exports = {
+  query,
   pool,
-  query
+  // Para compatibilidad con código que importa solo el pool
+  ...pool
 };

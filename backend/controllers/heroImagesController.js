@@ -41,18 +41,12 @@ exports.getPublicHeroImages = async (req, res) => {
              ORDER BY section`
         );
 
-        // OBTENEMOS EL HOST DINÁMICAMENTE (Evita el error de localhost en Render)
-        const protocol = req.protocol;
-        const host = req.get('host');
-        const fullHost = `${protocol}://${host}`;
-
         const images = result.rows.map(row => ({
             id: row.section.replace('section', ''),
             title: row.title,
             subtitle: row.subtitle,
             buttonText: row.button_text,
-            // Cambiado localhost por el host dinámico
-            image: `${fullHost}${row.image_url}`,
+            image: `http://localhost:3000${row.image_url}`,
             categoria: row.categoria
         }));
 
@@ -66,18 +60,14 @@ exports.getPublicHeroImages = async (req, res) => {
 // Subir/actualizar imagen con metadatos
 exports.uploadHeroImage = async (req, res) => {
     try {
-        // Extraemos los datos del body
         const { section, title, subtitle, buttonText, categoria } = req.body;
 
-        // Si Multer falló o no hay archivo, lanzamos error 400
         if (!req.file) {
-            console.error("❌ No se recibió req.file en el controlador");
             return res.status(400).json({ error: "No se recibió imagen" });
         }
 
         const imageUrl = `/uploads/hero/${req.file.filename}`;
 
-        // Usamos ON CONFLICT para que si la sección ya existe, se actualice en lugar de dar error
         await pool.query(
             `INSERT INTO hero_images (section, image_url, title, subtitle, button_text, categoria, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, NOW())
@@ -94,7 +84,7 @@ exports.uploadHeroImage = async (req, res) => {
 
         res.json({
             ok: true,
-            message: "Imagen actualizada correctamente",
+            message: "Imagen actualizada",
             data: {
                 imageUrl,
                 title,
@@ -104,7 +94,7 @@ exports.uploadHeroImage = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error("❌ Error detallado en uploadHeroImage:", error);
-        res.status(500).json({ error: "Error interno: " + error.message });
+        console.error("❌ Error subiendo imagen:", error);
+        res.status(500).json({ error: error.message });
     }
 };
