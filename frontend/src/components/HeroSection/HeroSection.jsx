@@ -19,6 +19,15 @@ export default function HeroSection() {
                 setLoading(true);
                 const { data } = await api.get("/hero-images/public");
                 // Solo mostrar los primeros 3 slides
+                // Mapeamos los datos para asegurar que la URL apunte a la carpeta public local
+                const formattedData = (Array.isArray(data) ? data : []).map(slide => ({
+                    ...slide,
+                    // Si la imagen ya es una URL completa (http...), la dejamos.
+                    // Si es solo el nombre del archivo o ruta relativa, le ponemos el prefijo de public
+                    displayImage: slide.image?.startsWith('http')
+                        ? slide.image
+                        : `/uploads/hero/${slide.image}`
+                }));
                 const firstThreeSlides = Array.isArray(data) ? data.slice(0, 3) : data;
                 setSlides(firstThreeSlides);
             } catch (error) {
@@ -95,7 +104,7 @@ export default function HeroSection() {
                                 {/* Imagen de fondo con overlay */}
                                 <div
                                     className="absolute inset-0 z-0 bg-cover bg-center opacity-20"
-                                    style={{ backgroundImage: `url(${image})` }}
+                                    style={{ backgroundImage: `url(${displayImage})` }}
                                 ></div>
 
                                 {/* Contenido principal */}
@@ -138,7 +147,7 @@ export default function HeroSection() {
                                                 <div className="relative">
                                                     <div className="absolute -inset-4 bg-gradient-to-r from-accent/10 to-accent/5 blur-3xl rounded-full"></div>
                                                     <img
-                                                        src={image}
+                                                        src={displayImage}
                                                         alt={title}
                                                         className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl transform transition-transform duration-700 hover:scale-105"
                                                     />
