@@ -185,11 +185,7 @@ export default function ProductDetail() {
     rawImages.push(...product.imagenes_adicionales.map(toWebpPath).filter(Boolean));
   }
 
-  const images = rawImages.map((img) =>
-    img
-      ? `${API_BASE_URL}${img.startsWith("/") ? "" : "/"}${img}`
-      : `${API_BASE_URL}/images/placeholder.svg`
-  );
+  const images = rawImages.map((img) => img || "/placeholder.svg");
 
   const mainImage = images[selectedImgIndex] || `${API_BASE_URL}/images/placeholder.svg`;
 
