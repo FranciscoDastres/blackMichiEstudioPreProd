@@ -34,28 +34,42 @@ app.use((req, res, next) => {
 });
 
 // --------------------
-// CONFIGURACIÓN CORS - MODO "ABRE TODO" (SOLUCIÓN FORZADA)
+// CONFIGURACIÓN CORS
 // --------------------
-app.use(cors({
-  origin: true, // Esto refleja cualquier origen, equivalente a '*'
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost',
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  process.env.ALLOWED_ORIGIN,
+].filter(Boolean);
+
+// En producción, permite cualquier origen (flexible)
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (como mobile apps, curl, etc)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // En desarrollo o si la variable está en whitelist, permitir todo
+    if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // Fallback: permitir igual (para evitar errores)
+      callback(null, true);
+    }
+  },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  maxAge: 86400
+};
 
-// MIDDLEWARE ADICIONAL PARA ASEGURAR CABECERAS CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+app.use(cors(corsOptions));
 
-  // Responder inmediatamente a las preflight requests (OPTIONS)
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// MIDDLEWARE PRE-FLIGHT: Responder a OPTIONS manualmente como respaldo
+app.options('*', cors(corsOptions));
 
 // --------------------
 // MIDDLEWARES ADICIONALES
