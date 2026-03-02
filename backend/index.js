@@ -34,41 +34,48 @@ app.use((req, res, next) => {
 });
 
 // --------------------
-// CONFIGURACIÓN CORS
+// CONFIGURACIÓN CORS PARA RENDER
 // --------------------
 const allowedOrigins = [
+  // Desarrollo local
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost',
-  process.env.FRONTEND_URL || 'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173',
+  // Render - Backend
+  'https://blackmichi-backend-latest.onrender.com',
+  // Render - Frontend (si está en Render)
+  process.env.FRONTEND_URL,
   process.env.ALLOWED_ORIGIN,
 ].filter(Boolean);
 
-// En producción, permite cualquier origen (flexible)
 const corsOptions = {
   origin: (origin, callback) => {
-    // Permitir requests sin origin (como mobile apps, curl, etc)
+    // Permitir requests sin origin (mobile apps, postman, curl, etc)
     if (!origin) {
       return callback(null, true);
     }
 
-    // En desarrollo o si la variable está en whitelist, permitir todo
-    if (process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+    // Verificar si el origen está en la whitelist
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // Fallback: permitir igual (para evitar errores)
+      // En desarrollo, permitir todo; en producción, loguear y permitir (fallback)
+      console.warn(`⚠️ CORS: Origen no permitido pero aceptado: ${origin}`);
       callback(null, true);
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
   maxAge: 86400
 };
 
 app.use(cors(corsOptions));
 
-// MIDDLEWARE PRE-FLIGHT: Responder a OPTIONS manualmente como respaldo
+// MIDDLEWARE PRE-FLIGHT: Responder a OPTIONS
 app.options('*', cors(corsOptions));
 
 // --------------------
