@@ -4,8 +4,6 @@ import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ChevronRight, ChevronLeft, ShoppingCart, Star, Zap } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
 const formatTitle = (text) => {
   if (!text) return "";
   return text
@@ -35,8 +33,10 @@ function PopularProducts() {
       try {
         setLoading(true);
         setError(null);
-        const allProducts = await api.get("/productos")
+        const response = await api.get("/productos");
+        const allProducts = response.data;
         const limited = allProducts.slice(0, 20);
+
         setProducts(limited);
       } catch (err) {
         console.error("❌ Error cargando populares:", err);
@@ -160,14 +160,14 @@ function PopularProducts() {
                 {/* Imagen */}
                 <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
                   <img
-                    src={primaryImage ? `${API_BASE_URL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}` : "/placeholder.svg"}
+                    src={primaryImage || "/placeholder.svg"}
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />
                   {additionalImages.length > 0 && (
                     <img
-                      src={`${API_BASE_URL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')}
+                      src={additionalImages[0] || "/placeholder.svg"}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Hover view"
                     />
