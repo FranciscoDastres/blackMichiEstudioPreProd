@@ -4,9 +4,6 @@ import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ShoppingCart, Star, ChevronRight, ChevronLeft } from "lucide-react";
 
-// ✅ Eliminamos esta línea que causaba el problema
-// const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
 const formatTitle = (text) => {
   if (!text) return "";
   return text
