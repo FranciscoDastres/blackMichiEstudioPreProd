@@ -31,13 +31,16 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'https://black-michi-estudio-pre-prod-git-main-franciscodastres-projects.vercel.app',
   'https://sandbox.flow.cl',
   'https://www.flow.cl'
 ];
 
 app.use(cors({
   origin: allowedOrigins,
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // --------------------
@@ -46,17 +49,19 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos estáticos (uploads)
+// --------------------
+// SERVIR ARCHIVOS ESTÁTICOS
+// --------------------
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith(".webp")) res.setHeader("Content-Type", "image/webp");
     else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) res.setHeader("Content-Type", "image/jpeg");
     else if (filePath.endsWith(".png")) res.setHeader("Content-Type", "image/png");
+
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   }
 }));
 
-// Servir carpeta public
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
@@ -100,15 +105,17 @@ app.use('/api/categorias', categoriasRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use("/api/featured", featuredRoutes);
 
-// Hero images: admin y público
+// Hero images
+// Admin: requiere auth y admin
 app.use("/api/admin/hero-images", requireAuth, requireAdmin, heroImagesRoutes);
+// Público: no requiere auth
 app.use("/api/hero-images", heroImagesRoutes);
 
 // Reviews
 app.use('/reviews', reviewsRoutes);
 
 // --------------------
-// INICIO DEL SERVIDOR
+// START SERVER
 // --------------------
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
