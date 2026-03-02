@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ApiService from "../../services/api";
+import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ChevronRight, ChevronLeft, ShoppingCart, Star, Zap } from "lucide-react";
 
@@ -35,7 +35,7 @@ function PopularProducts() {
       try {
         setLoading(true);
         setError(null);
-        const allProducts = await ApiService.getProductos();
+        const allProducts = await api.get("/productos")
         const limited = allProducts.slice(0, 20);
         setProducts(limited);
       } catch (err) {
@@ -200,8 +200,8 @@ function PopularProducts() {
                         <Star
                           key={i}
                           className={`w-3.5 h-3.5 ${i < avgRating
-                              ? "fill-yellow-500 text-yellow-500"
-                              : "text-muted"
+                            ? "fill-yellow-500 text-yellow-500"
+                            : "text-muted"
                             }`}
                         />
                       ))}

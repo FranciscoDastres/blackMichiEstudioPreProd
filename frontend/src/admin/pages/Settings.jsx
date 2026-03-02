@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../../api/axios";
+import api from "../../services/api";
 import { Save, Image, Type, Tag, Text, Upload } from "lucide-react";
 
 export default function Settings() {

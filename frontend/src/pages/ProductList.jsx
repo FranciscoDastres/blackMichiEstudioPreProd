@@ -1,7 +1,7 @@
 // ProductList.jsx
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import ApiService from "../services/api";
+import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -42,21 +42,21 @@ function ProductList() {
         setLoading(true);
         setError(null);
 
-        const categoriesData = await ApiService.getCategorias();
+        const categoriesData = await api.get("/categorias").then(res => res.data);
         setCategories(categoriesData);
 
         let productsData;
 
         if (busquedaParam) {
-          productsData = await ApiService.buscarProductos(busquedaParam);
+          productsData = await api.get(`/productos/buscar?q=${busquedaParam}`).then(res => res.data);
           setSearchQuery(busquedaParam);
           setSelectedCategory("");
         } else if (categoriaParam) {
-          productsData = await ApiService.getProductosPorCategoria(categoriaParam);
+          productsData = await api.get(`/categorias/${categoriaParam}`).then(res => res.data);
           setSelectedCategory(categoriaParam);
           setSearchQuery("");
         } else {
-          productsData = await ApiService.getProductos();
+          productsData = await api.get("/productos").then(res => res.data);
           setSelectedCategory("");
           setSearchQuery("");
         }
@@ -121,9 +121,9 @@ function ProductList() {
     try {
       let productsData;
       if (!category || category === "") {
-        productsData = await ApiService.getProductos();
+        productsData = await api.get("/productos").then(res => res.data);
       } else {
-        productsData = await ApiService.getProductosPorCategoria(category);
+        productsData = await api.get(`/categorias/${category}`).then(res => res.data);
       }
       setProducts(productsData);
     } catch (err) {

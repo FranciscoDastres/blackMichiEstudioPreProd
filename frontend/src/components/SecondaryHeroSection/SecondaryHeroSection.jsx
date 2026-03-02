@@ -3,7 +3,7 @@ import { Navigation, Autoplay } from 'swiper/modules';
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, Tag, Palette, Sparkles, Headphones } from 'lucide-react';
-import api from "../../api/axios";
+import api from "../../services/api";
 import 'swiper/css';
 import 'swiper/css/navigation';
 

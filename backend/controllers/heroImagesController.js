@@ -1,6 +1,13 @@
 // backend/controllers/heroImagesController.js
 const pool = require("../lib/db");
-const supabaseService = require("../services/supabaseService");
+
+let supabaseService;
+function getSupabaseService() {
+    if (!supabaseService) {
+        supabaseService = require("../services/supabaseService");
+    }
+    return supabaseService;
+}
 
 /**
  * GET - Obtener todas las hero images (Admin)

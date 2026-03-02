@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import ApiService from "../../services/api";
+import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ShoppingCart, Star, ChevronRight, ChevronLeft } from "lucide-react";
 
@@ -35,7 +35,7 @@ function RelatedProducts({ category = "vasos3d" }) {
       try {
         setLoading(true);
         setError(null);
-        const data = await ApiService.getProductosPorCategoria(category);
+        const data = await api.get(`/productos/categoria/${category}`);
         setProducts((data || []).slice(0, 20));
       } catch (err) {
         setError("No hay productos relacionados disponibles.");
@@ -156,8 +156,8 @@ function RelatedProducts({ category = "vasos3d" }) {
                         <Star
                           key={i}
                           className={`w-3.5 h-3.5 ${i < avgRating
-                              ? "fill-yellow-500 text-yellow-500"
-                              : "text-muted"
+                            ? "fill-yellow-500 text-yellow-500"
+                            : "text-muted"
                             }`}
                         />
                       ))}

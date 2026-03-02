@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import api from "../../api/axios";
+import api from "../../services/api";
 import { Package, DollarSign, Hash, Tag, FileText, Image, Upload, X, Check, Loader } from "lucide-react";
 
 export default function AddProductForm() {

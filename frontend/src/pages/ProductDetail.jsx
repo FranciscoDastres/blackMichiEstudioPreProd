@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import RelatedProducts from "../components/RelatedProducts/RelatedProducts";
-import ApiService from "../services/api";
+import api from "../services/api";
 import useCart from "../hooks/useCart";
 import {
   Star,
@@ -78,14 +78,14 @@ export default function ProductDetail() {
       try {
         setLoading(true);
         setError(null);
-        const data = await ApiService.getProductoPorId(productId);
+        const data = await api.get(`/productos/${productId}`).then(res => res.data);
         setProduct(data);
         setSelectedImgIndex(0);
         setQuantity(1);
 
         // 👇 CARGAR RESEÑAS
         setLoadingReviews(true);
-        const reviewsData = await ApiService.getReviewsByProduct(productId);
+        const reviewsData = await api.get(`/reviews?producto_id=${productId}`).then(res => res.data);
         setReviews(Array.isArray(reviewsData) ? reviewsData : []);
       } catch (err) {
         setError(err.message || "Error al cargar producto");
@@ -108,7 +108,7 @@ export default function ProductDetail() {
 
     try {
       // 👇 Ajustado para tu ApiService con axios
-      await ApiService.submitReview({
+      await api.post("/reviews", {
         producto_id: productId,
         usuario_id: user?.id,
         calificacion: rating,
@@ -116,7 +116,7 @@ export default function ProductDetail() {
       });
 
       // Recargar reseñas
-      const updatedReviews = await ApiService.getReviewsByProduct(productId);
+      const updatedReviews = await api.get(`/reviews?producto_id=${productId}`).then(res => res.data);
       setReviews(Array.isArray(updatedReviews) ? updatedReviews : []);
 
       setReviewText("");

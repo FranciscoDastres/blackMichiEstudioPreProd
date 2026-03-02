@@ -1,6 +1,6 @@
 //AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/axios"
+import api from "../services/api"
 
 const AuthContext = createContext(null);
 

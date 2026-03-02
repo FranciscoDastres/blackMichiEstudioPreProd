@@ -1,33 +1,6 @@
+// backend/controllers/productosController.js
 const pool = require("../lib/db");
-const path = require("path");
-const fs = require("fs");
-
-
-// =======================================================
-// 🔧 FUNCIONES PARA BORRAR ARCHIVOS + CARPETAS
-// =======================================================
-
-
-function deleteFileAndFolder(imagePath) {
-  if (!imagePath) return;
-
-  try {
-    const absolutePath = path.join(__dirname, "..", imagePath);
-    const folderPath = path.dirname(absolutePath);
-
-    // borrar archivo
-    if (fs.existsSync(absolutePath)) {
-      fs.unlinkSync(absolutePath);
-    }
-
-    // borrar carpeta si queda vacía
-    if (fs.existsSync(folderPath) && fs.readdirSync(folderPath).length === 0) {
-      fs.rmdirSync(folderPath);
-    }
-  } catch (err) {
-    console.error("Error eliminando archivo/carpeta:", err);
-  }
-}
+const supabaseService = require("../services/supabaseService");
 
 // =======================================================
 // 📌 CREAR PRODUCTO
@@ -40,11 +13,36 @@ exports.createProduct = async (req, res) => {
     let imagenPrincipal = null;
     let imagenesAdicionales = [];
 
-    // Procesar imágenes subidas
-    if (req.processedFiles && req.processedFiles.length > 0) {
-      imagenPrincipal = req.processedFiles[0].path;
-      if (req.processedFiles.length > 1) {
-        imagenesAdicionales = req.processedFiles.slice(1).map(f => f.path);
+    // Procesar imágenes subidas a Supabase
+    if (req.files && req.files.length > 0) {
+      try {
+        // Imagen principal
+        const mainUpload = await supabaseService.uploadProductImage(
+          req.files[0].buffer,
+          req.files[0].originalname,
+          nombre.toLowerCase().replace(/\s+/g, "-")
+        );
+        imagenPrincipal = mainUpload.publicUrl;
+
+        // Imágenes adicionales
+        if (req.files.length > 1) {
+          const additionalUploads = await Promise.all(
+            req.files.slice(1).map(file =>
+              supabaseService.uploadProductImage(
+                file.buffer,
+                file.originalname,
+                nombre.toLowerCase().replace(/\s+/g, "-")
+              )
+            )
+          );
+          imagenesAdicionales = additionalUploads.map(u => u.publicUrl);
+        }
+      } catch (uploadError) {
+        console.error("❌ Error subiendo imágenes:", uploadError);
+        return res.status(400).json({
+          error: "Error subiendo imágenes",
+          details: uploadError.message
+        });
       }
     }
 
@@ -57,9 +55,9 @@ exports.createProduct = async (req, res) => {
       if (isNaN(parsed)) {
         const cat = await pool.query(
           `INSERT INTO categorias (nombre)
-           VALUES ($1)
-           ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre
-           RETURNING id`,
+                     VALUES ($1)
+                     ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre
+                     RETURNING id`,
           [categoria]
         );
         categoriaId = cat.rows[0].id;
@@ -69,9 +67,9 @@ exports.createProduct = async (req, res) => {
     }
 
     await pool.query(
-      `INSERT INTO productos 
-       (titulo, slug, precio, descripcion, imagen_principal, imagenes_adicionales, categoria_id, stock, activo)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      `INSERT INTO productos
+             (titulo, slug, precio, descripcion, imagen_principal, imagenes_adicionales, categoria_id, stock, activo)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [
         nombre,
         slug,
@@ -97,11 +95,6 @@ exports.createProduct = async (req, res) => {
 // 📌 ACTUALIZAR PRODUCTO
 // =======================================================
 
-
-// =======================================================
-// 📌 ACTUALIZAR PRODUCTO
-// =======================================================
-
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -111,14 +104,80 @@ exports.updateProduct = async (req, res) => {
       return res.status(400).json({ error: "El título es requerido" });
     }
 
-    let imagenPrincipal = null;
-    let imagenesAdicionales = [];
+    // Obtener producto actual para saber si hay imágenes viejas
+    const currentProduct = await pool.query(
+      `SELECT imagen_principal, imagenes_adicionales FROM productos WHERE id = $1`,
+      [id]
+    );
 
-    // Procesar nuevas imágenes
-    if (req.processedFiles && req.processedFiles.length > 0) {
-      imagenPrincipal = req.processedFiles[0].path;
-      if (req.processedFiles.length > 1) {
-        imagenesAdicionales = req.processedFiles.slice(1).map(f => f.path);
+    if (currentProduct.rows.length === 0) {
+      return res.status(404).json({ error: "Producto no encontrado" });
+    }
+
+    let imagenPrincipal = currentProduct.rows[0].imagen_principal;
+    let imagenesAdicionales = currentProduct.rows[0].imagenes_adicionales || [];
+
+    // Procesar nuevas imágenes si se suben
+    if (req.files && req.files.length > 0) {
+      try {
+        // Eliminar imágenes antiguas de Supabase
+        if (imagenPrincipal && imagenPrincipal.includes("supabaseusercontent.com")) {
+          try {
+            const urlParts = imagenPrincipal.split("/object/public/BlackMichiEstudio/");
+            if (urlParts[1]) {
+              await supabaseService.deleteFile(urlParts[1]);
+            }
+          } catch (deleteError) {
+            console.warn("⚠️ No se pudo eliminar imagen principal antigua:", deleteError.message);
+          }
+        }
+
+        if (imagenesAdicionales && imagenesAdicionales.length > 0) {
+          for (const oldUrl of imagenesAdicionales) {
+            if (oldUrl.includes("supabaseusercontent.com")) {
+              try {
+                const urlParts = oldUrl.split("/object/public/BlackMichiEstudio/");
+                if (urlParts[1]) {
+                  await supabaseService.deleteFile(urlParts[1]);
+                }
+              } catch (deleteError) {
+                console.warn("⚠️ No se pudo eliminar imagen adicional:", deleteError.message);
+              }
+            }
+          }
+        }
+
+        // Subir nuevas imágenes
+        const productName = titulo.toLowerCase().replace(/\s+/g, "-");
+
+        // Imagen principal
+        const mainUpload = await supabaseService.uploadProductImage(
+          req.files[0].buffer,
+          req.files[0].originalname,
+          productName
+        );
+        imagenPrincipal = mainUpload.publicUrl;
+
+        // Imágenes adicionales
+        imagenesAdicionales = [];
+        if (req.files.length > 1) {
+          const additionalUploads = await Promise.all(
+            req.files.slice(1).map(file =>
+              supabaseService.uploadProductImage(
+                file.buffer,
+                file.originalname,
+                productName
+              )
+            )
+          );
+          imagenesAdicionales = additionalUploads.map(u => u.publicUrl);
+        }
+      } catch (uploadError) {
+        console.error("❌ Error subiendo nuevas imágenes:", uploadError);
+        return res.status(400).json({
+          error: "Error subiendo imágenes",
+          details: uploadError.message
+        });
       }
     }
 
@@ -130,9 +189,9 @@ exports.updateProduct = async (req, res) => {
       if (isNaN(parsed)) {
         const cat = await pool.query(
           `INSERT INTO categorias (nombre)
-           VALUES ($1)
-           ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre
-           RETURNING id`,
+                     VALUES ($1)
+                     ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre
+                     RETURNING id`,
           [categoria]
         );
         categoriaId = cat.rows[0].id;
@@ -141,51 +200,32 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    // Construir query dinámicamente
-    const fields = [];
-    const values = [];
-    let paramIndex = 1;
-
-    fields.push(`titulo = $${paramIndex++}`);
-    values.push(titulo);
-
-    fields.push(`slug = $${paramIndex++}`);
-    values.push(slug);
-
-    fields.push(`precio = $${paramIndex++}`);
-    values.push(Number(precio));
-
-    fields.push(`descripcion = $${paramIndex++}`);
-    values.push(descripcion || null);
-
-    if (imagenPrincipal) {
-      fields.push(`imagen_principal = $${paramIndex++}`);
-      values.push(imagenPrincipal);
-    }
-
-    if (imagenesAdicionales.length > 0) {
-      fields.push(`imagenes_adicionales = $${paramIndex++}`);
-      values.push(imagenesAdicionales);
-    }
-
-    fields.push(`categoria_id = $${paramIndex++}`);
-    values.push(categoriaId);
-
-    fields.push(`stock = $${paramIndex++}`);
-    values.push(Number(stock));
-
-    fields.push(`updated_at = NOW()`);
-
-    values.push(id);
-
-    const query = `
-      UPDATE productos 
-      SET ${fields.join(', ')}
-      WHERE id = $${paramIndex}
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, values);
+    // Actualizar producto
+    const result = await pool.query(
+      `UPDATE productos
+             SET titulo = $1,
+                 slug = $2,
+                 precio = $3,
+                 descripcion = $4,
+                 imagen_principal = $5,
+                 imagenes_adicionales = $6,
+                 categoria_id = $7,
+                 stock = $8,
+                 updated_at = NOW()
+             WHERE id = $9
+             RETURNING *`,
+      [
+        titulo,
+        slug,
+        Number(precio),
+        descripcion || null,
+        imagenPrincipal,
+        imagenesAdicionales.length > 0 ? imagenesAdicionales : null,
+        categoriaId,
+        Number(stock),
+        id
+      ]
+    );
 
     res.json({
       ok: true,
@@ -210,7 +250,7 @@ exports.deleteProduct = async (req, res) => {
     // Obtener datos del producto
     const result = await pool.query(
       `SELECT imagen_principal, imagenes_adicionales, categoria_id
-       FROM productos WHERE id=$1`,
+             FROM productos WHERE id=$1`,
       [id]
     );
 
@@ -244,14 +284,31 @@ exports.deleteProduct = async (req, res) => {
 
     // ✅ HARD DELETE - Eliminar completamente
 
-    // ❌ ELIMINAR ESTA LÍNEA (hero_images no tiene producto_id):
-    // await pool.query('DELETE FROM hero_images WHERE producto_id = $1', [id]);
+    // Eliminar imágenes de Supabase
+    if (imagen_principal && imagen_principal.includes("supabaseusercontent.com")) {
+      try {
+        const urlParts = imagen_principal.split("/object/public/BlackMichiEstudio/");
+        if (urlParts[1]) {
+          await supabaseService.deleteFile(urlParts[1]);
+        }
+      } catch (deleteError) {
+        console.warn("⚠️ No se pudo eliminar imagen principal:", deleteError.message);
+      }
+    }
 
-    // Borrar imágenes físicas
-    deleteFileAndFolder(imagen_principal);
-
-    if (imagenes_adicionales) {
-      imagenes_adicionales.forEach(img => deleteFileAndFolder(img));
+    if (imagenes_adicionales && imagenes_adicionales.length > 0) {
+      for (const imageUrl of imagenes_adicionales) {
+        if (imageUrl.includes("supabaseusercontent.com")) {
+          try {
+            const urlParts = imageUrl.split("/object/public/BlackMichiEstudio/");
+            if (urlParts[1]) {
+              await supabaseService.deleteFile(urlParts[1]);
+            }
+          } catch (deleteError) {
+            console.warn("⚠️ No se pudo eliminar imagen adicional:", deleteError.message);
+          }
+        }
+      }
     }
 
     // Borrar producto
@@ -287,21 +344,19 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
-
 // =======================================================
 // 📌 OBTENER TODOS LOS PRODUCTOS (SOLO ACTIVOS)
 // =======================================================
 
-
 exports.getAllProducts = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT p.*, c.nombre AS categoria_nombre
-      FROM productos p
-      LEFT JOIN categorias c ON p.categoria_id = c.id
-      WHERE p.activo = true
-      ORDER BY p.created_at DESC
-    `);
+            SELECT p.*, c.nombre AS categoria_nombre
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            WHERE p.activo = true
+            ORDER BY p.created_at DESC
+        `);
 
     console.log('🔍 Productos devueltos:', result.rows.length);
     console.log('🔍 IDs:', result.rows.map(p => p.id));
@@ -314,8 +369,6 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
-
-
 // =======================================================
 // 📌 OBTENER UN PRODUCTO POR ID
 // =======================================================
@@ -326,9 +379,9 @@ exports.getProductById = async (req, res) => {
 
     const result = await pool.query(
       `SELECT p.*, c.nombre AS categoria_nombre
-       FROM productos p
-       LEFT JOIN categorias c ON p.categoria_id = c.id
-       WHERE p.id = $1 AND p.activo = true`,
+             FROM productos p
+             LEFT JOIN categorias c ON p.categoria_id = c.id
+             WHERE p.id = $1 AND p.activo = true`,
       [id]
     );
 
@@ -356,15 +409,15 @@ exports.getProductsByCategory = async (req, res) => {
 
     const query = isNumeric
       ? `SELECT p.*, c.nombre AS categoria_nombre
-         FROM productos p
-         LEFT JOIN categorias c ON p.categoria_id = c.id
-         WHERE c.id = $1 AND p.activo = true
-         ORDER BY p.created_at DESC`
+               FROM productos p
+               LEFT JOIN categorias c ON p.categoria_id = c.id
+               WHERE c.id = $1 AND p.activo = true
+               ORDER BY p.created_at DESC`
       : `SELECT p.*, c.nombre AS categoria_nombre
-         FROM productos p
-         LEFT JOIN categorias c ON p.categoria_id = c.id
-         WHERE LOWER(c.nombre) = LOWER($1) AND p.activo = true
-         ORDER BY p.created_at DESC`;
+               FROM productos p
+               LEFT JOIN categorias c ON p.categoria_id = c.id
+               WHERE LOWER(c.nombre) = LOWER($1) AND p.activo = true
+               ORDER BY p.created_at DESC`;
 
     const result = await pool.query(query, [categoria]);
 
@@ -391,15 +444,15 @@ exports.buscarProductos = async (req, res) => {
 
     const result = await pool.query(
       `SELECT p.*, c.nombre AS categoria_nombre
-       FROM productos p
-       LEFT JOIN categorias c ON p.categoria_id = c.id
-       WHERE p.activo = true
-         AND (
-           LOWER(p.titulo) LIKE $1
-           OR LOWER(p.descripcion) LIKE $1
-           OR LOWER(c.nombre) LIKE $1
-         )
-       ORDER BY p.created_at DESC`,
+             FROM productos p
+             LEFT JOIN categorias c ON p.categoria_id = c.id
+             WHERE p.activo = true
+               AND (
+                 LOWER(p.titulo) LIKE $1
+                 OR LOWER(p.descripcion) LIKE $1
+                 OR LOWER(c.nombre) LIKE $1
+               )
+             ORDER BY p.created_at DESC`,
       [searchTerm]
     );
 
@@ -428,19 +481,19 @@ exports.getSugerencias = async (req, res) => {
     const [productosResult, categoriasResult] = await Promise.all([
       pool.query(
         `SELECT titulo AS texto, 'producto' AS tipo
-         FROM productos 
-         WHERE activo = true 
-           AND LOWER(titulo) LIKE $1
-         ORDER BY created_at DESC
-         LIMIT 5`,
+                 FROM productos
+                 WHERE activo = true
+                   AND LOWER(titulo) LIKE $1
+                 ORDER BY created_at DESC
+                 LIMIT 5`,
         [searchTerm]
       ),
       pool.query(
         `SELECT nombre AS texto, 'categoria' AS tipo
-         FROM categorias 
-         WHERE LOWER(nombre) LIKE $1
-         ORDER BY nombre ASC
-         LIMIT 3`,
+                 FROM categorias
+                 WHERE LOWER(nombre) LIKE $1
+                 ORDER BY nombre ASC
+                 LIMIT 3`,
         [searchTerm]
       )
     ]);

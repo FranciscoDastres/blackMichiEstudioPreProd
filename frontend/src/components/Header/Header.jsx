@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, ShoppingCart, ChevronDown, User, Settings, LogOut, Trash2, Plus, Minus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import ApiService from "../../services/api";
+import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -31,7 +31,7 @@ function Header() {
       try {
         setLoading(true);
         setError(null);
-        const data = await ApiService.getCategorias();
+        const data = await api.get("/categorias").then(res => res.data);
         setCategories(data);
       } catch (err) {
         setError("Error al cargar categorías");

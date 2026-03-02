@@ -1,7 +1,7 @@
 // CategoryCards.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ApiService from "../../services/api";
+import api from "../../services/api";
 
 function CategoryCards() {
     const [categories, setCategories] = useState([]);
@@ -11,7 +11,7 @@ function CategoryCards() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        ApiService.getCategorias()
+        api.get("/categorias").then(res => res.data)
             .then((res) => setCategories(Array.isArray(res) ? res : []))
             .catch((err) => {
                 setError("Error al cargar categorías");
