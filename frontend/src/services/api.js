@@ -56,13 +56,13 @@ const ApiService = {
   },
 
   async buscarProductos(q) {
-    const { data } = await api.get(`/productos/buscar?q=${encodeURIComponent(q)}`);
+    const { data } = await api.get(`productos/buscar?q=${encodeURIComponent(q)}`);
     return data;
   },
 
   // CATEGORÍAS
   async getCategorias() {
-    const { data } = await api.get("/categorias");
+    const { data } = await api.get("categorias");
     return data;
   },
 
@@ -82,12 +82,12 @@ const ApiService = {
 
   // 👇👇👇 AÑADIDO: RESEÑAS 👇👇👇
   async getReviewsByProduct(productId) {
-    const { data } = await api.get(`/reviews/producto/${productId}`);
+    const { data } = await api.get(`reviews/producto/${productId}`);
     return data;
   },
 
   async submitReview(reviewData) {
-    const { data } = await api.post("/reviews", reviewData);
+    const { data } = await api.post("reviews", reviewData);
     return data;
   }
 };
