@@ -17,7 +17,7 @@ exports.uploadHeroImage = async (req, res) => {
         const ext = req.file.originalname.split(".").pop();
         const fileName = `uploads/hero/hero-${Date.now()}.${ext}`;
         const { error } = await supabase.storage
-            .from("BlackMichiEestudio")
+            .from("BlackMichiEstudio")
             .upload(fileName, req.file.buffer, {
                 contentType: req.file.mimetype,
                 upsert: true
@@ -27,7 +27,7 @@ exports.uploadHeroImage = async (req, res) => {
 
         const { data } = supabase
             .storage
-            .from("BlackMichiEestudio")
+            .from("BlackMichiEstudio")
             .getPublicUrl(fileName);
 
         const imageUrl = data.publicUrl;
