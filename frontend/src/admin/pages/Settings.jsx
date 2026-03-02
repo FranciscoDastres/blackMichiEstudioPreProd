@@ -52,9 +52,7 @@ export default function Settings() {
                 if (data[key]) {
                     // Si existe data para esta sección en la API
                     const section = data[key];
-                    newPreviews[key] = section.imageUrl
-                        ? `http://localhost:3000${section.imageUrl}`
-                        : null;
+                    newPreviews[key] = section.imageUrl || null;
 
                     newFormData[key] = {
                         title: section.title || "",
@@ -150,9 +148,8 @@ export default function Settings() {
             });
             setHeroImages(prev => ({ ...prev, [section]: null }));
 
-            if (data.data.imageUrl) {
-                const fullUrl = `http://localhost:3000${data.data.imageUrl}`;
-                setPreviews(prev => ({ ...prev, [section]: fullUrl }));
+            if (data?.data?.imageUrl) {
+                setPreviews(prev => ({ ...prev, [section]: data.data.imageUrl }));
             }
 
         } catch (err) {
