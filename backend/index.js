@@ -34,47 +34,28 @@ app.use((req, res, next) => {
 });
 
 // --------------------
-// CONFIGURACIÓN CORS MEJORADA - VERSIÓN CORREGIDA
+// CONFIGURACIÓN CORS - MODO "ABRE TODO" (SOLUCIÓN FORZADA)
 // --------------------
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'https://sandbox.flow.cl',
-  'https://www.flow.cl'
-];
-
 app.use(cors({
-  origin: function (origin, callback) {
-    // 1. Permitir peticiones sin origen (Postman, curl, etc.)
-    if (!origin) {
-      console.log('✅ Petición sin origen permitida');
-      return callback(null, true);
-    }
-
-    // 2. ✅ CORREGIDO: Permitir TODOS los dominios de Vercel (más flexible)
-    if (origin && origin.includes('vercel.app')) {
-      console.log(`✅ Origen Vercel permitido: ${origin}`);
-      return callback(null, true);
-    }
-
-    // 3. Permitir dominios de la lista blanca
-    if (allowedOrigins.includes(origin)) {
-      console.log(`✅ Origen permitido (lista blanca): ${origin}`);
-      return callback(null, true);
-    }
-
-    // 4. Bloquear cualquier otro origen
-    console.log(`❌ Origen bloqueado: ${origin}`);
-    callback(new Error(`Origen ${origin} no permitido por CORS`));
-  },
+  origin: true, // Esto refleja cualquier origen, equivalente a '*'
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  exposedHeaders: ["Content-Range", "X-Content-Range"],
-  optionsSuccessStatus: 200
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 }));
+
+// MIDDLEWARE ADICIONAL PARA ASEGURAR CABECERAS CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+  // Responder inmediatamente a las preflight requests (OPTIONS)
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // --------------------
 // MIDDLEWARES ADICIONALES
@@ -222,7 +203,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`📁 Sirviendo archivos estáticos desde: ${publicPath}`);
   console.log(`📁 Uploads: ${path.join(__dirname, "uploads")}`);
   console.log(`📁 ¿Existe uploads/hero/? ${fs.existsSync(path.join(__dirname, 'uploads/hero')) ? '✅ SÍ' : '❌ NO'}`);
-  console.log(`🔒 CORS permitidos: todos los dominios que contengan "vercel.app"`);
+  console.log(`🔒 CORS: MODO ABIERTO - Todas las solicitudes permitidas`);
   console.log(`=================================`);
 });
 
