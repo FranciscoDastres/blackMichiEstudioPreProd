@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Eye } from "lucide-react";
 import useProducts from "../hooks/useProducts";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import api from '../../services/api';
+const API_URL = api.defaults.baseURL.replace('/api', '');
 
 export default function ProductTable() {
     const { products, loading, deleteProduct } = useProducts();
@@ -91,7 +91,7 @@ export default function ProductTable() {
                                 <td className="px-6 py-4">
                                     {p.imagen_principal ? (
                                         <img
-                                            src={`${API_BASE_URL}${p.imagen_principal}`}
+                                            src={`${API_URL}${p.imagen_principal}`}
                                             alt={p.titulo}
                                             className="w-16 h-16 object-cover rounded-lg shadow-sm"
                                             onError={(e) => {
@@ -143,10 +143,10 @@ export default function ProductTable() {
                                 {/* Stock */}
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${p.stock > 10
-                                            ? 'bg-green-100 text-green-800'
-                                            : p.stock > 0
-                                                ? 'bg-yellow-100 text-yellow-800'
-                                                : 'bg-red-100 text-red-800'
+                                        ? 'bg-green-100 text-green-800'
+                                        : p.stock > 0
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : 'bg-red-100 text-red-800'
                                         }`}>
                                         {p.stock > 0 ? `${p.stock} unidades` : 'Agotado'}
                                     </span>

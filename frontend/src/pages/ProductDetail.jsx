@@ -22,8 +22,6 @@ import {
   Clock
 } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
 function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -184,14 +182,14 @@ export default function ProductDetail() {
   if (product.imagenes_adicionales && product.imagenes_adicionales.length > 0) {
     rawImages.push(...product.imagenes_adicionales.map(toWebpPath).filter(Boolean));
   }
-
+  const baseURL = api.defaults.baseURL.replace('/api', '');
   const images = rawImages.map((img) =>
     img
-      ? `${API_BASE_URL}${img.startsWith("/") ? "" : "/"}${img}`
-      : `${API_BASE_URL}/images/placeholder.svg`
+      ? `${baseURL}${img.startsWith("/") ? "" : "/"}${img}`
+      : `${baseURL}/images/placeholder.svg`
   );
 
-  const mainImage = images[selectedImgIndex] || `${API_BASE_URL}/images/placeholder.svg`;
+  const mainImage = images[selectedImgIndex] || `${baseURL}/images/placeholder.svg`;
 
   const CLP = new Intl.NumberFormat("es-CL", {
     style: "currency",

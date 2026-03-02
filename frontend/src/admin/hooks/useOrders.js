@@ -1,7 +1,7 @@
 // hooks/useOrders.js
 import { useEffect, useState, useCallback } from "react";
 import axios from 'axios';
-
+import api from "../../services/api";
 export default function useOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ export default function useOrders() {
 
             const token = localStorage.getItem('token');
 
-            const response = await axios.get('http://localhost:3000/api/admin/pedidos', {
+            const response = await axios.get(`${api.defaults.baseURL}/admin/pedidos`, {
                 headers: { 'Authorization': `Bearer ${token}` },
                 withCredentials: true
             });

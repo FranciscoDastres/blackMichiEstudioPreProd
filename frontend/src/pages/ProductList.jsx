@@ -5,8 +5,7 @@ import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-console.log("API_BASE_URL PREPROD:", API_BASE_URL);
+
 function ProductList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -348,7 +347,7 @@ function ProductList() {
                     const outOfStock = isStockExceeded(product);
                     const primaryImage = product.imagen_principal;
                     const additionalImages = product.imagenes_adicionales || [];
-
+                    const baseURL = api.defaults.baseURL.replace('/api', '');
                     return (
                       <div
                         key={product.id}
@@ -361,13 +360,13 @@ function ProductList() {
                             <img
                               src={
                                 primaryImage
-                                  ? `${API_BASE_URL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}`
-                                  : "/placeholder.svg"
+                                  ? `${baseURL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}`
+                                  : `${baseURL}/images/placeholder.svg`
                               }
                               alt={product.titulo || product.nombre}
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                               onError={(e) => {
-                                e.target.src = `${API_BASE_URL}/images/placeholder.svg`;
+                                e.target.src = `${baseURL}/images/placeholder.svg`;
                               }}
                             />
 
@@ -375,13 +374,13 @@ function ProductList() {
                               <img
                                 src={
                                   additionalImages[0]
-                                    ? `${API_BASE_URL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')
-                                    : `${API_BASE_URL}/images/placeholder.svg`
+                                    ? `${baseURL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')
+                                    : `${baseURL}/images/placeholder.svg`
                                 }
                                 alt={`${product.titulo || product.nombre} (vista alternativa)`}
                                 className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                 onError={(e) => {
-                                  e.target.src = `${API_BASE_URL}/images/placeholder.svg`;
+                                  e.target.src = `${baseURL}/images/placeholder.svg`;
                                 }}
                               />
                             )}
