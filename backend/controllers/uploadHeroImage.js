@@ -10,48 +10,89 @@ exports.uploadHeroImage = async (req, res) => {
     try {
         const { section, title, subtitle, buttonText, categoria } = req.body;
 
-        if (!req.file) {
-            return res.status(400).json({ error: "No se recibió imagen" });
+        if (!section) {
+            return res.status(400).json({ error: "Section requerida" });
         }
 
-        const ext = req.file.originalname.split(".").pop();
-        const fileName = `uploads/hero/hero-${Date.now()}.${ext}`;
-        const { error } = await supabase.storage
-            .from("BlackMichiEstudio")
-            .upload(fileName, req.file.buffer, {
-                contentType: req.file.mimetype,
-                upsert: true
-            });
+        let imageUrl = null;
 
-        if (error) throw error;
+        if (req.file) {
 
-        const { data } = supabase
-            .storage
-            .from("BlackMichiEstudio")
-            .getPublicUrl(fileName);
+            const ext = req.file.originalname.split(".").pop();
 
-        const imageUrl = data.publicUrl;
+            const fileName = `uploads/hero/hero-${Date.now()}-${Math.round(
+                Math.random() * 1e9
+            )}.${ext}`;
 
-        await pool.query(
-            `
-      INSERT INTO hero_images (section, image_url, title, subtitle, button_text, categoria, updated_at)
-      VALUES ($1,$2,$3,$4,$5,$6,NOW())
-      ON CONFLICT (section)
-      DO UPDATE SET
-        image_url = $2,
-        title = $3,
-        subtitle = $4,
-        button_text = $5,
-        categoria = $6,
-        updated_at = NOW()
-      `,
-            [section, imageUrl, title, subtitle, buttonText, categoria]
+            const { error } = await supabase.storage
+                .from("BlackMichiEstudio")
+                .upload(fileName, req.file.buffer, {
+                    contentType: req.file.mimetype,
+                    upsert: true
+                });
+
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ error: error.message });
+            }
+
+            const { data } = supabase.storage
+                .from("BlackMichiEstudio")
+                .getPublicUrl(fileName);
+
+            imageUrl = data.publicUrl;
+        }
+
+        const current = await pool.query(
+            `SELECT image_url FROM hero_images WHERE section = $1`,
+            [section]
         );
 
-        res.json({ ok: true, imageUrl });
+        const finalImageUrl =
+            imageUrl ||
+            (current.rows[0] ? current.rows[0].image_url : null);
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        if (!finalImageUrl) {
+            return res.status(400).json({
+                error: "Debe existir una imagen para la sección"
+            });
+        }
+
+        await pool.query(
+            `INSERT INTO hero_images
+        (section, image_url, title, subtitle, button_text, categoria, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       ON CONFLICT (section)
+       DO UPDATE SET
+         image_url   = $2,
+         title       = $3,
+         subtitle    = $4,
+         button_text = $5,
+         categoria   = $6,
+         updated_at  = NOW()`,
+            [
+                section,
+                finalImageUrl,
+                title || "",
+                subtitle || "",
+                buttonText || "",
+                categoria || ""
+            ]
+        );
+
+        res.json({
+            ok: true,
+            data: {
+                imageUrl: finalImageUrl,
+                title,
+                subtitle,
+                buttonText,
+                categoria
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ Error subiendo imagen:", error);
+        res.status(500).json({ error: error.message });
     }
 };
