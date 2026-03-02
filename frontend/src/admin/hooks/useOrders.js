@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from 'axios';
 import api from "../../services/api";
+
 export default function useOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -14,9 +15,9 @@ export default function useOrders() {
 
             const token = localStorage.getItem('token');
 
-            const response = await axios.get(`${api.defaults.baseURL}/admin/pedidos`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-                withCredentials: true
+            // ✅ MEJOR: Usar api en lugar de axios.get directamente
+            const response = await api.get('/admin/pedidos', {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             // 🔴 DIAGNÓSTICO: MUESTRA EL ESTADO TAL COMO VIENE DEL BACKEND
@@ -48,23 +49,26 @@ export default function useOrders() {
             const token = localStorage.getItem('token');
             const normalizedNewStatus = String(newStatus).toLowerCase().trim();
 
+            // Optimistic update
             setOrders(prev =>
                 prev.map(o =>
                     o.id === orderId ? { ...o, estado: normalizedNewStatus } : o
                 )
             );
 
-            await axios.put(
-                `http://localhost:3000/api/admin/pedidos/${orderId}/estado`,
+            // ✅ CORREGIDO: Usar api en lugar de localhost:3000
+            await api.put(
+                `/admin/pedidos/${orderId}/estado`,
                 { estado: normalizedNewStatus },
                 {
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    withCredentials: true
+                    headers: { 'Authorization': `Bearer ${token}` }
                 }
             );
+
             return true;
         } catch (err) {
             console.error("Error al actualizar:", err);
+            // Revertir el cambio si hay error
             fetchOrders();
             return false;
         }
