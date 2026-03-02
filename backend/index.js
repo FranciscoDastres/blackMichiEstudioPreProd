@@ -31,8 +31,9 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-  'https://black-michi-estudio-pre-prod.vercel.app',  // ← Agrega esta línea
-  'https://black-michi-estudio-pre-prod-git-main-franciscodastres-projects.vercel.app',
+  'https://black-michi-estudio-pre-prod.vercel.app',
+  'https://black-michi-estudio-pre-prod-git-main-franciscodastres-projects.vercel.app', // ✅ Este ya lo tienes
+  'https://black-michi-estudio-pre-prod-c49e2tkgz.vercel.app', // ← AGREGAR TAMBIÉN ESTE (por si acaso)
   'https://sandbox.flow.cl',
   'https://www.flow.cl'
 ];
