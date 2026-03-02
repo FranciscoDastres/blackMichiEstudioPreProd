@@ -6,7 +6,7 @@ import useCart from "../hooks/useCart";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
+console.log("API_BASE_URL PREPROD:", API_BASE_URL);
 function ProductList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
