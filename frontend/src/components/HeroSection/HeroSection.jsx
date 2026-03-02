@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import { useNavigate } from "react-router-dom";
-import api from "../../api/axios";
+import { api } from "../../services/api";
 import { ChevronRight } from 'lucide-react';
 
 export default function HeroSection() {
