@@ -34,7 +34,7 @@ app.use((req, res, next) => {
 });
 
 // --------------------
-// CONFIGURACIÓN CORS MEJORADA
+// CONFIGURACIÓN CORS MEJORADA - VERSIÓN CORREGIDA
 // --------------------
 const allowedOrigins = [
   'http://localhost:5173',
@@ -53,8 +53,8 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // 2. Permitir TODOS los dominios de Vercel (producción y previews)
-    if (origin.includes('.vercel.app')) {
+    // 2. ✅ CORREGIDO: Permitir TODOS los dominios de Vercel (más flexible)
+    if (origin && origin.includes('vercel.app')) {
       console.log(`✅ Origen Vercel permitido: ${origin}`);
       return callback(null, true);
     }
@@ -87,12 +87,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // --------------------
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
   setHeaders: (res, filePath) => {
-    // Configurar Content-Type según extensión
     if (filePath.endsWith(".webp")) res.setHeader("Content-Type", "image/webp");
     else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) res.setHeader("Content-Type", "image/jpeg");
     else if (filePath.endsWith(".png")) res.setHeader("Content-Type", "image/png");
 
-    // Permitir acceso cross-origin a imágenes
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     res.setHeader("Access-Control-Allow-Origin", "*");
   }
@@ -102,7 +100,7 @@ const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
 // --------------------
-// ENDPOINTS DE PRUEBA (verificar que el backend funciona)
+// ENDPOINTS DE PRUEBA
 // --------------------
 app.get("/", (req, res) => {
   res.json({
@@ -121,7 +119,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ✅ NUEVO ENDPOINT DE PRUEBA PARA VERIFICAR QUE LAS RUTAS API FUNCIONAN
+// Endpoint de prueba para verificar que las rutas API funcionan
 app.get("/api/test", (req, res) => {
   console.log('🚀 Endpoint /api/test fue llamado correctamente');
   res.json({
@@ -155,12 +153,11 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// ✅ LOG PARA VERIFICAR QUE LLEGAMOS A LA SECCIÓN DE RUTAS
-console.log('✅ Endpoints de prueba configurados. Ahora montando rutas API...');
+// --------------------
+// RUTAS API - CON LOGS
+// --------------------
+console.log('✅ Endpoints de prueba configurados. Montando rutas API...');
 
-// --------------------
-// RUTAS API - CON LOGS INDIVIDUALES
-// --------------------
 console.log('⏳ Montando /api/auth...');
 app.use('/api/auth', authRoutes);
 
@@ -225,7 +222,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`📁 Sirviendo archivos estáticos desde: ${publicPath}`);
   console.log(`📁 Uploads: ${path.join(__dirname, "uploads")}`);
   console.log(`📁 ¿Existe uploads/hero/? ${fs.existsSync(path.join(__dirname, 'uploads/hero')) ? '✅ SÍ' : '❌ NO'}`);
-  console.log(`🔒 CORS permitidos: todos los dominios .vercel.app y lista blanca`);
+  console.log(`🔒 CORS permitidos: todos los dominios que contengan "vercel.app"`);
   console.log(`=================================`);
 });
 
