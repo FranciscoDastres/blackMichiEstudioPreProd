@@ -1,3 +1,4 @@
+// index.js
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -5,65 +6,63 @@ const fs = require("fs");
 require("dotenv").config();
 
 const pool = require("./lib/db");
+
+// Importar rutas
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const clientRoutes = require('./routes/client');
 const productosRoutes = require('./routes/productos');
-const categoriasRouter = require('./routes/categorias');
+const categoriasRoutes = require('./routes/categorias');
 const heroImagesRoutes = require("./routes/heroImages");
 const paymentRoutes = require('./routes/payments');
 const featuredRoutes = require('./routes/featuredRoutes');
-const { requireAuth, requireAdmin } = require('./middleware/auth');
 const reviewsRoutes = require('./routes/reviews');
+
+const { requireAuth, requireAdmin } = require('./middleware/auth');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// --------------------
+// CONFIGURACIÓN CORS
+// --------------------
 const allowedOrigins = [
-  'http://localhost',
-  'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:3000',
   'http://127.0.0.1:3000',
-  'http://127.0.0.1',
   'https://sandbox.flow.cl',
   'https://www.flow.cl'
 ];
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    callback(null, true);
-  },
+app.use(cors({
+  origin: allowedOrigins,
   credentials: true
-};
+}));
 
+// --------------------
+// MIDDLEWARES
+// --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Aplicar CORS excepto retorno Flow
-app.use((req, res, next) => {
-  if (req.path === '/api/payments/flow/return') return next();
-  cors(corsOptions)(req, res, next);
-});
-
-// ✅ SERVIR ARCHIVOS ESTÁTICOS (SOLO UNA VEZ)
+// Servir archivos estáticos (uploads)
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith(".webp")) {
-      res.setHeader("Content-Type", "image/webp");
-    } else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) {
-      res.setHeader("Content-Type", "image/jpeg");
-    } else if (filePath.endsWith(".png")) {
-      res.setHeader("Content-Type", "image/png");
-    }
+    if (filePath.endsWith(".webp")) res.setHeader("Content-Type", "image/webp");
+    else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) res.setHeader("Content-Type", "image/jpeg");
+    else if (filePath.endsWith(".png")) res.setHeader("Content-Type", "image/png");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   }
 }));
 
+// Servir carpeta public
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
-// Endpoints de prueba y debug
+// --------------------
+// ENDPOINTS DE PRUEBA
+// --------------------
 app.get("/", (req, res) => {
   res.json({ message: "Backend funcionando correctamente", timestamp: new Date().toISOString() });
 });
@@ -90,18 +89,27 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// Rutas de API
+// --------------------
+// RUTAS API
+// --------------------
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', requireAuth, requireAdmin, adminRoutes);
 app.use('/api/client', requireAuth, clientRoutes);
 app.use('/api/productos', productosRoutes);
-app.use('/api/categorias', categoriasRouter);
+app.use('/api/categorias', categoriasRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use("/api/featured", featuredRoutes);
-app.use("/api/admin/hero-images", heroImagesRoutes);
-app.use("/api/hero-images", require("./routes/heroImages"));
+
+// Hero images: admin y público
+app.use("/api/admin/hero-images", requireAuth, requireAdmin, heroImagesRoutes);
+app.use("/api/hero-images", heroImagesRoutes);
+
+// Reviews
 app.use('/reviews', reviewsRoutes);
 
+// --------------------
+// INICIO DEL SERVIDOR
+// --------------------
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`📁 Sirviendo archivos estáticos desde: ${publicPath}`);

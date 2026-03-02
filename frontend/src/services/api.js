@@ -32,21 +32,21 @@ api.interceptors.response.use(
 const ApiService = {
   // PRODUCTOS
   async getProductos() {
-    const { data } = await api.get("productos");
+    const { data } = await api.get("/productos");
     return data;
   },
 
   async getProductoPorId(id) {
-    const { data } = await api.get(`productos/${id}`);
+    const { data } = await api.get(`/productos/${id}`);
     return data;
   },
 
   async buscarSugerencias(q) {
-    const { data } = await api.get(`productos/sugerencias?q=${encodeURIComponent(q)}`);
+    const { data } = await api.get(`/productos/sugerencias?q=${encodeURIComponent(q)}`);
     return data;
   },
   async getProductosPorCategoria(categoria) {
-    const { data } = await api.get(`productos/categoria/${encodeURIComponent(categoria)}`);
+    const { data } = await api.get(`/productos/categoria/${encodeURIComponent(categoria)}`);
     return data;
   },
 
@@ -56,25 +56,25 @@ const ApiService = {
   },
 
   async buscarProductos(q) {
-    const { data } = await api.get(`productos/buscar?q=${encodeURIComponent(q)}`);
+    const { data } = await api.get(`/productos/buscar?q=${encodeURIComponent(q)}`);
     return data;
   },
 
   // CATEGORÍAS
   async getCategorias() {
-    const { data } = await api.get("categorias");
+    const { data } = await api.get("/categorias");
     return data;
   },
 
   // ⭐ PRODUCTOS DESTACADOS (HEADER)
   async getFeaturedProductos() {
-    const { data } = await api.get("featured-productos");
+    const { data } = await api.get("/featured-productos");
     return data;
   },
 
   // ADMIN — guardar destacados
   async setFeaturedProductos(productos) {
-    const { data } = await api.post("admin/featured-productos", {
+    const { data } = await api.post("/admin/featured-productos", {
       productos
     });
     return data;
@@ -82,12 +82,12 @@ const ApiService = {
 
   // 👇👇👇 AÑADIDO: RESEÑAS 👇👇👇
   async getReviewsByProduct(productId) {
-    const { data } = await api.get(`reviews/producto/${productId}`);
+    const { data } = await api.get(`/reviews/producto/${productId}`);
     return data;
   },
 
   async submitReview(reviewData) {
-    const { data } = await api.post("reviews", reviewData);
+    const { data } = await api.post("/reviews", reviewData);
     return data;
   }
 };
