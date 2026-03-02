@@ -137,7 +137,9 @@ export default function SecondaryHeroSection() {
             className="w-full h-full"
           >
             {slides.map((slide, idx) => {
-              const imageUrl = slide.image || "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop";
+              const imageUrl = slide.image?.startsWith("http")
+                ? slide.image
+                : `${import.meta.env.VITE_API_URL}${slide.image}`;
 
               return (
                 <SwiperSlide key={`${slide.id}-${idx}`} className="h-full">
