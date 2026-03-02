@@ -121,6 +121,17 @@ app.get("/health", (req, res) => {
   });
 });
 
+// ✅ NUEVO ENDPOINT DE PRUEBA PARA VERIFICAR QUE LAS RUTAS API FUNCIONAN
+app.get("/api/test", (req, res) => {
+  console.log('🚀 Endpoint /api/test fue llamado correctamente');
+  res.json({
+    success: true,
+    message: 'API endpoint de prueba funcionando',
+    cors_origin: req.headers.origin || 'sin origen',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
@@ -144,23 +155,43 @@ app.get("/test-db", async (req, res) => {
   }
 });
 
-// --------------------
-// RUTAS API - ORDEN IMPORTANTE!
-// --------------------
+// ✅ LOG PARA VERIFICAR QUE LLEGAMOS A LA SECCIÓN DE RUTAS
+console.log('✅ Endpoints de prueba configurados. Ahora montando rutas API...');
 
-// Rutas públicas (no requieren autenticación)
+// --------------------
+// RUTAS API - CON LOGS INDIVIDUALES
+// --------------------
+console.log('⏳ Montando /api/auth...');
 app.use('/api/auth', authRoutes);
+
+console.log('⏳ Montando /api/productos...');
 app.use('/api/productos', productosRoutes);
+
+console.log('⏳ Montando /api/categorias...');
 app.use('/api/categorias', categoriasRoutes);
-app.use('/api/hero-images', heroImagesRoutes); // Público
+
+console.log('⏳ Montando /api/hero-images...');
+app.use('/api/hero-images', heroImagesRoutes);
+
+console.log('⏳ Montando /api/featured...');
 app.use('/api/featured', featuredRoutes);
+
+console.log('⏳ Montando /reviews...');
 app.use('/reviews', reviewsRoutes);
 
-// Rutas que requieren autenticación
+console.log('⏳ Montando /api/client...');
 app.use('/api/client', requireAuth, clientRoutes);
+
+console.log('⏳ Montando /api/admin...');
 app.use('/api/admin', requireAuth, requireAdmin, adminRoutes);
+
+console.log('⏳ Montando /api/admin/hero-images...');
 app.use('/api/admin/hero-images', requireAuth, requireAdmin, heroImagesRoutes);
+
+console.log('⏳ Montando /api/payments...');
 app.use('/api/payments', paymentRoutes);
+
+console.log('✅ TODAS LAS RUTAS MONTADAS CORRECTAMENTE');
 
 // --------------------
 // MIDDLEWARE PARA RUTAS NO ENCONTRADAS
@@ -188,7 +219,7 @@ app.use((err, req, res, next) => {
 // --------------------
 // START SERVER
 // --------------------
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`=================================`);
   console.log(`🚀 Servidor corriendo en puerto: ${PORT}`);
   console.log(`📁 Sirviendo archivos estáticos desde: ${publicPath}`);
