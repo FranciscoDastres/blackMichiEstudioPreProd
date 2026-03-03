@@ -24,73 +24,42 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --------------------
+// 🔥 CORS AGRESIVO - PERMITIR TODOS LOS ORÍGENES
+// --------------------
+// Este middleware se ejecuta PRIMERO para asegurar que los headers CORS se envíen
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '*';
+
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Expose-Headers', 'X-Total-Count, X-Page-Count');
+  res.header('Access-Control-Max-Age', '86400');
+
+  // Responder inmediatamente a OPTIONS
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// También usar el middleware cors como respaldo
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
+
+// --------------------
 // MIDDLEWARE DE LOGGING (para depuración)
 // --------------------
 app.use((req, res, next) => {
   console.log(`🌐 [${new Date().toISOString()}] ${req.method} ${req.url}`);
   console.log(`   Origin: ${req.headers.origin || 'sin origen'}`);
-  console.log(`   User-Agent: ${req.headers['user-agent'] || 'desconocido'}`);
-  next();
-});
-
-// --------------------
-// CONFIGURACIÓN CORS PARA RENDER + VERCEL
-// --------------------
-const allowedOrigins = [
-  // Desarrollo local
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:5173',
-  // Render - Backend
-  'https://blackmichi-backend-latest.onrender.com',
-  // Vercel - Frontend (tu deployment actual)
-  'https://black-michi-estudio-pre-prod.vercel.app',
-  // Variables de entorno personalizadas
-  process.env.FRONTEND_URL,
-  process.env.ALLOWED_ORIGIN,
-].filter(Boolean);
-
-console.log('✅ CORS Whitelist configurados:', allowedOrigins);
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Permitir requests sin origin (mobile apps, postman, curl, etc)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    // Verificar si el origen está en la whitelist
-    if (allowedOrigins.includes(origin)) {
-      console.log(`✅ CORS permitido para: ${origin}`);
-      callback(null, true);
-    } else {
-      // Log del origen no permitido (solo para debug)
-      console.warn(`⚠️ CORS: Origen desconocido recibido: ${origin}`);
-      // PERMITIR IGUAL (fallback seguro)
-      callback(null, true);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
-  maxAge: 86400
-};
-
-app.use(cors(corsOptions));
-
-// PRE-FLIGHT: Responder a requests OPTIONS
-app.options('*', cors(corsOptions));
-
-// Middleware adicional para asegurar headers CORS en todas las respuestas
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
+  console.log(`   CORS permitido: ✅ SÍ (TODOS)`);
   next();
 });
 
