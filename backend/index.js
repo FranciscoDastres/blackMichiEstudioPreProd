@@ -34,7 +34,7 @@ app.use((req, res, next) => {
 });
 
 // --------------------
-// CONFIGURACIÓN CORS PARA RENDER
+// CONFIGURACIÓN CORS PARA RENDER + VERCEL
 // --------------------
 const allowedOrigins = [
   // Desarrollo local
@@ -45,10 +45,14 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   // Render - Backend
   'https://blackmichi-backend-latest.onrender.com',
-  // Render - Frontend (si está en Render)
+  // Vercel - Frontend (tu deployment actual)
+  'https://black-michi-estudio-pre-prod.vercel.app',
+  // Variables de entorno personalizadas
   process.env.FRONTEND_URL,
   process.env.ALLOWED_ORIGIN,
 ].filter(Boolean);
+
+console.log('✅ CORS Whitelist configurados:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -59,10 +63,12 @@ const corsOptions = {
 
     // Verificar si el origen está en la whitelist
     if (allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS permitido para: ${origin}`);
       callback(null, true);
     } else {
-      // En desarrollo, permitir todo; en producción, loguear y permitir (fallback)
-      console.warn(`⚠️ CORS: Origen no permitido pero aceptado: ${origin}`);
+      // Log del origen no permitido (solo para debug)
+      console.warn(`⚠️ CORS: Origen desconocido recibido: ${origin}`);
+      // PERMITIR IGUAL (fallback seguro)
       callback(null, true);
     }
   },
@@ -75,8 +81,18 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// MIDDLEWARE PRE-FLIGHT: Responder a OPTIONS
+// PRE-FLIGHT: Responder a requests OPTIONS
 app.options('*', cors(corsOptions));
+
+// Middleware adicional para asegurar headers CORS en todas las respuestas
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+});
 
 // --------------------
 // MIDDLEWARES ADICIONALES
