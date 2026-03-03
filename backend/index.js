@@ -37,14 +37,14 @@ console.log('\n');
 // --------------------
 app.use((req, res, next) => {
   const origin = req.headers.origin || '*';
-  
+
   // Enviar headers CORS
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.setHeader('Access-Control-Max-Age', '86400');
-  
+
   console.log(`✅ CORS enviado para origin: ${origin}`);
 
   // OPTIONS siempre retorna 200
