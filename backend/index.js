@@ -23,35 +23,41 @@ const { requireAuth, requireAdmin } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 🔥🔥🔥 VERIFICACIÓN DE VERSIÓN - SOLO PARA DEBUG 🔥🔥🔥
+console.log('\n\n');
+console.log('╔════════════════════════════════════════════════════════════╗');
+console.log('║                    🚀 BACKEND INICIADO 🚀                  ║');
+console.log('║                   VERSIÓN: CORS ULTRA 2.0                 ║');
+console.log('║              Todos los orígenes permitidos ✅              ║');
+console.log('╚════════════════════════════════════════════════════════════╝');
+console.log('\n');
+
 // --------------------
-// 🔥 CORS AGRESIVO - PERMITIR TODOS LOS ORÍGENES
+// 🔥 CORS: PERMITIR ABSOLUTAMENTE TODO
 // --------------------
-// Este middleware se ejecuta PRIMERO para asegurar que los headers CORS se envíen
 app.use((req, res, next) => {
   const origin = req.headers.origin || '*';
+  
+  // Enviar headers CORS
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  
+  console.log(`✅ CORS enviado para origin: ${origin}`);
 
-  res.header('Access-Control-Allow-Origin', origin);
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Expose-Headers', 'X-Total-Count, X-Page-Count');
-  res.header('Access-Control-Max-Age', '86400');
-
-  // Responder inmediatamente a OPTIONS
+  // OPTIONS siempre retorna 200
   if (req.method === 'OPTIONS') {
+    console.log(`✅ OPTIONS preflight respondido para: ${req.path}`);
     return res.sendStatus(200);
   }
 
   next();
 });
 
-// También usar el middleware cors como respaldo
-app.use(cors({
-  origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
-}));
+// Doble middleware CORS como respaldo
+app.use(cors({ origin: '*', credentials: false }));
 
 // --------------------
 // MIDDLEWARE DE LOGGING (para depuración)
