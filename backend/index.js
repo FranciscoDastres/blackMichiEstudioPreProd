@@ -5,6 +5,9 @@ const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
 
+// ✅ KEEP-ALIVE PARA RENDER
+const keepAlive = require("./lib/keepAlive");
+
 // ✅ VERIFICAR VARIABLES DE ENTORNO CRÍTICAS
 console.log('\n🔍 Verificando configuración...');
 const requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
@@ -305,6 +308,11 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🔒 CORS: MODO ABIERTO - Todas las solicitudes permitidas`);
   console.log(`📊 Node.js: ${process.version}`);
   console.log(`=================================`);
+  
+  // ✅ INICIAR KEEP-ALIVE PARA RENDER
+  if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+    keepAlive.start();
+  }
 }).on('error', (err) => {
   console.error('❌ Error al iniciar el servidor:', err);
   if (err.code === 'EADDRINUSE') {
@@ -316,6 +324,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 // Manejo de cierre graceful
 process.on('SIGTERM', () => {
   console.log('🛑 Recibida señal SIGTERM, cerrando servidor...');
+  keepAlive.stop();
   server.close(() => {
     console.log('✅ Servidor cerrado');
     process.exit(0);
