@@ -400,70 +400,28 @@ exports.getAllProducts = async (req, res) => {
   try {
     const now = Date.now();
 
-    // ✅ Parámetros de paginación (OPCIONAL)
-    const limit = parseInt(req.query.limit);
-    const offset = parseInt(req.query.offset) || 0;
-    const isPaginated = !isNaN(limit) && limit > 0; // Si viene limit, usar paginación
-    const includeAll = req.query.all === 'true';
-
     // ✅ Verificar si el caché es válido
     if (cache.allProducts && (now - cache.timestamp) < cache.ttl) {
       console.log('✅ Devolviendo productos desde CACHÉ');
-
-      // Si pide paginado, devolver estructura paginada
-      if (isPaginated) {
-        const paginatedResults = cache.allProducts.slice(offset, offset + limit);
-        return res.json({
-          items: paginatedResults,
-          total: cache.allProducts.length,
-          limit,
-          offset,
-          page: Math.floor(offset / limit) + 1,
-          pages: Math.ceil(cache.allProducts.length / limit)
-        });
-      }
-
-      // Si NO pide paginado, devolver array directo (compatible hacia atrás)
       return res.json(cache.allProducts);
     }
 
     // ✅ Caché inválido, obtener de la BD
     console.log('🔄 Cargando productos de la BD...');
 
-    const query = `
+    const result = await pool.query(`
       SELECT p.*, c.nombre AS categoria_nombre
       FROM productos p
       LEFT JOIN categorias c ON p.categoria_id = c.id
       WHERE p.activo = true
       ORDER BY p.created_at DESC
-    `;
+    `);
 
-    const result = await pool.query(query);
-
-    // ✅ Guardar TODOS en caché
+    // ✅ Guardar en caché
     cache.allProducts = result.rows;
     cache.timestamp = now;
 
-    // Si pide paginado, devolver estructura paginada
-    if (isPaginated) {
-      const paginatedResults = result.rows.slice(offset, offset + limit);
-      const total = result.rows.length;
-      return res.json({
-        items: paginatedResults,
-        total,
-        limit,
-        offset,
-        page: Math.floor(offset / limit) + 1,
-        pages: Math.ceil(total / limit)
-      });
-    }
-
-    // Si NO pide paginado, devolver array directo (compatible hacia atrás)
-    console.log(`✅ ${result.rows.length} productos cargados`);
-    res.json(result.rows);
-
-  } catch (error) {
-    console.error("❌ Error obteniendo productos:", error);
+    console.log(`✅ ${result.rows.length} productos cargados en caché`);
     res.status(500).json({ error: "Error obteniendo productos" });
   }
 };
