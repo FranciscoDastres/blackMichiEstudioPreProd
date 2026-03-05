@@ -1,15 +1,12 @@
-// ProductList.jsx
+// ProductList.jsx - VERSIÓN CON IDS DE CATEGORÍAS
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// ✅ Función segura para obtener URL de imágenes
 function getImageUrl(imagePath) {
   if (!imagePath) return "/placeholder.svg";
-
-  // Si es URL completa, devolverla
   if (imagePath.startsWith('http')) return imagePath;
 
   const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
@@ -33,6 +30,7 @@ function ProductList() {
   const { addToCart, isStockExceeded } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
 
+  // ✅ ARREGLADO: Obtener el ID de la categoría
   const categoriaParam = searchParams.get("categoria");
   const busquedaParam = searchParams.get("busqueda");
 
@@ -56,7 +54,7 @@ function ProductList() {
         setLoading(true);
         setError(null);
 
-        // ✅ Cargar categorías de forma segura
+        // ✅ Cargar categorías
         try {
           const categoriesResponse = await api.get("/categorias");
           const categoriesData = Array.isArray(categoriesResponse.data)
@@ -68,21 +66,44 @@ function ProductList() {
           setCategories([]);
         }
 
-        // ✅ Cargar productos de forma segura
+        // ✅ Cargar productos
         let productsData = [];
 
         try {
           if (busquedaParam) {
+            // Búsqueda por término
             const searchResponse = await api.get(`/productos/buscar?q=${busquedaParam}`);
             productsData = Array.isArray(searchResponse.data) ? searchResponse.data : [];
             setSearchQuery(busquedaParam);
             setSelectedCategory("");
           } else if (categoriaParam) {
-            const categoryResponse = await api.get(`/categorias/${categoriaParam}`);
-            productsData = Array.isArray(categoryResponse.data) ? categoryResponse.data : [];
-            setSelectedCategory(categoriaParam);
+            // ✅ ARREGLADO: categoriaParam es ahora un ID, no un nombre
+            try {
+              // Buscar productos por ID de categoría
+              const categoryResponse = await api.get(`/categorias/${categoriaParam}`);
+              productsData = Array.isArray(categoryResponse.data) ? categoryResponse.data : [];
+
+              // Encontrar el nombre de la categoría para mostrar
+              const foundCategory = categories.find(
+                c => String(c.id) === String(categoriaParam)
+              );
+              const categoryName = foundCategory?.nombre || `Categoría ${categoriaParam}`;
+              setSelectedCategory(categoryName);
+
+              console.log(`✅ Productos cargados para categoría: ${categoryName}`);
+            } catch (categoryErr) {
+              // Si no encuentra la categoría, mostrar todos los productos
+              console.warn(
+                `⚠️ Categoría con ID "${categoriaParam}" no encontrada, mostrando todos los productos`,
+                categoryErr
+              );
+              const allResponse = await api.get("/productos");
+              productsData = Array.isArray(allResponse.data) ? allResponse.data : [];
+              setSelectedCategory("");
+            }
             setSearchQuery("");
           } else {
+            // Todos los productos (sin filtro)
             const allResponse = await api.get("/productos");
             productsData = Array.isArray(allResponse.data) ? allResponse.data : [];
             setSelectedCategory("");
@@ -105,7 +126,7 @@ function ProductList() {
     fetchData();
   }, [categoriaParam, busquedaParam]);
 
-  // ✅ Filtrado seguro de productos
+  // ✅ Filtrado seguro
   const filteredProducts = products
     .filter((product) => {
       if (busquedaParam) return true;
@@ -150,20 +171,33 @@ function ProductList() {
   );
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  const handleCategoryChange = async (category) => {
+  // ✅ Arreglado: handleCategoryChange con IDs
+  const handleCategoryChange = async (categoryId) => {
     setCurrentPage(1);
-    setSelectedCategory(category);
+
+    // Encontrar el nombre para mostrar
+    const foundCategory = categories.find(c => String(c.id) === String(categoryId));
+    const categoryName = foundCategory?.nombre || `Categoría ${categoryId}`;
+
+    setSelectedCategory(categoryId === "" ? "" : categoryName);
     setLoading(true);
 
     try {
       let productsData = [];
 
-      if (!category || category === "") {
+      if (!categoryId || categoryId === "") {
+        // Todos los productos
         const response = await api.get("/productos");
         productsData = Array.isArray(response.data) ? response.data : [];
       } else {
-        const response = await api.get(`/categorias/${category}`);
-        productsData = Array.isArray(response.data) ? response.data : [];
+        // Por categoría usando ID
+        try {
+          const response = await api.get(`/categorias/${categoryId}`);
+          productsData = Array.isArray(response.data) ? response.data : [];
+        } catch (err) {
+          console.warn(`⚠️ No se encontró la categoría con ID "${categoryId}"`);
+          productsData = [];
+        }
       }
 
       setProducts(productsData);
@@ -219,8 +253,8 @@ function ProductList() {
             <h1 className="text-2xl font-bold text-foreground">
               {busquedaParam
                 ? `Resultados para "${busquedaParam}"`
-                : categoriaParam
-                  ? `Productos en ${categoriaParam}`
+                : selectedCategory
+                  ? `Productos en ${selectedCategory}`
                   : "Todos los productos"}
             </h1>
             <p className="text-sm text-muted">
@@ -266,8 +300,8 @@ function ProductList() {
               </button>
               {categories.map((category) => (
                 <button
-                  key={category.id || category.nombre}
-                  onClick={() => handleCategoryChange(category.nombre)}
+                  key={category.id}
+                  onClick={() => handleCategoryChange(category.id)}
                   className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${selectedCategory === category.nombre
                     ? "bg-primary/10 text-primary font-semibold"
                     : "text-foreground hover:bg-muted/20"
@@ -392,7 +426,6 @@ function ProductList() {
                     const primaryImage = product.imagen_principal;
                     const additionalImages = product.imagenes_adicionales || [];
 
-                    // ✅ Calificación segura desde BD
                     const avgRating = product.promedio_calificacion
                       ? Math.round(parseFloat(product.promedio_calificacion))
                       : 0;

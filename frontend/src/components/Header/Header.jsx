@@ -75,13 +75,10 @@ function Header() {
     };
   }, []);
 
-  // ✅ Función para navegar a categoría
+  // ✅ ARREGLADO: Función para navegar a categoría usando ID
   const handleCategoryClick = (categoryId, categoryName) => {
-    // ✅ OPCIÓN 1: Si tu backend soporta buscar por ID
-    // navigate(`/productos?categoria=${categoryId}`);
-
-    // ✅ OPCIÓN 2: Si necesita buscar por nombre (URL encoded)
-    navigate(`/productos?categoria=${encodeURIComponent(categoryName)}`);
+    // ✅ Usar el ID de la categoría
+    navigate(`/productos?categoria=${categoryId}`);
     setSidebarOpen(false);
   };
 
@@ -225,15 +222,18 @@ function Header() {
 
                     <div className="flex-1 overflow-y-auto px-6 py-4">
                       <ul className="space-y-2">
-                        {/* ✅ NUEVO: Botón "Todos los Productos" */}
+                        {/* ✅ ARREGLADO: Botón "Todos los Productos" - Limpio sin hover especial */}
                         <li>
                           <button
                             onClick={handleAllProducts}
-                            className="w-full text-left text-foreground hover:text-primary text-base font-bold py-3 px-2 rounded transition bg-primary/10 border-2 border-primary mb-4"
+                            className="w-full text-left text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition capitalize"
                           >
                             Todos los Productos
                           </button>
                         </li>
+
+                        {/* ✅ Separador visual */}
+                        <li className="border-t border-border mt-4 pt-4"></li>
 
                         {/* ✅ Mapear categorías */}
                         {categories.map((cat) => (
