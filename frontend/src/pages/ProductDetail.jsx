@@ -1,47 +1,12 @@
-// ProductDetail.jsx
-import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import RelatedProducts from "../components/RelatedProducts/RelatedProducts";
+// ProductList.jsx - VERSIÓN ACTUALIZADA CON MANEJO DE CATEGORÍAS
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import useCart from "../hooks/useCart";
-import {
-  Star,
-  ShoppingBag,
-  Truck,
-  Shield,
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Minus,
-  Check,
-  Sparkles,
-  Package,
-  User,
-  MessageSquare,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-function useAuth() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const userData = localStorage.getItem("user");
-      setUser(userData ? JSON.parse(userData) : { id: "unknown" });
-    }
-    setLoading(false);
-  }, []);
-
-  return { user, loading, isLoggedIn: !!localStorage.getItem("token") };
-}
-
-// ✅ Función segura para convertir imágenes a webp
 function getImageUrl(imagePath) {
   if (!imagePath) return "/placeholder.svg";
-
-  // Si es URL completa, devolverla
   if (imagePath.startsWith('http')) return imagePath;
 
   const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
@@ -51,134 +16,220 @@ function getImageUrl(imagePath) {
   return `${baseURL}${webpPath}`;
 }
 
-export default function ProductDetail() {
-  const { productId } = useParams();
-  const [product, setProduct] = useState(null);
+function ProductList() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedImgIndex, setSelectedImgIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(12);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const { addToCart, isStockExceeded } = useCart();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const [activeTab, setActiveTab] = useState("description");
-  const [reviewText, setReviewText] = useState("");
-  const [rating, setRating] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
-  const [isZoomed, setIsZoomed] = useState(false);
+  const categoriaParam = searchParams.get("categoria");
+  const busquedaParam = searchParams.get("busqueda");
 
-  // ✅ Estado para reseñas
-  const [reviews, setReviews] = useState([]);
-  const [loadingReviews, setLoadingReviews] = useState(false);
+  const CLP = new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    maximumFractionDigits: 0,
+  });
 
-  const { user, loading: authLoading, isLoggedIn } = useAuth();
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPriceLimit] = useState(100000);
+  const [selectedRating, setSelectedRating] = useState(0);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [productId]);
+  }, []);
 
+  // ✅ ARREGLADO: Mejor manejo de categorías con decodeURIComponent
   useEffect(() => {
-    const fetchProductAndReviews = async () => {
-      if (!productId) return;
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // ✅ Fetch producto
-        const productResponse = await api.get(`/productos/${productId}`);
-        const productData = productResponse.data;
-        setProduct(productData);
-        setSelectedImgIndex(0);
-        setQuantity(1);
-
-        // ✅ Fetch reseñas de forma segura
+        // ✅ Cargar categorías
         try {
-          setLoadingReviews(true);
-          const reviewsResponse = await api.get(`/reviews?producto_id=${productId}`);
-          const reviewsData = Array.isArray(reviewsResponse.data)
-            ? reviewsResponse.data
+          const categoriesResponse = await api.get("/categorias");
+          const categoriesData = Array.isArray(categoriesResponse.data)
+            ? categoriesResponse.data
             : [];
-          setReviews(reviewsData);
-        } catch (reviewError) {
-          console.error("❌ Error cargando reseñas:", reviewError);
-          setReviews([]);
-        } finally {
-          setLoadingReviews(false);
+          setCategories(categoriesData);
+        } catch (err) {
+          console.error("❌ Error cargando categorías:", err);
+          setCategories([]);
+        }
+
+        // ✅ Cargar productos
+        let productsData = [];
+
+        try {
+          if (busquedaParam) {
+            // Búsqueda por término
+            const searchResponse = await api.get(`/productos/buscar?q=${busquedaParam}`);
+            productsData = Array.isArray(searchResponse.data) ? searchResponse.data : [];
+            setSearchQuery(busquedaParam);
+            setSelectedCategory("");
+          } else if (categoriaParam) {
+            // ✅ ARREGLADO: Decodificar categoría (maneja "Fondo de Bikini" correctamente)
+            const decodedCategoria = decodeURIComponent(categoriaParam);
+
+            try {
+              // Intentar con el nombre decodificado
+              const categoryResponse = await api.get(
+                `/categorias/${encodeURIComponent(decodedCategoria)}`
+              );
+              productsData = Array.isArray(categoryResponse.data)
+                ? categoryResponse.data
+                : [];
+              console.log(`✅ Productos cargados para categoría: ${decodedCategoria}`);
+            } catch (categoryErr) {
+              // Si no encuentra por nombre, mostrar todos los productos
+              console.warn(
+                `⚠️ Categoría "${decodedCategoria}" no encontrada, mostrando todos los productos`,
+                categoryErr
+              );
+              const allResponse = await api.get("/productos");
+              productsData = Array.isArray(allResponse.data) ? allResponse.data : [];
+            }
+
+            setSelectedCategory(decodedCategoria);
+            setSearchQuery("");
+          } else {
+            // Todos los productos (sin filtro)
+            const allResponse = await api.get("/productos");
+            productsData = Array.isArray(allResponse.data) ? allResponse.data : [];
+            setSelectedCategory("");
+            setSearchQuery("");
+          }
+
+          setProducts(productsData);
+        } catch (err) {
+          console.error("❌ Error cargando productos:", err);
+          setProducts([]);
         }
       } catch (err) {
-        console.error("❌ Error cargando producto:", err);
-        setError(err.message || "Error al cargar producto");
+        console.error("❌ Error general:", err);
+        setError("Error al cargar productos");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProductAndReviews();
-  }, [productId]);
+    fetchData();
+  }, [categoriaParam, busquedaParam]);
 
-  const handleReviewSubmit = async () => {
-    if (rating === 0 || !reviewText.trim()) {
-      setSubmitError("Por favor, completa todos los campos.");
-      return;
-    }
+  // ✅ Filtrado seguro
+  const filteredProducts = products
+    .filter((product) => {
+      if (busquedaParam) return true;
+      if (!selectedCategory || selectedCategory === "todas") return true;
+      return (
+        (product.categoria_nombre || "").toLowerCase() ===
+        selectedCategory.toLowerCase()
+      );
+    })
+    .filter((product) => {
+      if (busquedaParam) return true;
+      const price = Number(product.precio) || 0;
+      return price >= minPrice;
+    })
+    .filter((product) => {
+      if (busquedaParam) return true;
+      if (selectedRating === 0) return true;
+      const rating = product.promedio_calificacion
+        ? Math.round(parseFloat(product.promedio_calificacion))
+        : 0;
+      return rating >= selectedRating;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "price-low":
+          return (a.precio || 0) - (b.precio || 0);
+        case "price-high":
+          return (b.precio || 0) - (a.precio || 0);
+        case "name":
+          return (a.titulo || "").localeCompare(b.titulo || "");
+        case "newest":
+        default:
+          return new Date(b.created_at) - new Date(a.created_at);
+      }
+    });
 
-    setIsSubmitting(true);
-    setSubmitError(null);
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  // ✅ Arreglado: handleCategoryChange con mejor manejo
+  const handleCategoryChange = async (category) => {
+    setCurrentPage(1);
+    setSelectedCategory(category);
+    setLoading(true);
 
     try {
-      // ✅ Enviar reseña
-      await api.post("/reviews", {
-        producto_id: productId,
-        usuario_id: user?.id || "unknown",
-        calificacion: rating,
-        comentario: reviewText.trim(),
-      });
+      let productsData = [];
 
-      // ✅ Recargar reseñas
-      try {
-        const updatedReviews = await api.get(`/reviews?producto_id=${productId}`);
-        setReviews(Array.isArray(updatedReviews.data) ? updatedReviews.data : []);
-      } catch (err) {
-        console.error("Error recargando reseñas:", err);
+      if (!category || category === "") {
+        // Todos los productos
+        const response = await api.get("/productos");
+        productsData = Array.isArray(response.data) ? response.data : [];
+      } else {
+        // Por categoría con encodeURIComponent
+        try {
+          const response = await api.get(`/categorias/${encodeURIComponent(category)}`);
+          productsData = Array.isArray(response.data) ? response.data : [];
+        } catch (err) {
+          console.warn(`⚠️ No se encontró la categoría "${category}"`);
+          productsData = [];
+        }
       }
 
-      setReviewText("");
-      setRating(0);
-      alert("¡Gracias por tu reseña!");
-    } catch (error) {
-      console.error("❌ Error al enviar reseña:", error);
-      setSubmitError(
-        error.message || "Hubo un problema al enviar tu reseña. Por favor, inténtalo de nuevo."
-      );
+      setProducts(productsData);
+    } catch (err) {
+      console.error("❌ Error al cargar productos de categoría:", err);
+      setProducts([]);
+      setError("Error al cargar productos");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory("");
+    setSortBy("newest");
+    setCurrentPage(1);
+    setMinPrice(0);
+    setSelectedRating(0);
+    setSearchQuery("");
+    navigate("/productos");
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="absolute inset-0 animate-pulse bg-primary/20 rounded-full blur-xl"></div>
-            <div className="relative animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-primary mx-auto mb-6"></div>
-          </div>
-          <p className="text-lg text-muted font-light animate-pulse">Cargando producto...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="glass-panel rounded-2xl p-8 text-center max-w-md">
-          <div className="text-6xl mb-4 text-rose-400">❌</div>
-          <div className="text-xl font-display font-extrabold text-foreground mb-4">Error: {error}</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 font-bold mb-4">Error: {error}</div>
           <button
             onClick={() => window.location.reload()}
-            className="btn-add-cart"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
           >
             Reintentar
           </button>
@@ -187,554 +238,353 @@ export default function ProductDetail() {
     );
   }
 
-  if (!product) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="glass-panel rounded-2xl p-8 text-center max-w-md">
-          <div className="text-6xl mb-4 text-muted">🔍</div>
-          <h2 className="text-2xl font-display font-extrabold text-foreground mb-4">Producto no encontrado</h2>
-          <Link
-            to="/"
-            className="btn-add-cart"
-          >
-            Ver todos los productos
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // ✅ Construir array de imágenes de forma segura
-  const rawImages = [];
-  if (product.imagen_principal) {
-    rawImages.push(product.imagen_principal);
-  }
-  if (product.imagenes_adicionales && Array.isArray(product.imagenes_adicionales)) {
-    rawImages.push(...product.imagenes_adicionales);
-  }
-
-  const images = rawImages.map(img => getImageUrl(img)).filter(Boolean);
-  const mainImage = images[selectedImgIndex] || "/placeholder.svg";
-
-  const CLP = new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  });
-
-  const stock = product.stock ?? 99;
-  const maxQty = Math.max(1, stock);
-
-  const handleImageZoom = (e) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setZoomPosition({ x, y });
-  };
-
-  // ✅ Calcular promedio de reseñas de forma segura
-  const avgRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + (r.calificacion || 0), 0) / reviews.length
-    : 0;
-
   return (
-    <div className="min-h-screen py-12 px-4">
-      {/* Elementos decorativos */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
-      </div>
+    <div className="min-h-screen w-full bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Encabezado */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {busquedaParam
+                ? `Resultados para "${busquedaParam}"`
+                : selectedCategory
+                  ? `Productos en ${selectedCategory}`
+                  : "Todos los productos"}
+            </h1>
+            <p className="text-sm text-muted">
+              {filteredProducts.length} producto
+              {filteredProducts.length !== 1 && "s"} encontrado
+              {filteredProducts.length !== 1 && "s"}.
+            </p>
+          </div>
 
-      <div className="relative max-w-7xl mx-auto">
-        {/* Botón de retroceso */}
-        <div className="mb-6">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-muted hover:text-primary transition-colors group"
-          >
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span>Volver a productos</span>
-          </Link>
+          {/* Ordenar */}
+          <div className="mt-4 md:mt-0">
+            <label className="mr-2 text-sm text-muted">Ordenar por:</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 border border-border rounded-lg bg-background text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="newest">Más recientes</option>
+              <option value="price-low">Precio: menor a mayor</option>
+              <option value="price-high">Precio: mayor a menor</option>
+              <option value="name">Nombre A-Z</option>
+            </select>
+          </div>
         </div>
 
-        {/* Contenedor principal */}
-        <div className="glass-panel rounded-2xl overflow-hidden border border-border shadow-2xl mb-8">
-          <div className="p-6 md:p-8">
-            {/* Contenido: Imagen + Detalles */}
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-              {/* Galería de imágenes */}
-              <div className="space-y-4">
-                {/* Imagen principal */}
-                <div
-                  className="relative overflow-hidden rounded-xl bg-secondary/30 aspect-square group"
-                  onMouseMove={handleImageZoom}
-                  onMouseEnter={() => setIsZoomed(true)}
-                  onMouseLeave={() => setIsZoomed(false)}
+        {/* Layout principal */}
+        <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-6">
+          {/* Sidebar */}
+          <aside className="bg-background rounded-2xl shadow-sm border border-border p-5 h-fit">
+            <h2 className="text-sm font-semibold text-foreground mb-4">
+              Filtrar por categoría
+            </h2>
+
+            <div className="space-y-2 mb-6">
+              <button
+                onClick={() => handleCategoryChange("")}
+                className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${!selectedCategory
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "text-foreground hover:bg-muted/20"
+                  }`}
+              >
+                Todas las categorías
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id || category.nombre}
+                  onClick={() => handleCategoryChange(category.nombre)}
+                  className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${selectedCategory === category.nombre
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "text-foreground hover:bg-muted/20"
+                    }`}
                 >
-                  <img
-                    src={mainImage}
-                    alt={product.titulo || "Producto"}
-                    className={`w-full h-full object-contain transition-transform duration-300 ${isZoomed ? 'scale-150' : ''}`}
-                    style={{
-                      transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
-                    }}
-                    onError={(e) => {
-                      e.target.src = "/placeholder.svg";
-                    }}
-                  />
-                  {isZoomed && (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-transparent to-black/10"></div>
-                  )}
-                </div>
+                  {category.nombre || "Sin categoría"}
+                </button>
+              ))}
+            </div>
 
-                {/* Miniaturas */}
-                {images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {images.map((img, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImgIndex(index)}
-                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${selectedImgIndex === index
-                          ? "border-primary shadow-lg shadow-primary/20 scale-105"
-                          : "border-border hover:border-muted/50"
-                          }`}
-                        aria-label={`Ver imagen ${index + 1}`}
-                      >
-                        <img
-                          src={img}
-                          alt={`${product.titulo} ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "/placeholder.svg";
-                          }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
+            {/* Precio */}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs font-semibold text-foreground mb-3">
+                Filtrar por precio
+              </p>
 
-                {/* Navegación de imágenes */}
-                {images.length > 1 && (
-                  <div className="flex items-center justify-center gap-4">
-                    <button
-                      onClick={() => setSelectedImgIndex(prev => prev > 0 ? prev - 1 : images.length - 1)}
-                      className="p-2 rounded-full bg-secondary/50 border border-border hover:bg-secondary transition-colors"
-                      aria-label="Imagen anterior"
-                    >
-                      <ChevronLeft className="w-5 h-5 text-foreground" />
-                    </button>
-                    <span className="text-sm text-muted">
-                      {selectedImgIndex + 1} / {images.length}
+              <div className="flex flex-col gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPriceLimit}
+                  step={500}
+                  value={minPrice}
+                  onChange={(e) => {
+                    setCurrentPage(1);
+                    setMinPrice(Number(e.target.value));
+                  }}
+                  className="w-full accent-primary"
+                />
+
+                <div className="flex justify-between text-xs text-muted">
+                  <span>
+                    Desde:{" "}
+                    <span className="font-semibold">
+                      {CLP.format(minPrice)}
                     </span>
-                    <button
-                      onClick={() => setSelectedImgIndex(prev => prev < images.length - 1 ? prev + 1 : 0)}
-                      className="p-2 rounded-full bg-secondary/50 border border-border hover:bg-secondary transition-colors"
-                      aria-label="Siguiente imagen"
-                    >
-                      <ChevronRight className="w-5 h-5 text-foreground" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Detalles del producto */}
-              <div className="space-y-6">
-                {/* Categoría */}
-                {product.categoria_nombre && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-                    <Package className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-primary">{product.categoria_nombre}</span>
-                  </div>
-                )}
-
-                {/* Título */}
-                <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground leading-tight">
-                  {product.titulo || "Producto"}
-                </h1>
-
-                {/* Calificación */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-5 h-5 fill-current ${star <= Math.round(avgRating) ? 'text-yellow-400' : 'text-muted/30'}`}
-                        />
-                      ))}
-                    </div>
-                    {reviews.length > 0 ? (
-                      <span className="text-sm text-muted">
-                        {avgRating.toFixed(1)} ({reviews.length} reseña{reviews.length !== 1 ? 's' : ''})
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted">Sin reseñas</span>
-                    )}
-                  </div>
-                  <div className="w-px h-4 bg-border"></div>
-                  <span className={`text-sm font-medium ${stock > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {stock > 0 ? "✓ En stock" : "✗ Agotado"}
+                  </span>
+                  <span>
+                    Hasta:{" "}
+                    <span className="font-semibold">
+                      {CLP.format(maxPriceLimit)}
+                    </span>
                   </span>
                 </div>
-
-                {/* Descripción */}
-                {product.descripcion && (
-                  <p className="text-muted leading-relaxed">
-                    {product.descripcion}
-                  </p>
-                )}
-
-                {/* Precios */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="price-text text-4xl">{CLP.format(product.precio || 0)}</span>
-                    {product.precio_anterior && (
-                      <span className="line-through text-muted">{CLP.format(product.precio_anterior)}</span>
-                    )}
-                  </div>
-                  {product.descuento && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
-                      <span className="text-sm font-bold text-emerald-400">
-                        {product.descuento}% OFF
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Beneficios */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg">
-                    <Truck className="w-5 h-5 text-primary" />
-                    <span className="text-sm text-foreground">Envío en 3-5 días</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg">
-                    <Shield className="w-5 h-5 text-primary" />
-                    <span className="text-sm text-foreground">Garantía 30 días</span>
-                  </div>
-                </div>
-
-                {/* Cantidad y botón */}
-                <div className="space-y-4 pt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-muted mb-2">Cantidad</label>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center border border-border rounded-xl bg-secondary/30 h-12">
-                        <button
-                          aria-label="Restar cantidad"
-                          className="h-full w-12 flex items-center justify-center text-foreground rounded-l-xl hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          onClick={() => setQuantity((q) => Math.max(q - 1, 1))}
-                          disabled={quantity === 1}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-12 text-center text-base font-semibold text-foreground">{quantity}</span>
-                        <button
-                          aria-label="Sumar cantidad"
-                          className="h-full w-12 flex items-center justify-center text-foreground rounded-r-xl hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          onClick={() => setQuantity((q) => Math.min(q + 1, maxQty))}
-                          disabled={quantity === maxQty}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="text-sm text-muted">
-                        <span className="text-emerald-400">{stock} disponibles</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    className={`btn-add-cart w-full !px-6 !py-4 !text-lg group relative overflow-hidden ${isStockExceeded(product) ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                    onClick={() => {
-                      if (!isStockExceeded(product)) {
-                        for (let i = 0; i < quantity; i++) {
-                          addToCart({
-                            id: product.id,
-                            titulo: product.titulo,
-                            precio: product.precio,
-                            imagen: getImageUrl(product.imagen_principal),
-                            stock: product.stock,
-                          });
-                        }
-                        const btn = document.activeElement;
-                        btn?.classList.add('bg-emerald-500');
-                        setTimeout(() => {
-                          btn?.classList.remove('bg-emerald-500');
-                        }, 300);
-                      }
-                    }}
-                    disabled={isStockExceeded(product)}
-                  >
-                    {isStockExceeded(product) ? (
-                      "Sin stock disponible"
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        Agregar al carrito
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Info */}
-                <div className="pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 text-sm text-muted mb-2">
-                    <Check className="w-4 h-4" />
-                    <span>Impuesto incluido · Envío calculado al checkout</span>
-                  </div>
-                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Pestañas */}
-        <div className="glass-panel rounded-2xl overflow-hidden border border-border mb-8">
-          {/* Navegación */}
-          <div className="border-b border-border">
-            <nav className="flex space-x-1 px-6" role="tablist">
-              <button
-                onClick={() => setActiveTab("description")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "description"
-                  ? "text-primary border-primary"
-                  : "text-muted border-transparent hover:text-foreground"
-                  }`}
-                role="tab"
-              >
-                Descripción
-              </button>
-              <button
-                onClick={() => setActiveTab("specs")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "specs"
-                  ? "text-primary border-primary"
-                  : "text-muted border-transparent hover:text-foreground"
-                  }`}
-                role="tab"
-              >
-                Especificaciones
-              </button>
-              <button
-                onClick={() => setActiveTab("reviews")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "reviews"
-                  ? "text-primary border-primary"
-                  : "text-muted border-transparent hover:text-foreground"
-                  }`}
-                role="tab"
-              >
-                Reseñas
-              </button>
-            </nav>
-          </div>
+            {/* Rating */}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs font-semibold text-foreground mb-3">
+                Filtrar por calificación
+              </p>
 
-          {/* Contenido */}
-          <div className="p-6 md:p-8">
-            {activeTab === "description" && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-display font-extrabold text-foreground">Descripción del Producto</h3>
-                <div className="prose prose-invert max-w-none text-muted leading-relaxed">
-                  {product.descripcion_larga || product.descripcion ||
-                    "Producto personalizado impreso en 3D, ideal para regalos únicos y decoraciones especiales."}
+              {[5, 4, 3, 2, 1].map((rating) => (
+                <div key={rating} className="flex items-center gap-2 mb-2">
+                  <input
+                    type="radio"
+                    id={`rating-${rating}`}
+                    name="rating"
+                    checked={selectedRating === rating}
+                    onChange={() => {
+                      setCurrentPage(1);
+                      setSelectedRating(rating);
+                    }}
+                    className="accent-primary"
+                  />
+                  <label htmlFor={`rating-${rating}`} className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <svg
+                        key={i}
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`w-4 h-4 ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-muted fill-muted"
+                          }`}
+                        viewBox="0 0 24 24"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.16 12 17.77 5.82 21.16 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    ))}
+                  </label>
                 </div>
+              ))}
 
-                {/* Características */}
-                <div className="grid md:grid-cols-2 gap-4 mt-6">
-                  <div className="flex items-start gap-3 p-4 bg-secondary/30 rounded-xl">
-                    <Sparkles className="w-5 h-5 text-primary mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-foreground">Impresión 3D de alta calidad</h4>
-                      <p className="text-sm text-muted mt-1">Detalles precisos y acabado profesional</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-4 bg-secondary/30 rounded-xl">
-                    <Shield className="w-5 h-5 text-primary mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-foreground">Material duradero</h4>
-                      <p className="text-sm text-muted mt-1">Resistente y de larga duración</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="radio"
+                  id="rating-0"
+                  name="rating"
+                  checked={selectedRating === 0}
+                  onChange={() => {
+                    setCurrentPage(1);
+                    setSelectedRating(0);
+                  }}
+                  className="accent-primary"
+                />
+                <label htmlFor="rating-0" className="text-xs text-muted">
+                  Sin calificación
+                </label>
               </div>
-            )}
+            </div>
 
-            {activeTab === "specs" && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-display font-extrabold text-foreground">Especificaciones Técnicas</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-secondary/30 rounded-xl">
-                      <p className="text-sm text-muted">Material</p>
-                      <p className="font-semibold text-foreground">PLA Premium</p>
-                    </div>
-                    <div className="p-4 bg-secondary/30 rounded-xl">
-                      <p className="text-sm text-muted">Tiempo de impresión</p>
-                      <p className="font-semibold text-foreground">6-8 horas</p>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-secondary/30 rounded-xl">
-                    <p className="text-sm text-muted">Dimensiones aproximadas</p>
-                    <p className="font-semibold text-foreground">10cm x 10cm x 10cm</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {(selectedCategory ||
+              sortBy !== "newest" ||
+              minPrice !== 0 ||
+              selectedRating !== 0 ||
+              busquedaParam) && (
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 w-full text-xs font-semibold px-3 py-2 rounded-lg border border-border text-foreground hover:bg-muted/20"
+                >
+                  Limpiar filtros
+                </button>
+              )}
+          </aside>
 
-            {activeTab === "reviews" && (
-              <div className="space-y-8">
-                {/* Encabezado */}
-                <div>
-                  <h3 className="text-xl font-display font-extrabold text-foreground mb-4">Reseñas de clientes</h3>
+          {/* Contenido principal */}
+          <main>
+            {currentProducts.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 auto-rows-fr">
+                  {currentProducts.map((product) => {
+                    const outOfStock = isStockExceeded(product);
+                    const primaryImage = product.imagen_principal;
+                    const additionalImages = product.imagenes_adicionales || [];
 
-                  {loadingReviews ? (
-                    <p className="text-muted">Cargando reseñas...</p>
-                  ) : reviews.length > 0 ? (
-                    <div className="space-y-6">
-                      {reviews.map((review) => (
-                        <div key={review.id} className="glass-panel p-5 rounded-xl border border-border">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="w-5 h-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-foreground">
-                                  {review.usuario_nombre || "Anónimo"}
-                                </p>
-                                <div className="flex items-center gap-1 mt-1">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${i < (review.calificacion || 0) ? 'text-yellow-400 fill-current' : 'text-muted'}`}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                            <span className="text-xs text-muted">
-                              {review.created_at
-                                ? new Date(review.created_at).toLocaleDateString("es-CL")
-                                : "Fecha desconocida"
-                              }
+                    const avgRating = product.promedio_calificacion
+                      ? Math.round(parseFloat(product.promedio_calificacion))
+                      : 0;
+
+                    return (
+                      <div
+                        key={product.id}
+                        className="group bg-background rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-300 flex flex-col"
+                        onClick={() => navigate(`/producto/${product.id}`)}
+                      >
+                        {/* Imagen */}
+                        <div className="relative w-full h-56 bg-muted/20 overflow-hidden group">
+                          <div className="w-full h-full relative">
+                            <img
+                              src={getImageUrl(primaryImage)}
+                              alt={product.titulo || "Producto"}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              onError={(e) => {
+                                e.target.src = "/placeholder.svg";
+                              }}
+                            />
+
+                            {additionalImages.length > 0 && (
+                              <img
+                                src={getImageUrl(additionalImages[0])}
+                                alt={`${product.titulo} (vista alternativa)`}
+                                className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                onError={(e) => {
+                                  e.target.src = "/placeholder.svg";
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          {product.descuento && (
+                            <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full shadow-sm z-10">
+                              -{product.descuento}%
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Contenido */}
+                        <div className="p-4 flex flex-col flex-grow">
+                          <h3 className="font-semibold text-sm text-foreground line-clamp-2 mb-2">
+                            {product.titulo || "Producto"}
+                          </h3>
+
+                          {/* Rating */}
+                          <div className="flex items-center mb-2">
+                            {[...Array(5)].map((_, i) => (
+                              <svg
+                                key={i}
+                                xmlns="http://www.w3.org/2000/svg"
+                                className={`w-4 h-4 ${i < avgRating ? "text-yellow-500 fill-yellow-500" : "text-muted fill-muted"
+                                  }`}
+                                viewBox="0 0 24 24"
+                              >
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.16 12 17.77 5.82 21.16 7 14.14 2 9.27 8.91 8.26 12 2" />
+                              </svg>
+                            ))}
+                            <span className="text-[11px] text-muted ml-1">
+                              {product.total_valoraciones
+                                ? `(${product.total_valoraciones} calif.)`
+                                : "(Sin calificación)"}
                             </span>
                           </div>
-                          <p className="text-muted">{review.comentario || ""}</p>
+
+                          {/* Precios */}
+                          <div className="flex items-end gap-2 mb-3">
+                            <span className="text-lg font-bold text-primary">
+                              {CLP.format(product.precio || 0)}
+                            </span>
+                            {product.precio_anterior && (
+                              <span className="line-through text-muted text-xs">
+                                {CLP.format(product.precio_anterior)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Botón */}
+                          <button
+                            className={`w-full py-2 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-1.5 mt-auto ${outOfStock
+                              ? "bg-muted text-muted cursor-not-allowed"
+                              : "border border-primary text-primary hover:bg-primary/10"
+                              }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!outOfStock) addToCart(product);
+                            }}
+                            disabled={outOfStock}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.5}
+                              stroke="currentColor"
+                              className="w-5 h-5"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M2.25 3h1.384c1.45 0 2.3 1.68 1.25 2.95C6.5 8.04 9.5 10.5 12 10.5c2.5 0 5.5-2.46 7.25-4.5C20.5 4.68 21.35 3 22.75 3H24m-10 3v6m0 0l-3-3m3 3 3-3m-3 3v6"
+                              />
+                            </svg>
+                            {outOfStock ? "Sin stock" : "Agregar al carrito"}
+                          </button>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    !isLoggedIn ? (
-                      <div className="glass-panel p-4 rounded-xl">
-                        <p className="text-sm text-primary">
-                          Por favor, <Link to="/login" className="font-bold underline">inicia sesión</Link> para ver y dejar reseñas.
-                        </p>
                       </div>
-                    ) : (
-                      <p className="text-muted">No hay reseñas aún. ¡Sé el primero en dejar una!</p>
-                    )
-                  )}
+                    );
+                  })}
                 </div>
 
-                {/* Formulario */}
-                {isLoggedIn && (
-                  <div className="glass-panel p-6 rounded-xl border border-border">
-                    <h4 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5" />
-                      Escribe tu reseña
-                    </h4>
-
-                    <form onSubmit={(e) => { e.preventDefault(); handleReviewSubmit(); }} className="space-y-6">
-                      {/* Calificación */}
-                      <div className="space-y-3">
-                        <label className="block text-sm font-medium text-foreground">Tu calificación</label>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setRating(star)}
-                              className={`text-3xl focus:outline-none transition-transform hover:scale-110 ${star <= rating ? "text-yellow-400" : "text-muted/30"
-                                }`}
-                              aria-label={`Calificar con ${star} estrellas`}
-                            >
-                              ★
-                            </button>
-                          ))}
-                        </div>
-                        {rating === 0 && (
-                          <p className="text-sm text-rose-400">Por favor, selecciona una calificación</p>
-                        )}
-                      </div>
-
-                      {/* Texto */}
-                      <div className="space-y-3">
-                        <label htmlFor="review-text" className="block text-sm font-medium text-foreground">
-                          Tu opinión
-                        </label>
-                        <textarea
-                          id="review-text"
-                          rows={4}
-                          value={reviewText}
-                          onChange={(e) => setReviewText(e.target.value)}
-                          className="glass-panel w-full px-4 py-3 rounded-xl border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300"
-                          placeholder="¿Qué te pareció este producto? Comparte tu experiencia..."
-                        />
-                        {reviewText.trim().length === 0 && (
-                          <p className="text-sm text-rose-400">Por favor, escribe tu reseña</p>
-                        )}
-                      </div>
-
-                      {/* Error */}
-                      {submitError && (
-                        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-sm">
-                          {submitError}
-                        </div>
-                      )}
-
-                      {/* Botón */}
+                {/* Paginación */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-1 mt-4">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-full border border-border bg-background hover:bg-muted/20 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm"
+                      aria-label="Página anterior"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                       <button
-                        type="submit"
-                        disabled={isSubmitting || rating === 0 || reviewText.trim().length === 0}
-                        className={`btn-add-cart !px-8 !py-3 ${isSubmitting || rating === 0 || reviewText.trim().length === 0
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-2 py-1 rounded-lg border text-xs font-medium ${currentPage === page
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "border-border bg-background hover:bg-muted/20"
                           }`}
                       >
-                        {isSubmitting ? (
-                          <>
-                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent"></div>
-                            Enviando...
-                          </>
-                        ) : (
-                          <>
-                            <User className="w-5 h-5" />
-                            Publicar reseña
-                          </>
-                        )}
+                        {page}
                       </button>
-                    </form>
+                    ))}
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-full border border-border bg-background hover:bg-muted/20 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm"
+                      aria-label="Siguiente página"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-muted text-lg mb-4">
+                  No se encontraron productos que coincidan con los filtros.
+                </div>
+                <button
+                  onClick={clearFilters}
+                  className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm font-semibold"
+                >
+                  Limpiar filtros
+                </button>
               </div>
             )}
-          </div>
+          </main>
         </div>
-
-        {/* Productos relacionados */}
-        {product.categoria_nombre && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-display font-extrabold text-foreground">Productos relacionados</h2>
-              <Link
-                to={`/categoria/${product.categoria_nombre}`}
-                className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
-              >
-                Ver todos →
-              </Link>
-            </div>
-            <RelatedProducts category={product.categoria_nombre} />
-          </div>
-        )}
       </div>
     </div>
   );
 }
+
+export default ProductList;

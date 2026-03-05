@@ -31,10 +31,14 @@ function Header() {
       try {
         setLoading(true);
         setError(null);
-        const data = await api.get("/categorias").then(res => res.data);
+        const response = await api.get("/categorias");
+        // ✅ Validar que sea un array
+        const data = Array.isArray(response.data) ? response.data : [];
         setCategories(data);
       } catch (err) {
+        console.error("❌ Error cargando categorías:", err);
         setError("Error al cargar categorías");
+        // ✅ Fallback con categorías por defecto
         setCategories([
           { id: 1, nombre: "Vasos 3D", descripcion: "Vasos personalizados en 3D" },
           { id: 2, nombre: "Placas Navi", descripcion: "Placas decorativas Navi" },
@@ -70,6 +74,22 @@ function Header() {
       window.removeEventListener('cart-cleared', handleStorageChange);
     };
   }, []);
+
+  // ✅ Función para navegar a categoría
+  const handleCategoryClick = (categoryId, categoryName) => {
+    // ✅ OPCIÓN 1: Si tu backend soporta buscar por ID
+    // navigate(`/productos?categoria=${categoryId}`);
+
+    // ✅ OPCIÓN 2: Si necesita buscar por nombre (URL encoded)
+    navigate(`/productos?categoria=${encodeURIComponent(categoryName)}`);
+    setSidebarOpen(false);
+  };
+
+  // ✅ Función para ir a todos los productos
+  const handleAllProducts = () => {
+    navigate('/productos');
+    setSidebarOpen(false);
+  };
 
   return (
     <div className="sticky top-0 z-50 bg-background bg-grid shadow-lg border-b border-border w-full">
@@ -202,17 +222,28 @@ function Header() {
                         <X className="w-6 h-6 text-muted" />
                       </button>
                     </div>
+
                     <div className="flex-1 overflow-y-auto px-6 py-4">
                       <ul className="space-y-2">
+                        {/* ✅ NUEVO: Botón "Todos los Productos" */}
+                        <li>
+                          <button
+                            onClick={handleAllProducts}
+                            className="w-full text-left text-foreground hover:text-primary text-base font-bold py-3 px-2 rounded transition bg-primary/10 border-2 border-primary mb-4"
+                          >
+                            🛍️ Todos los Productos
+                          </button>
+                        </li>
+
+                        {/* ✅ Mapear categorías */}
                         {categories.map((cat) => (
                           <li key={cat.id}>
-                            <Link
-                              to={`/productos?categoria=${encodeURIComponent(cat.nombre)}`}
-                              className="text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition block capitalize"
-                              onClick={() => setSidebarOpen(false)}
+                            <button
+                              onClick={() => handleCategoryClick(cat.id, cat.nombre)}
+                              className="w-full text-left text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition capitalize"
                             >
                               {capitalize(cat.nombre)}
-                            </Link>
+                            </button>
                           </li>
                         ))}
                       </ul>
@@ -222,14 +253,14 @@ function Header() {
 
                 <div className="flex space-x-4 xl:space-x-6 overflow-x-auto scrollbar-hide">
                   {categories.map((category) => (
-                    <Link
+                    <button
                       key={category.id}
-                      to={`/productos?categoria=${encodeURIComponent(category.nombre)}`}
+                      onClick={() => handleCategoryClick(category.id, category.nombre)}
                       className="text-foreground transition-colors duration-200 whitespace-nowrap font-semibold relative capitalize group px-3 py-1.5 rounded-lg hover:text-primary active:outline-none focus:outline-none overflow-hidden"
                     >
                       <span className="relative z-10">{capitalize(category.nombre)}</span>
                       <span className="pointer-events-none absolute left-1/2 top-1/2 w-0 h-0 rounded-full bg-primary/30 opacity-0 group-active:opacity-100 group-active:w-[220%] group-active:h-[400%] group-active:transition-all group-active:duration-400 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"></span>
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </div>
