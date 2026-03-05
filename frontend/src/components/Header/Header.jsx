@@ -231,7 +231,7 @@ function Header() {
                             onClick={handleAllProducts}
                             className="w-full text-left text-foreground hover:text-primary text-base font-bold py-3 px-2 rounded transition bg-primary/10 border-2 border-primary mb-4"
                           >
-                            🛍️ Todos los Productos
+                            Todos los Productos
                           </button>
                         </li>
 
