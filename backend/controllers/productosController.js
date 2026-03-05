@@ -2,6 +2,36 @@
 const pool = require("../lib/db");
 const supabaseService = require("../services/supabaseService");
 
+// ✅ CACHÉ EN MEMORIA (5 minutos)
+const cache = {
+  allProducts: null,
+  allProductsByCategory: {},
+  timestamp: 0,
+  categoryTimestamp: {},
+  ttl: 5 * 60 * 1000
+};
+
+// ✅ Invalidar caché completo
+const invalidateAllCache = () => {
+  console.log('🧹 Invalidando caché completo');
+  cache.allProducts = null;
+  cache.allProductsByCategory = {};
+  cache.timestamp = 0;
+  cache.categoryTimestamp = {};
+};
+
+// ✅ Invalidar caché de una categoría
+const invalidateCategoryCache = (categoryId) => {
+  if (categoryId) {
+    const cacheKey = `cat_${categoryId}`;
+    if (cache.allProductsByCategory[cacheKey]) {
+      delete cache.allProductsByCategory[cacheKey];
+      delete cache.categoryTimestamp[cacheKey];
+      console.log(`🧹 Caché de categoría ${categoryId} invalidado`);
+    }
+  }
+};
+
 // =======================================================
 // 📌 CREAR PRODUCTO
 // =======================================================
@@ -83,6 +113,10 @@ exports.createProduct = async (req, res) => {
       ]
     );
 
+    // ✅ Invalidar caché
+    invalidateAllCache();
+    invalidateCategoryCache(categoriaId);
+
     res.json({ ok: true, message: "Producto creado correctamente" });
 
   } catch (error) {
@@ -104,9 +138,9 @@ exports.updateProduct = async (req, res) => {
       return res.status(400).json({ error: "El título es requerido" });
     }
 
-    // Obtener producto actual para saber si hay imágenes viejas
+    // Obtener producto actual
     const currentProduct = await pool.query(
-      `SELECT imagen_principal, imagenes_adicionales FROM productos WHERE id = $1`,
+      `SELECT imagen_principal, imagenes_adicionales, categoria_id FROM productos WHERE id = $1`,
       [id]
     );
 
@@ -116,6 +150,7 @@ exports.updateProduct = async (req, res) => {
 
     let imagenPrincipal = currentProduct.rows[0].imagen_principal;
     let imagenesAdicionales = currentProduct.rows[0].imagenes_adicionales || [];
+    const oldCategoryId = currentProduct.rows[0].categoria_id;
 
     // Procesar nuevas imágenes si se suben
     if (req.files && req.files.length > 0) {
@@ -227,6 +262,11 @@ exports.updateProduct = async (req, res) => {
       ]
     );
 
+    // ✅ Invalidar caché
+    invalidateAllCache();
+    invalidateCategoryCache(oldCategoryId);
+    invalidateCategoryCache(categoriaId);
+
     res.json({
       ok: true,
       message: "Producto actualizado correctamente",
@@ -274,6 +314,10 @@ exports.deleteProduct = async (req, res) => {
       );
 
       console.log(`📦 Producto ${id} desactivado (tiene pedidos asociados)`);
+
+      // ✅ Invalidar caché
+      invalidateAllCache();
+      invalidateCategoryCache(categoria_id);
 
       return res.json({
         ok: true,
@@ -329,6 +373,10 @@ exports.deleteProduct = async (req, res) => {
 
     console.log(`🗑️ Producto ${id} eliminado permanentemente`);
 
+    // ✅ Invalidar caché
+    invalidateAllCache();
+    invalidateCategoryCache(categoria_id);
+
     res.json({
       ok: true,
       message: "Producto eliminado completamente",
@@ -345,11 +393,22 @@ exports.deleteProduct = async (req, res) => {
 };
 
 // =======================================================
-// 📌 OBTENER TODOS LOS PRODUCTOS (SOLO ACTIVOS)
+// 📌 OBTENER TODOS LOS PRODUCTOS (SOLO ACTIVOS) - CON CACHÉ
 // =======================================================
 
 exports.getAllProducts = async (req, res) => {
   try {
+    const now = Date.now();
+
+    // ✅ Verificar si el caché es válido
+    if (cache.allProducts && (now - cache.timestamp) < cache.ttl) {
+      console.log('✅ Devolviendo productos desde CACHÉ');
+      return res.json(cache.allProducts);
+    }
+
+    // ✅ Caché inválido, obtener de la BD
+    console.log('🔄 Cargando productos de la BD...');
+
     const result = await pool.query(`
             SELECT p.*, c.nombre AS categoria_nombre
             FROM productos p
@@ -358,6 +417,11 @@ exports.getAllProducts = async (req, res) => {
             ORDER BY p.created_at DESC
         `);
 
+    // ✅ Guardar en caché
+    cache.allProducts = result.rows;
+    cache.timestamp = now;
+
+    console.log(`✅ ${result.rows.length} productos cargados en caché`);
     console.log('🔍 Productos devueltos:', result.rows.length);
     console.log('🔍 IDs:', result.rows.map(p => p.id));
 
@@ -397,12 +461,24 @@ exports.getProductById = async (req, res) => {
 };
 
 // =======================================================
-// 📌 OBTENER PRODUCTOS POR CATEGORÍA
+// 📌 OBTENER PRODUCTOS POR CATEGORÍA - CON CACHÉ
 // =======================================================
 
 exports.getProductsByCategory = async (req, res) => {
   try {
     const { categoria } = req.params;
+    const now = Date.now();
+    const cacheKey = `cat_${categoria}`;
+
+    // ✅ Verificar si el caché de esta categoría es válido
+    if (cache.allProductsByCategory[cacheKey] &&
+      (now - (cache.categoryTimestamp[cacheKey] || 0)) < cache.ttl) {
+      console.log(`✅ Devolviendo productos de categoría ${categoria} desde CACHÉ`);
+      return res.json(cache.allProductsByCategory[cacheKey]);
+    }
+
+    // ✅ Caché inválido, obtener de la BD
+    console.log(`🔄 Cargando productos de categoría ${categoria} de la BD...`);
 
     // Verificar si es un número (ID) o texto (nombre)
     const isNumeric = !isNaN(categoria);
@@ -420,6 +496,12 @@ exports.getProductsByCategory = async (req, res) => {
                ORDER BY p.created_at DESC`;
 
     const result = await pool.query(query, [categoria]);
+
+    // ✅ Guardar en caché
+    cache.allProductsByCategory[cacheKey] = result.rows;
+    cache.categoryTimestamp[cacheKey] = now;
+
+    console.log(`✅ ${result.rows.length} productos de categoría ${categoria} cargados en caché`);
 
     res.json(result.rows);
   } catch (error) {
