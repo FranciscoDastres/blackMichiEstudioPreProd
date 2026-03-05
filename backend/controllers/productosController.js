@@ -422,6 +422,10 @@ exports.getAllProducts = async (req, res) => {
     cache.timestamp = now;
 
     console.log(`✅ ${result.rows.length} productos cargados en caché`);
+    res.json(result.rows);
+
+  } catch (error) {
+    console.error("❌ Error obteniendo productos:", error);
     res.status(500).json({ error: "Error obteniendo productos" });
   }
 };
