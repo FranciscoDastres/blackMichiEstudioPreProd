@@ -5,7 +5,25 @@ const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
 
-const pool = require("./lib/db");
+// ✅ VERIFICAR VARIABLES DE ENTORNO CRÍTICAS
+console.log('\n🔍 Verificando configuración...');
+const requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+
+if (missingVars.length > 0) {
+  console.warn(`⚠️ Variables de entorno faltantes: ${missingVars.join(', ')}`);
+  console.warn('⚠️ Usando DATABASE_URL si está disponible...');
+}
+
+// ✅ CONEXIÓN A BD CON MEJOR MANEJO
+let pool;
+try {
+  pool = require("./lib/db");
+  console.log('✅ Pool de conexión a BD inicializado');
+} catch (error) {
+  console.error('❌ Error al cargar la BD:', error.message);
+  console.error('La aplicación intentará continuar sin BD inicial...');
+}
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
@@ -21,6 +39,8 @@ const reviewsRoutes = require('./routes/reviews');
 const { requireAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
+// 🔥 IMPORTANTE: Render asigna el puerto dinámicamente via PORT env var
+// NO USAR PUERTO FIJO EN RENDER
 const PORT = process.env.PORT || 3000;
 
 // 🔥🔥🔥 VERIFICACIÓN DE VERSIÓN - SOLO PARA DEBUG 🔥🔥🔥
@@ -78,7 +98,13 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // --------------------
 // SERVIR ARCHIVOS ESTÁTICOS
 // --------------------
-app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
+const uploadsPath = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsPath)) {
+  console.warn(`⚠️ Carpeta uploads no existe, creando: ${uploadsPath}`);
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
+
+app.use("/uploads", express.static(uploadsPath, {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith(".webp")) res.setHeader("Content-Type", "image/webp");
     else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg")) res.setHeader("Content-Type", "image/jpeg");
@@ -90,7 +116,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
 }));
 
 const publicPath = path.join(__dirname, 'public');
-app.use(express.static(publicPath));
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+} else {
+  console.warn(`⚠️ Carpeta public no existe en: ${publicPath}`);
+}
 
 // --------------------
 // ENDPOINTS DE PRUEBA
@@ -100,7 +130,8 @@ app.get("/", (req, res) => {
     message: "Backend funcionando correctamente",
     timestamp: new Date().toISOString(),
     status: "online",
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT
   });
 });
 
@@ -108,7 +139,8 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     status: "healthy",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
   });
 });
 
@@ -124,24 +156,50 @@ app.get("/api/test", (req, res) => {
 });
 
 app.get("/test-db", async (req, res) => {
+  if (!pool) {
+    return res.status(503).json({
+      error: "Pool de BD no inicializado",
+      message: "Verifica las variables de entorno",
+      vars_configured: {
+        has_DATABASE_URL: !!process.env.DATABASE_URL,
+        has_DB_HOST: !!process.env.DB_HOST,
+        has_SUPABASE_URL: !!process.env.SUPABASE_URL
+      }
+    });
+  }
+
   try {
     const result = await pool.query('SELECT NOW()');
     res.json({
-      message: "Conexión a la base de datos exitosa",
+      message: "✅ Conexión a la base de datos exitosa",
       timestamp: result.rows[0].now,
+      connection_type: process.env.SUPABASE_URL ? "Supabase PostgreSQL" : "PostgreSQL Standard",
       dbConfig: {
-        host: process.env.DB_HOST,
-        database: process.env.DB_NAME,
-        user: process.env.DB_USER,
+        host: process.env.DB_HOST || process.env.SUPABASE_URL || 'no configurado',
+        database: process.env.DB_NAME || 'no configurado',
+        user: process.env.DB_USER || 'no configurado',
         hasPassword: !!process.env.DB_PASSWORD,
-        hasDatabaseUrl: !!process.env.DATABASE_URL
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        supabase_configured: {
+          url: !!process.env.SUPABASE_URL,
+          anon_key: !!process.env.SUPABASE_ANON_KEY,
+          service_key: !!process.env.SUPABASE_SERVICE_KEY
+        }
       }
     });
   } catch (error) {
     console.error('❌ Error de base de datos:', error);
     res.status(500).json({
-      error: "Error de conexión a la base de datos",
-      details: error.message
+      error: "❌ Error de conexión a la base de datos",
+      details: error.message,
+      hint: "Verifica DATABASE_URL o las variables DB_HOST, DB_NAME, DB_USER, DB_PASSWORD en Render Environment",
+      configured_vars: {
+        DATABASE_URL: process.env.DATABASE_URL ? "✓ Configurado" : "✗ Falta",
+        DB_HOST: process.env.DB_HOST ? "✓ Configurado" : "✗ Falta",
+        DB_NAME: process.env.DB_NAME ? "✓ Configurado" : "✗ Falta",
+        DB_USER: process.env.DB_USER ? "✓ Configurado" : "✗ Falta",
+        SUPABASE_URL: process.env.SUPABASE_URL ? "✓ Configurado" : "✗ Falta"
+      }
     });
   }
 });
@@ -151,37 +209,42 @@ app.get("/test-db", async (req, res) => {
 // --------------------
 console.log('✅ Endpoints de prueba configurados. Montando rutas API...');
 
-console.log('⏳ Montando /api/auth...');
-app.use('/api/auth', authRoutes);
+try {
+  console.log('⏳ Montando /api/auth...');
+  app.use('/api/auth', authRoutes);
 
-console.log('⏳ Montando /api/productos...');
-app.use('/api/productos', productosRoutes);
+  console.log('⏳ Montando /api/productos...');
+  app.use('/api/productos', productosRoutes);
 
-console.log('⏳ Montando /api/categorias...');
-app.use('/api/categorias', categoriasRoutes);
+  console.log('⏳ Montando /api/categorias...');
+  app.use('/api/categorias', categoriasRoutes);
 
-console.log('⏳ Montando /api/hero-images...');
-app.use('/api/hero-images', heroImagesRoutes);
+  console.log('⏳ Montando /api/hero-images...');
+  app.use('/api/hero-images', heroImagesRoutes);
 
-console.log('⏳ Montando /api/featured...');
-app.use('/api/featured', featuredRoutes);
+  console.log('⏳ Montando /api/featured...');
+  app.use('/api/featured', featuredRoutes);
 
-console.log('⏳ Montando /reviews...');
-app.use('/reviews', reviewsRoutes);
+  console.log('⏳ Montando /reviews...');
+  app.use('/reviews', reviewsRoutes);
 
-console.log('⏳ Montando /api/client...');
-app.use('/api/client', requireAuth, clientRoutes);
+  console.log('⏳ Montando /api/client...');
+  app.use('/api/client', requireAuth, clientRoutes);
 
-console.log('⏳ Montando /api/admin...');
-app.use('/api/admin', requireAuth, requireAdmin, adminRoutes);
+  console.log('⏳ Montando /api/admin...');
+  app.use('/api/admin', requireAuth, requireAdmin, adminRoutes);
 
-console.log('⏳ Montando /api/admin/hero-images...');
-app.use('/api/admin/hero-images', requireAuth, requireAdmin, heroImagesRoutes);
+  console.log('⏳ Montando /api/admin/hero-images...');
+  app.use('/api/admin/hero-images', requireAuth, requireAdmin, heroImagesRoutes);
 
-console.log('⏳ Montando /api/payments...');
-app.use('/api/payments', paymentRoutes);
+  console.log('⏳ Montando /api/payments...');
+  app.use('/api/payments', paymentRoutes);
 
-console.log('✅ TODAS LAS RUTAS MONTADAS CORRECTAMENTE');
+  console.log('✅ TODAS LAS RUTAS MONTADAS CORRECTAMENTE');
+} catch (error) {
+  console.error('❌ Error al montar rutas:', error);
+  console.error('El servidor continuará pero algunas rutas pueden no estar disponibles');
+}
 
 // --------------------
 // MIDDLEWARE PARA RUTAS NO ENCONTRADAS
@@ -213,10 +276,17 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`=================================`);
   console.log(`🚀 Servidor corriendo en puerto: ${PORT}`);
   console.log(`📁 Sirviendo archivos estáticos desde: ${publicPath}`);
-  console.log(`📁 Uploads: ${path.join(__dirname, "uploads")}`);
+  console.log(`📁 Uploads: ${uploadsPath}`);
   console.log(`📁 ¿Existe uploads/hero/? ${fs.existsSync(path.join(__dirname, 'uploads/hero')) ? '✅ SÍ' : '❌ NO'}`);
   console.log(`🔒 CORS: MODO ABIERTO - Todas las solicitudes permitidas`);
+  console.log(`📊 Node.js: ${process.version}`);
   console.log(`=================================`);
+}).on('error', (err) => {
+  console.error('❌ Error al iniciar el servidor:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`⚠️ Puerto ${PORT} ya está en uso`);
+  }
+  process.exit(1);
 });
 
 // Manejo de cierre graceful
@@ -226,6 +296,17 @@ process.on('SIGTERM', () => {
     console.log('✅ Servidor cerrado');
     process.exit(0);
   });
+});
+
+// Manejo de excepciones no capturadas
+process.on('uncaughtException', (err) => {
+  console.error('❌ Excepción no capturada:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promesa rechazada no manejada:', reason);
+  console.error('Promise:', promise);
 });
 
 module.exports = app;
