@@ -146,28 +146,40 @@ function PopularProducts() {
             const primaryImage = product.imagen_principal;
             const additionalImages = product.imagenes_adicionales || [];
 
-            // 👇 Calificación promedio desde la base de datos
             const avgRating = product.promedio_calificacion
               ? Math.round(parseFloat(product.promedio_calificacion))
               : 0;
+
+            // ✅ Función para obtener URL de imagen
+            const getImageUrl = (imagePath) => {
+              if (!imagePath) return "/placeholder.svg";
+              if (imagePath.startsWith('http')) return imagePath;
+
+              const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
+              const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+              const webpPath = cleanPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+
+              return `${baseURL}${webpPath}`;
+            };
 
             return (
               <article
                 key={product.id}
                 className="group relative min-w-[300px] max-w-[300px] h-[550px] bg-card rounded-2xl border border-border/50 overflow-hidden cursor-pointer hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 flex flex-col"
+                // ✅ ARREGLADO: Click en el card navega a ProductDetail
                 onClick={() => navigate(`/producto/${product.id}`)}
               >
                 {/* Imagen */}
                 <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
                   <img
-                    src={primaryImage || "/placeholder.svg"}
+                    src={getImageUrl(primaryImage)}
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />
                   {additionalImages.length > 0 && (
                     <img
-                      src={additionalImages[0] || "/placeholder.svg"}
+                      src={getImageUrl(additionalImages[0])}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Hover view"
                     />
