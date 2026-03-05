@@ -409,7 +409,7 @@ exports.getAllProducts = async (req, res) => {
     // ✅ Verificar si el caché es válido
     if (cache.allProducts && (now - cache.timestamp) < cache.ttl) {
       console.log('✅ Devolviendo productos desde CACHÉ');
-      
+
       // Si pide paginado, devolver estructura paginada
       if (isPaginated) {
         const paginatedResults = cache.allProducts.slice(offset, offset + limit);
@@ -422,7 +422,7 @@ exports.getAllProducts = async (req, res) => {
           pages: Math.ceil(cache.allProducts.length / limit)
         });
       }
-      
+
       // Si NO pide paginado, devolver array directo (compatible hacia atrás)
       return res.json(cache.allProducts);
     }
