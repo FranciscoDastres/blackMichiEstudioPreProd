@@ -5,6 +5,19 @@ import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+// ✅ Función segura para obtener URL de imágenes
+function getImageUrl(imagePath) {
+  if (!imagePath) return "/placeholder.svg";
+
+  // Si es URL completa, devolverla
+  if (imagePath.startsWith('http')) return imagePath;
+
+  const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
+  const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  const webpPath = cleanPath.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+
+  return `${baseURL}${webpPath}`;
+}
 
 function ProductList() {
   const [searchParams] = useSearchParams();
@@ -19,8 +32,10 @@ function ProductList() {
   const [sortBy, setSortBy] = useState("newest");
   const { addToCart, isStockExceeded } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
+
   const categoriaParam = searchParams.get("categoria");
   const busquedaParam = searchParams.get("busqueda");
+
   const CLP = new Intl.NumberFormat("es-CL", {
     style: "currency",
     currency: "CLP",
@@ -41,36 +56,56 @@ function ProductList() {
         setLoading(true);
         setError(null);
 
-        const categoriesData = await api.get("/categorias").then(res => res.data);
-        setCategories(categoriesData);
-
-        let productsData;
-
-        if (busquedaParam) {
-          productsData = await api.get(`/productos/buscar?q=${busquedaParam}`).then(res => res.data);
-          setSearchQuery(busquedaParam);
-          setSelectedCategory("");
-        } else if (categoriaParam) {
-          productsData = await api.get(`/categorias/${categoriaParam}`).then(res => res.data);
-          setSelectedCategory(categoriaParam);
-          setSearchQuery("");
-        } else {
-          productsData = await api.get("/productos").then(res => res.data);
-          setSelectedCategory("");
-          setSearchQuery("");
+        // ✅ Cargar categorías de forma segura
+        try {
+          const categoriesResponse = await api.get("/categorias");
+          const categoriesData = Array.isArray(categoriesResponse.data)
+            ? categoriesResponse.data
+            : [];
+          setCategories(categoriesData);
+        } catch (err) {
+          console.error("❌ Error cargando categorías:", err);
+          setCategories([]);
         }
 
-        setProducts(productsData);
+        // ✅ Cargar productos de forma segura
+        let productsData = [];
+
+        try {
+          if (busquedaParam) {
+            const searchResponse = await api.get(`/productos/buscar?q=${busquedaParam}`);
+            productsData = Array.isArray(searchResponse.data) ? searchResponse.data : [];
+            setSearchQuery(busquedaParam);
+            setSelectedCategory("");
+          } else if (categoriaParam) {
+            const categoryResponse = await api.get(`/categorias/${categoriaParam}`);
+            productsData = Array.isArray(categoryResponse.data) ? categoryResponse.data : [];
+            setSelectedCategory(categoriaParam);
+            setSearchQuery("");
+          } else {
+            const allResponse = await api.get("/productos");
+            productsData = Array.isArray(allResponse.data) ? allResponse.data : [];
+            setSelectedCategory("");
+            setSearchQuery("");
+          }
+
+          setProducts(productsData);
+        } catch (err) {
+          console.error("❌ Error cargando productos:", err);
+          setProducts([]);
+        }
       } catch (err) {
+        console.error("❌ Error general:", err);
         setError("Error al cargar productos");
-        console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [categoriaParam, busquedaParam]);
 
+  // ✅ Filtrado seguro de productos
   const filteredProducts = products
     .filter((product) => {
       if (busquedaParam) return true;
@@ -88,17 +123,19 @@ function ProductList() {
     .filter((product) => {
       if (busquedaParam) return true;
       if (selectedRating === 0) return true;
-      const rating = product.rating || 0;
+      const rating = product.promedio_calificacion
+        ? Math.round(parseFloat(product.promedio_calificacion))
+        : 0;
       return rating >= selectedRating;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case "price-low":
-          return a.precio - b.precio;
+          return (a.precio || 0) - (b.precio || 0);
         case "price-high":
-          return b.precio - a.precio;
+          return (b.precio || 0) - (a.precio || 0);
         case "name":
-          return a.titulo.localeCompare(b.titulo);
+          return (a.titulo || "").localeCompare(b.titulo || "");
         case "newest":
         default:
           return new Date(b.created_at) - new Date(a.created_at);
@@ -117,15 +154,22 @@ function ProductList() {
     setCurrentPage(1);
     setSelectedCategory(category);
     setLoading(true);
+
     try {
-      let productsData;
+      let productsData = [];
+
       if (!category || category === "") {
-        productsData = await api.get("/productos").then(res => res.data);
+        const response = await api.get("/productos");
+        productsData = Array.isArray(response.data) ? response.data : [];
       } else {
-        productsData = await api.get(`/categorias/${category}`).then(res => res.data);
+        const response = await api.get(`/categorias/${category}`);
+        productsData = Array.isArray(response.data) ? response.data : [];
       }
+
       setProducts(productsData);
     } catch (err) {
+      console.error("❌ Error al cargar productos de categoría:", err);
+      setProducts([]);
       setError("Error al cargar productos");
     } finally {
       setLoading(false);
@@ -169,7 +213,7 @@ function ProductList() {
   return (
     <div className="min-h-screen w-full bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Encabezado superior */}
+        {/* Encabezado */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">
@@ -186,7 +230,7 @@ function ProductList() {
             </p>
           </div>
 
-          {/* Ordenar por */}
+          {/* Ordenar */}
           <div className="mt-4 md:mt-0">
             <label className="mr-2 text-sm text-muted">Ordenar por:</label>
             <select
@@ -204,7 +248,7 @@ function ProductList() {
 
         {/* Layout principal */}
         <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-6">
-          {/* Sidebar filtros */}
+          {/* Sidebar */}
           <aside className="bg-background rounded-2xl shadow-sm border border-border p-5 h-fit">
             <h2 className="text-sm font-semibold text-foreground mb-4">
               Filtrar por categoría
@@ -222,19 +266,19 @@ function ProductList() {
               </button>
               {categories.map((category) => (
                 <button
-                  key={category.id}
+                  key={category.id || category.nombre}
                   onClick={() => handleCategoryChange(category.nombre)}
                   className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${selectedCategory === category.nombre
                     ? "bg-primary/10 text-primary font-semibold"
                     : "text-foreground hover:bg-muted/20"
                     }`}
                 >
-                  {category.nombre}
+                  {category.nombre || "Sin categoría"}
                 </button>
               ))}
             </div>
 
-            {/* Slider de precio */}
+            {/* Precio */}
             <div className="border-t border-border pt-4">
               <p className="text-xs font-semibold text-foreground mb-3">
                 Filtrar por precio
@@ -271,7 +315,7 @@ function ProductList() {
               </div>
             </div>
 
-            {/* Filtro por rating */}
+            {/* Rating */}
             <div className="border-t border-border pt-4">
               <p className="text-xs font-semibold text-foreground mb-3">
                 Filtrar por calificación
@@ -347,40 +391,37 @@ function ProductList() {
                     const outOfStock = isStockExceeded(product);
                     const primaryImage = product.imagen_principal;
                     const additionalImages = product.imagenes_adicionales || [];
-                    const baseURL = api.defaults.baseURL.replace('/api', '');
+
+                    // ✅ Calificación segura desde BD
+                    const avgRating = product.promedio_calificacion
+                      ? Math.round(parseFloat(product.promedio_calificacion))
+                      : 0;
+
                     return (
                       <div
                         key={product.id}
                         className="group bg-background rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-300 flex flex-col"
                         onClick={() => navigate(`/producto/${product.id}`)}
                       >
-                        {/* Imagen con hover */}
+                        {/* Imagen */}
                         <div className="relative w-full h-56 bg-muted/20 overflow-hidden group">
                           <div className="w-full h-full relative">
                             <img
-                              src={
-                                primaryImage
-                                  ? `${baseURL}${primaryImage.startsWith("/") ? "" : "/"}${primaryImage.replace(/\.(jpg|jpeg|png)$/i, '.webp')}`
-                                  : `${baseURL}/images/placeholder.svg`
-                              }
-                              alt={product.titulo || product.nombre}
+                              src={getImageUrl(primaryImage)}
+                              alt={product.titulo || "Producto"}
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                               onError={(e) => {
-                                e.target.src = `${baseURL}/images/placeholder.svg`;
+                                e.target.src = "/placeholder.svg";
                               }}
                             />
 
                             {additionalImages.length > 0 && (
                               <img
-                                src={
-                                  additionalImages[0]
-                                    ? `${baseURL}${additionalImages[0].startsWith("/") ? "" : "/"}${additionalImages[0]}`.replace(/\.(jpg|jpeg|png)$/i, '.webp')
-                                    : `${baseURL}/images/placeholder.svg`
-                                }
-                                alt={`${product.titulo || product.nombre} (vista alternativa)`}
+                                src={getImageUrl(additionalImages[0])}
+                                alt={`${product.titulo} (vista alternativa)`}
                                 className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                 onError={(e) => {
-                                  e.target.src = `${baseURL}/images/placeholder.svg`;
+                                  e.target.src = "/placeholder.svg";
                                 }}
                               />
                             )}
@@ -392,18 +433,20 @@ function ProductList() {
                             </span>
                           )}
                         </div>
+
                         {/* Contenido */}
                         <div className="p-4 flex flex-col flex-grow">
                           <h3 className="font-semibold text-sm text-foreground line-clamp-2 mb-2">
-                            {product.titulo}
+                            {product.titulo || "Producto"}
                           </h3>
 
+                          {/* Rating */}
                           <div className="flex items-center mb-2">
                             {[...Array(5)].map((_, i) => (
                               <svg
                                 key={i}
                                 xmlns="http://www.w3.org/2000/svg"
-                                className={`w-4 h-4 ${i < 4 ? "text-yellow-500 fill-yellow-500" : "text-muted fill-muted"
+                                className={`w-4 h-4 ${i < avgRating ? "text-yellow-500 fill-yellow-500" : "text-muted fill-muted"
                                   }`}
                                 viewBox="0 0 24 24"
                               >
@@ -411,12 +454,17 @@ function ProductList() {
                               </svg>
                             ))}
                             <span className="text-[11px] text-muted ml-1">
-                              {product.rating ? `(${product.rating} calif.)` : "(Sin calificación)"}
+                              {product.total_valoraciones
+                                ? `(${product.total_valoraciones} calif.)`
+                                : "(Sin calificación)"}
                             </span>
                           </div>
 
+                          {/* Precios */}
                           <div className="flex items-end gap-2 mb-3">
-                            <span className="text-lg font-bold text-primary">{CLP.format(product.precio)}</span>
+                            <span className="text-lg font-bold text-primary">
+                              {CLP.format(product.precio || 0)}
+                            </span>
                             {product.precio_anterior && (
                               <span className="line-through text-muted text-xs">
                                 {CLP.format(product.precio_anterior)}
@@ -424,6 +472,7 @@ function ProductList() {
                             )}
                           </div>
 
+                          {/* Botón */}
                           <button
                             className={`w-full py-2 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-1.5 mt-auto ${outOfStock
                               ? "bg-muted text-muted cursor-not-allowed"
@@ -431,7 +480,7 @@ function ProductList() {
                               }`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              !outOfStock && addToCart(product);
+                              if (!outOfStock) addToCart(product);
                             }}
                             disabled={outOfStock}
                           >
@@ -464,6 +513,7 @@ function ProductList() {
                       onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
                       className="p-2 rounded-full border border-border bg-background hover:bg-muted/20 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm"
+                      aria-label="Página anterior"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -483,6 +533,7 @@ function ProductList() {
                       onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
                       className="p-2 rounded-full border border-border bg-background hover:bg-muted/20 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm"
+                      aria-label="Siguiente página"
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>

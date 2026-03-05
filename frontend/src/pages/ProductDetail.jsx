@@ -19,7 +19,6 @@ import {
   Package,
   User,
   MessageSquare,
-  Clock
 } from "lucide-react";
 
 function useAuth() {
@@ -38,9 +37,18 @@ function useAuth() {
   return { user, loading, isLoggedIn: !!localStorage.getItem("token") };
 }
 
-function toWebpPath(path) {
-  if (!path) return null;
-  return path.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+// ✅ Función segura para convertir imágenes a webp
+function getImageUrl(imagePath) {
+  if (!imagePath) return "/placeholder.svg";
+
+  // Si es URL completa, devolverla
+  if (imagePath.startsWith('http')) return imagePath;
+
+  const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
+  const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  const webpPath = cleanPath.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
+
+  return `${baseURL}${webpPath}`;
 }
 
 export default function ProductDetail() {
@@ -60,7 +68,7 @@ export default function ProductDetail() {
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [isZoomed, setIsZoomed] = useState(false);
 
-  // 👇 NUEVO: estado para reseñas
+  // ✅ Estado para reseñas
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
@@ -76,22 +84,36 @@ export default function ProductDetail() {
       try {
         setLoading(true);
         setError(null);
-        const data = await api.get(`/productos/${productId}`).then(res => res.data);
-        setProduct(data);
+
+        // ✅ Fetch producto
+        const productResponse = await api.get(`/productos/${productId}`);
+        const productData = productResponse.data;
+        setProduct(productData);
         setSelectedImgIndex(0);
         setQuantity(1);
 
-        // 👇 CARGAR RESEÑAS
-        setLoadingReviews(true);
-        const reviewsData = await api.get(`/reviews?producto_id=${productId}`).then(res => res.data);
-        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        // ✅ Fetch reseñas de forma segura
+        try {
+          setLoadingReviews(true);
+          const reviewsResponse = await api.get(`/reviews?producto_id=${productId}`);
+          const reviewsData = Array.isArray(reviewsResponse.data)
+            ? reviewsResponse.data
+            : [];
+          setReviews(reviewsData);
+        } catch (reviewError) {
+          console.error("❌ Error cargando reseñas:", reviewError);
+          setReviews([]);
+        } finally {
+          setLoadingReviews(false);
+        }
       } catch (err) {
+        console.error("❌ Error cargando producto:", err);
         setError(err.message || "Error al cargar producto");
       } finally {
         setLoading(false);
-        setLoadingReviews(false);
       }
     };
+
     fetchProductAndReviews();
   }, [productId]);
 
@@ -105,23 +127,27 @@ export default function ProductDetail() {
     setSubmitError(null);
 
     try {
-      // 👇 Ajustado para tu ApiService con axios
+      // ✅ Enviar reseña
       await api.post("/reviews", {
         producto_id: productId,
-        usuario_id: user?.id,
+        usuario_id: user?.id || "unknown",
         calificacion: rating,
         comentario: reviewText.trim(),
       });
 
-      // Recargar reseñas
-      const updatedReviews = await api.get(`/reviews?producto_id=${productId}`).then(res => res.data);
-      setReviews(Array.isArray(updatedReviews) ? updatedReviews : []);
+      // ✅ Recargar reseñas
+      try {
+        const updatedReviews = await api.get(`/reviews?producto_id=${productId}`);
+        setReviews(Array.isArray(updatedReviews.data) ? updatedReviews.data : []);
+      } catch (err) {
+        console.error("Error recargando reseñas:", err);
+      }
 
       setReviewText("");
       setRating(0);
       alert("¡Gracias por tu reseña!");
     } catch (error) {
-      console.error("Error al enviar la reseña:", error);
+      console.error("❌ Error al enviar reseña:", error);
       setSubmitError(
         error.message || "Hubo un problema al enviar tu reseña. Por favor, inténtalo de nuevo."
       );
@@ -178,18 +204,17 @@ export default function ProductDetail() {
     );
   }
 
-  const rawImages = [toWebpPath(product.imagen_principal)].filter(Boolean);
-  if (product.imagenes_adicionales && product.imagenes_adicionales.length > 0) {
-    rawImages.push(...product.imagenes_adicionales.map(toWebpPath).filter(Boolean));
+  // ✅ Construir array de imágenes de forma segura
+  const rawImages = [];
+  if (product.imagen_principal) {
+    rawImages.push(product.imagen_principal);
   }
-  const baseURL = api.defaults.baseURL.replace('/api', '');
-  const images = rawImages.map((img) =>
-    img
-      ? `${baseURL}${img.startsWith("/") ? "" : "/"}${img}`
-      : `${baseURL}/images/placeholder.svg`
-  );
+  if (product.imagenes_adicionales && Array.isArray(product.imagenes_adicionales)) {
+    rawImages.push(...product.imagenes_adicionales);
+  }
 
-  const mainImage = images[selectedImgIndex] || `${baseURL}/images/placeholder.svg`;
+  const images = rawImages.map(img => getImageUrl(img)).filter(Boolean);
+  const mainImage = images[selectedImgIndex] || "/placeholder.svg";
 
   const CLP = new Intl.NumberFormat("es-CL", {
     style: "currency",
@@ -207,14 +232,14 @@ export default function ProductDetail() {
     setZoomPosition({ x, y });
   };
 
-  // Calcular promedio de reseñas
+  // ✅ Calcular promedio de reseñas de forma segura
   const avgRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + r.calificacion, 0) / reviews.length
+    ? reviews.reduce((sum, r) => sum + (r.calificacion || 0), 0) / reviews.length
     : 0;
 
   return (
     <div className="min-h-screen py-12 px-4">
-      {/* Elementos decorativos de fondo */}
+      {/* Elementos decorativos */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
@@ -235,11 +260,11 @@ export default function ProductDetail() {
         {/* Contenedor principal */}
         <div className="glass-panel rounded-2xl overflow-hidden border border-border shadow-2xl mb-8">
           <div className="p-6 md:p-8">
-            {/* Contenido principal: Imagen + Detalles */}
+            {/* Contenido: Imagen + Detalles */}
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
               {/* Galería de imágenes */}
               <div className="space-y-4">
-                {/* Imagen principal con zoom */}
+                {/* Imagen principal */}
                 <div
                   className="relative overflow-hidden rounded-xl bg-secondary/30 aspect-square group"
                   onMouseMove={handleImageZoom}
@@ -248,7 +273,7 @@ export default function ProductDetail() {
                 >
                   <img
                     src={mainImage}
-                    alt={product.titulo}
+                    alt={product.titulo || "Producto"}
                     className={`w-full h-full object-contain transition-transform duration-300 ${isZoomed ? 'scale-150' : ''}`}
                     style={{
                       transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
@@ -294,6 +319,7 @@ export default function ProductDetail() {
                     <button
                       onClick={() => setSelectedImgIndex(prev => prev > 0 ? prev - 1 : images.length - 1)}
                       className="p-2 rounded-full bg-secondary/50 border border-border hover:bg-secondary transition-colors"
+                      aria-label="Imagen anterior"
                     >
                       <ChevronLeft className="w-5 h-5 text-foreground" />
                     </button>
@@ -303,6 +329,7 @@ export default function ProductDetail() {
                     <button
                       onClick={() => setSelectedImgIndex(prev => prev < images.length - 1 ? prev + 1 : 0)}
                       className="p-2 rounded-full bg-secondary/50 border border-border hover:bg-secondary transition-colors"
+                      aria-label="Siguiente imagen"
                     >
                       <ChevronRight className="w-5 h-5 text-foreground" />
                     </button>
@@ -322,7 +349,7 @@ export default function ProductDetail() {
 
                 {/* Título */}
                 <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground leading-tight">
-                  {product.titulo}
+                  {product.titulo || "Producto"}
                 </h1>
 
                 {/* Calificación */}
@@ -350,7 +377,7 @@ export default function ProductDetail() {
                   </span>
                 </div>
 
-                {/* Descripción corta */}
+                {/* Descripción */}
                 {product.descripcion && (
                   <p className="text-muted leading-relaxed">
                     {product.descripcion}
@@ -360,7 +387,7 @@ export default function ProductDetail() {
                 {/* Precios */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
-                    <span className="price-text text-4xl">{CLP.format(product.precio)}</span>
+                    <span className="price-text text-4xl">{CLP.format(product.precio || 0)}</span>
                     {product.precio_anterior && (
                       <span className="line-through text-muted">{CLP.format(product.precio_anterior)}</span>
                     )}
@@ -368,7 +395,7 @@ export default function ProductDetail() {
                   {product.descuento && (
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
                       <span className="text-sm font-bold text-emerald-400">
-                        {product.descuento} OFF
+                        {product.descuento}% OFF
                       </span>
                     </div>
                   )}
@@ -426,14 +453,14 @@ export default function ProductDetail() {
                             id: product.id,
                             titulo: product.titulo,
                             precio: product.precio,
-                            imagen: toWebpPath(product.imagen_principal),
+                            imagen: getImageUrl(product.imagen_principal),
                             stock: product.stock,
                           });
                         }
                         const btn = document.activeElement;
-                        btn.classList.add('bg-emerald-500');
+                        btn?.classList.add('bg-emerald-500');
                         setTimeout(() => {
-                          btn.classList.remove('bg-emerald-500');
+                          btn?.classList.remove('bg-emerald-500');
                         }, 300);
                       }
                     }}
@@ -450,7 +477,7 @@ export default function ProductDetail() {
                   </button>
                 </div>
 
-                {/* Info adicional */}
+                {/* Info */}
                 <div className="pt-4 border-t border-border">
                   <div className="flex items-center gap-2 text-sm text-muted mb-2">
                     <Check className="w-4 h-4" />
@@ -462,9 +489,9 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Pestañas de Descripción y Reseñas */}
+        {/* Pestañas */}
         <div className="glass-panel rounded-2xl overflow-hidden border border-border mb-8">
-          {/* Navegación de pestañas */}
+          {/* Navegación */}
           <div className="border-b border-border">
             <nav className="flex space-x-1 px-6" role="tablist">
               <button
@@ -500,14 +527,14 @@ export default function ProductDetail() {
             </nav>
           </div>
 
-          {/* Contenido de pestañas */}
+          {/* Contenido */}
           <div className="p-6 md:p-8">
             {activeTab === "description" && (
               <div className="space-y-6">
                 <h3 className="text-xl font-display font-extrabold text-foreground">Descripción del Producto</h3>
                 <div className="prose prose-invert max-w-none text-muted leading-relaxed">
                   {product.descripcion_larga || product.descripcion ||
-                    "Producto personalizado impreso en 3D, ideal para regalos únicos y decoraciones especiales. Fabricado con materiales de alta calidad y atención al detalle."}
+                    "Producto personalizado impreso en 3D, ideal para regalos únicos y decoraciones especiales."}
                 </div>
 
                 {/* Características */}
@@ -554,7 +581,7 @@ export default function ProductDetail() {
 
             {activeTab === "reviews" && (
               <div className="space-y-8">
-                {/* Encabezado reseñas */}
+                {/* Encabezado */}
                 <div>
                   <h3 className="text-xl font-display font-extrabold text-foreground mb-4">Reseñas de clientes</h3>
 
@@ -577,17 +604,20 @@ export default function ProductDetail() {
                                   {[...Array(5)].map((_, i) => (
                                     <Star
                                       key={i}
-                                      className={`w-4 h-4 ${i < review.calificacion ? 'text-yellow-400 fill-current' : 'text-muted'}`}
+                                      className={`w-4 h-4 ${i < (review.calificacion || 0) ? 'text-yellow-400 fill-current' : 'text-muted'}`}
                                     />
                                   ))}
                                 </div>
                               </div>
                             </div>
                             <span className="text-xs text-muted">
-                              {new Date(review.created_at).toLocaleDateString("es-CL")}
+                              {review.created_at
+                                ? new Date(review.created_at).toLocaleDateString("es-CL")
+                                : "Fecha desconocida"
+                              }
                             </span>
                           </div>
-                          <p className="text-muted">{review.comentario}</p>
+                          <p className="text-muted">{review.comentario || ""}</p>
                         </div>
                       ))}
                     </div>
@@ -604,7 +634,7 @@ export default function ProductDetail() {
                   )}
                 </div>
 
-                {/* Formulario para dejar reseña */}
+                {/* Formulario */}
                 {isLoggedIn && (
                   <div className="glass-panel p-6 rounded-xl border border-border">
                     <h4 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
@@ -635,7 +665,7 @@ export default function ProductDetail() {
                         )}
                       </div>
 
-                      {/* Texto de la reseña */}
+                      {/* Texto */}
                       <div className="space-y-3">
                         <label htmlFor="review-text" className="block text-sm font-medium text-foreground">
                           Tu opinión
@@ -653,7 +683,7 @@ export default function ProductDetail() {
                         )}
                       </div>
 
-                      {/* Error de envío */}
+                      {/* Error */}
                       {submitError && (
                         <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-sm">
                           {submitError}

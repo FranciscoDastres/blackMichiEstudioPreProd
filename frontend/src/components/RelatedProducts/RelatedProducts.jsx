@@ -17,7 +17,6 @@ function RelatedProducts({ category = "vasos3d" }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [hoveredProduct, setHoveredProduct] = useState(null);
   const navigate = useNavigate();
   const { addToCart, isStockExceeded } = useCart();
 
@@ -29,46 +28,48 @@ function RelatedProducts({ category = "vasos3d" }) {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!category) return;
+      if (!category) {
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
         const response = await api.get(`/productos/categoria/${category}`);
-        // ✅ Asegurarnos de que response.data existe
-        const data = response.data || response || [];
+
+        // ✅ Manejo seguro de respuesta
+        const data = Array.isArray(response.data) ? response.data : [];
         setProducts(data.slice(0, 20));
       } catch (err) {
-        setError("No hay productos relacionados disponibles.");
-        console.error("Error al cargar productos relacionados:", err);
+        console.error("❌ Error al cargar productos relacionados:", err);
+        setError(null); // No mostrar error, solo no mostrar productos
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProducts();
   }, [category]);
 
-  if (error || !products.length) return null;
+  // ✅ Si no hay productos, no renderizar nada
+  if (loading || !products.length) return null;
 
-  if (loading) {
-    return (
-      <section className="w-full max-w-6xl mx-auto mt-16 mb-20 px-4 sm:px-6">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-2">
-            <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
-              Productos Relacionados
-            </span>
-          </h2>
-          <p className="text-lg text-muted-foreground">Descubre más productos que podrían interesarte</p>
-        </div>
-        <div className="flex justify-center items-center h-64">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
-            <div className="absolute inset-0 animate-ping rounded-full border-2 border-accent/30"></div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // ✅ Función segura para obtener URLs de imágenes
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "/placeholder.svg";
+
+    // Si ya es URL completa, devolverla
+    if (imagePath.startsWith('http')) return imagePath;
+
+    const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
+    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    const webpPath = cleanPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+
+    return `${baseURL}${webpPath}`;
+  };
 
   return (
     <section className="w-full max-w-6xl mx-auto mt-16 mb-20 px-4 sm:px-6">
@@ -86,7 +87,11 @@ function RelatedProducts({ category = "vasos3d" }) {
       <div className="relative">
         <button
           className="absolute -left-4 sm:-left-8 top-1/2 -translate-y-1/2 z-20 text-foreground/50 hover:text-accent transition-all duration-300 group/arrow"
-          onClick={() => document.querySelector(".related-products-container").scrollBy({ left: -400, behavior: "smooth" })}
+          onClick={() => {
+            const container = document.querySelector(".related-products-container");
+            if (container) container.scrollBy({ left: -400, behavior: "smooth" });
+          }}
+          aria-label="Anterior"
         >
           <ChevronLeft className="w-8 h-8 sm:w-10 sm:h-10 transition-transform group-hover/arrow:-translate-x-2" />
         </button>
@@ -100,43 +105,22 @@ function RelatedProducts({ category = "vasos3d" }) {
             const primaryImage = product.imagen_principal;
             const additionalImages = product.imagenes_adicionales || [];
 
-            // Calificación promedio desde la base de datos
+            // ✅ Calificación promedio desde BD
             const avgRating = product.promedio_calificacion
               ? Math.round(parseFloat(product.promedio_calificacion))
               : 0;
-
-            // ✅ Función para obtener la URL completa de la imagen
-            const getImageUrl = (imagePath) => {
-              if (!imagePath) return "/placeholder.svg";
-
-              // Si la imagen ya es una URL completa, devolverla
-              if (imagePath.startsWith('http')) return imagePath;
-
-              // ✅ Usar la URL base de la instancia de api
-              const baseURL = api.defaults.baseURL.replace('/api', '');
-
-              // Asegurar que la ruta comience con /
-              const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-
-              // Convertir a webp
-              const webpPath = cleanPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-
-              return `${baseURL}${webpPath}`;
-            };
 
             return (
               <article
                 key={product.id}
                 className="group relative min-w-[300px] max-w-[300px] h-[550px] bg-card rounded-2xl border border-border/50 overflow-hidden cursor-pointer hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 flex flex-col"
                 onClick={() => navigate(`/producto/${product.id}`)}
-                onMouseEnter={() => setHoveredProduct(product.id)}
-                onMouseLeave={() => setHoveredProduct(null)}
               >
                 {/* Imagen */}
                 <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
                   <img
                     src={getImageUrl(primaryImage)}
-                    alt={product.titulo}
+                    alt={product.titulo || "Producto"}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                     onError={(e) => {
@@ -144,16 +128,18 @@ function RelatedProducts({ category = "vasos3d" }) {
                       e.target.onerror = null;
                     }}
                   />
+
                   {additionalImages.length > 0 && (
                     <img
                       src={getImageUrl(additionalImages[0])}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
-                      alt="Hover view"
+                      alt="Vista alternativa"
                       onError={(e) => {
                         e.target.style.display = "none";
                       }}
                     />
                   )}
+
                   {product.descuento && (
                     <div className="absolute top-3 right-3 z-10">
                       <span className="bg-accent text-accent-foreground text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
@@ -172,10 +158,10 @@ function RelatedProducts({ category = "vasos3d" }) {
 
                   {/* Título */}
                   <h3 className="font-bold text-base text-foreground line-clamp-2 mb-2 group-hover:text-accent transition-colors duration-300 h-12 overflow-hidden">
-                    {formatTitle(product.titulo)}
+                    {formatTitle(product.titulo || "")}
                   </h3>
 
-                  {/* Rating - Dinámico desde DB */}
+                  {/* Rating */}
                   <div className="flex items-center gap-1 mb-3 h-5">
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
@@ -204,7 +190,7 @@ function RelatedProducts({ category = "vasos3d" }) {
                   <div className="mt-auto mb-4">
                     <div className="flex flex-col">
                       <span className="text-xl font-bold text-primary">
-                        {CLP.format(product.precio)}
+                        {CLP.format(product.precio || 0)}
                       </span>
                       <div className="h-5">
                         {product.precio_anterior && (
@@ -224,7 +210,7 @@ function RelatedProducts({ category = "vasos3d" }) {
                       }`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      !outOfStock && addToCart(product);
+                      if (!outOfStock) addToCart(product);
                     }}
                     disabled={outOfStock}
                   >
@@ -249,7 +235,11 @@ function RelatedProducts({ category = "vasos3d" }) {
 
         <button
           className="absolute -right-4 sm:-right-8 top-1/2 -translate-y-1/2 z-20 text-foreground/50 hover:text-accent transition-all duration-300 group/arrow"
-          onClick={() => document.querySelector(".related-products-container").scrollBy({ left: 400, behavior: "smooth" })}
+          onClick={() => {
+            const container = document.querySelector(".related-products-container");
+            if (container) container.scrollBy({ left: 400, behavior: "smooth" });
+          }}
+          aria-label="Siguiente"
         >
           <ChevronRight className="w-8 h-8 sm:w-10 sm:h-10 transition-transform group-hover/arrow:translate-x-2" />
         </button>
