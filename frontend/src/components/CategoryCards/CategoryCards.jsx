@@ -11,22 +11,42 @@ function CategoryCards() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        api.get("/categorias").then(res => res.data)
-            .then((res) => setCategories(Array.isArray(res) ? res : []))
-            .catch((err) => {
+        const fetchCategories = async () => {
+            try {
+                console.log('🔍 Cargando categorías...');
+                const response = await api.get("/categorias");
+
+                // ✅ Validar que es un array
+                const data = Array.isArray(response.data) ? response.data : [];
+                console.log('✅ Categorías cargadas:', data.length);
+
+                setCategories(data);
+                setError(null);
+            } catch (err) {
+                console.error('❌ Error cargando categorías:', err);
                 setError("Error al cargar categorías");
-                console.error(err);
-            })
-            .finally(() => setLoading(false));
+
+                // ✅ Fallback con categorías por defecto
+                setCategories([
+                    { id: 1, nombre: "Vasos 3D" },
+                    { id: 2, nombre: "Placas Navi" },
+                    { id: 3, nombre: "Figuras" }
+                ]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCategories();
     }, []);
 
-    const handleCategoryClick = (categoryName) => {
-        if (!categoryName) return;
-        navigate(`/productos?categoria=${encodeURIComponent(categoryName)}`);
+    const handleCategoryClick = (categoryId, categoryName) => {
+        if (!categoryId || !categoryName) return;
+        // ✅ Navegar usando ID de categoría
+        navigate(`/productos?categoria=${categoryId}`);
     };
 
-    // Si necesitas 6 tarjetas mínimo, puedes completar con placeholders
-    // Pero por ahora, mostramos solo las reales
+    // Mostrar máximo 6 categorías
     const shownCategories = categories.slice(0, 6);
 
     if (loading) {
@@ -37,10 +57,10 @@ function CategoryCards() {
         );
     }
 
-    if (error) {
+    if (error && categories.length === 0) {
         return (
             <div className="w-full flex justify-center mt-4">
-                <div className="text-red-500">{error}</div>
+                <div className="text-yellow-600">⚠️ {error}</div>
             </div>
         );
     }
@@ -52,17 +72,16 @@ function CategoryCards() {
                     <button
                         key={cat.id}
                         type="button"
-                        onClick={() => handleCategoryClick(cat.nombre)}
-                        disabled={cat.disabled}
-                        className={`flex flex-col items-center justify-center bg-background rounded-xl shadow-sm hover:shadow-md transition px-6 py-4 flex-shrink-0 ${cat.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        onClick={() => handleCategoryClick(cat.id, cat.nombre)}
+                        className="flex flex-col items-center justify-center bg-background rounded-xl shadow-sm hover:shadow-md transition px-6 py-4 flex-shrink-0 cursor-pointer hover:bg-muted/20"
                         style={{ width: 130, height: 120 }}
                         aria-label={`Ver productos en ${cat.nombre}`}
                     >
-                        <span className={`text-3xl mb-2 ${cat.color_icono || "text-foreground"}`}>
-                            {cat.icono || "📦"}
+                        <span className="text-3xl mb-2 text-foreground">
+                            📦
                         </span>
                         <span className="text-xs font-medium text-foreground text-center line-clamp-2">
-                            {cat.nombre}
+                            {cat.nombre || "Categoría"}
                         </span>
                     </button>
                 ))}
