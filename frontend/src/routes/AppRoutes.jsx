@@ -1,24 +1,37 @@
 //appRoutes.jsx
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 
 import Home from "../pages/Home";
-import ProductDetail from "../pages/ProductDetail";
-import ProductList from "../pages/ProductList";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import Checkout from "../pages/Checkout";
-import Success from "../pages/Success";
+
+// ✅ LAZY LOAD - Solo se cargan cuando se necesitan
+const ProductDetail = lazy(() => import("../pages/ProductDetail"));
+const ProductList = lazy(() => import("../pages/ProductList"));
+const Login = lazy(() => import("../pages/Login"));
+const Register = lazy(() => import("../pages/Register"));
+const Checkout = lazy(() => import("../pages/Checkout"));
+const Success = lazy(() => import("../pages/Success"));
+const AdminRoutes = lazy(() => import("../admin/admin.routes"));
+const UserRoutes = lazy(() => import("../user/user.routes"));
 
 import NotFound from "../components/NotFound/NotFound";
 import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
-
 import PrivateRoute from "./PrivateRoute";
 
-// ✅ RUTAS REALES
-import AdminRoutes from "../admin/admin.routes";
-import UserRoutes from "../user/user.routes";
+// ✅ Loading fallback
+function LoadingFallback() {
+  return (
+    <Layout>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    </Layout>
+  );
+}
 
 /* ------------------ helpers ------------------ */
 
@@ -43,12 +56,32 @@ export default function AppRoutes() {
     <Routes>
       {/* 🌐 PÚBLICAS */}
       <Route path="/" element={<Layout><Home /></Layout>} />
-      <Route path="/productos" element={<Layout><ProductList /></Layout>} />
-      <Route path="/producto/:productId" element={<Layout><ProductDetail /></Layout>} />
-      <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
+      <Route path="/productos" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Layout><ProductList /></Layout>
+        </Suspense>
+      } />
+      <Route path="/producto/:productId" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Layout><ProductDetail /></Layout>
+        </Suspense>
+      } />
+      <Route path="/checkout" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Layout><Checkout /></Layout>
+        </Suspense>
+      } />
 
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Login />
+        </Suspense>
+      } />
+      <Route path="/register" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Register />
+        </Suspense>
+      } />
       <Route path="/success" element={<SuccessRouteWrapper />} />
 
       {/* 💳 Retorno de pago */}
@@ -58,9 +91,11 @@ export default function AppRoutes() {
       <Route
         path="/admin/*"
         element={
-          <PrivateRoute requiredRole="admin">
-            <AdminRoutes />
-          </PrivateRoute>
+          <Suspense fallback={<LoadingFallback />}>
+            <PrivateRoute requiredRole="admin">
+              <AdminRoutes />
+            </PrivateRoute>
+          </Suspense>
         }
       />
 
@@ -68,9 +103,11 @@ export default function AppRoutes() {
       <Route
         path="/user/*"
         element={
-          <PrivateRoute requiredRole="cliente">
-            <UserRoutes />
-          </PrivateRoute>
+          <Suspense fallback={<LoadingFallback />}>
+            <PrivateRoute requiredRole="cliente">
+              <UserRoutes />
+            </PrivateRoute>
+          </Suspense>
         }
       />
 

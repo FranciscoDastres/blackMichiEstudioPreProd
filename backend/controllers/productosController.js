@@ -400,32 +400,74 @@ exports.getAllProducts = async (req, res) => {
   try {
     const now = Date.now();
 
+    // ✅ Parámetros de paginación
+    const limit = parseInt(req.query.limit) || 20; // Por defecto 20 productos
+    const offset = parseInt(req.query.offset) || 0;
+    const includeAll = req.query.all === 'true'; // Parámetro para obtener todos
+
     // ✅ Verificar si el caché es válido
-    if (cache.allProducts && (now - cache.timestamp) < cache.ttl) {
-      console.log('✅ Devolviendo productos desde CACHÉ');
-      return res.json(cache.allProducts);
+    if (!includeAll && cache.allProducts && (now - cache.timestamp) < cache.ttl) {
+      console.log('✅ Devolviendo productos desde CACHÉ (paginado)');
+      const paginatedResults = cache.allProducts.slice(offset, offset + limit);
+      return res.json({
+        items: paginatedResults,
+        total: cache.allProducts.length,
+        limit,
+        offset,
+        page: Math.floor(offset / limit) + 1,
+        pages: Math.ceil(cache.allProducts.length / limit)
+      });
     }
 
     // ✅ Caché inválido, obtener de la BD
     console.log('🔄 Cargando productos de la BD...');
 
-    const result = await pool.query(`
-            SELECT p.*, c.nombre AS categoria_nombre
-            FROM productos p
-            LEFT JOIN categorias c ON p.categoria_id = c.id
-            WHERE p.activo = true
-            ORDER BY p.created_at DESC
-        `);
+    // Obtener total de productos
+    const countResult = await pool.query(`
+      SELECT COUNT(*) as total FROM productos WHERE activo = true
+    `);
+    const total = parseInt(countResult.rows[0].total);
 
-    // ✅ Guardar en caché
-    cache.allProducts = result.rows;
-    cache.timestamp = now;
+    // Obtener productos con paginación
+    const query = `
+      SELECT p.*, c.nombre AS categoria_nombre
+      FROM productos p
+      LEFT JOIN categorias c ON p.categoria_id = c.id
+      WHERE p.activo = true
+      ORDER BY p.created_at DESC
+      LIMIT $1 OFFSET $2
+    `;
 
-    console.log(`✅ ${result.rows.length} productos cargados en caché`);
-    console.log('🔍 Productos devueltos:', result.rows.length);
-    console.log('🔍 IDs:', result.rows.map(p => p.id));
+    const params = includeAll ? [] : [limit, offset];
+    const result = includeAll
+      ? await pool.query(`
+          SELECT p.*, c.nombre AS categoria_nombre
+          FROM productos p
+          LEFT JOIN categorias c ON p.categoria_id = c.id
+          WHERE p.activo = true
+          ORDER BY p.created_at DESC
+        `)
+      : await pool.query(query, params);
 
-    res.json(result.rows);
+    // ✅ Guardar TODOS en caché (sin paginación) para futuras búsquedas
+    if (includeAll) {
+      cache.allProducts = result.rows;
+      cache.timestamp = now;
+    }
+
+    const responseData = includeAll
+      ? result.rows
+      : {
+        items: result.rows,
+        total,
+        limit,
+        offset,
+        page: Math.floor(offset / limit) + 1,
+        pages: Math.ceil(total / limit)
+      };
+
+    console.log(`✅ ${result.rows.length} productos cargados`);
+    res.json(responseData);
 
   } catch (error) {
     console.error("❌ Error obteniendo productos:", error);

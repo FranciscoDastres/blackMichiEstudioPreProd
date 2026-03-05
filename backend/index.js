@@ -79,6 +79,30 @@ app.use((req, res, next) => {
 // Doble middleware CORS como respaldo
 app.use(cors({ origin: '*', credentials: false }));
 
+// ✅ COMPRESIÓN GZIP - REDUCE TAMAÑO DE RESPUESTAS
+const compression = require('compression');
+app.use(compression({
+  level: 6, // Balance entre velocidad y compresión
+  threshold: 1024 // Solo comprimir si es mayor a 1KB
+}));
+
+// ✅ CACHE HEADERS - CACHEAR RECURSOS ESTÁTICOS
+app.use((req, res, next) => {
+  // Cachear imágenes por 30 días
+  if (req.path.match(/\.(webp|jpg|jpeg|png|gif|svg)$/i)) {
+    res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+  }
+  // Cachear bundles (tienen hash en nombre)
+  else if (req.path.match(/\.[a-f0-9]{8}\.(js|css)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  // Cachear datos de API por 5 minutos
+  else if (req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'public, max-age=300');
+  }
+  next();
+});
+
 // --------------------
 // MIDDLEWARE DE LOGGING (para depuración)
 // --------------------
