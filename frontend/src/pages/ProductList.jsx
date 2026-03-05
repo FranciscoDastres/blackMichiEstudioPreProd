@@ -1,4 +1,4 @@
-// ProductList.jsx - COMPLETAMENTE ARREGLADO
+// ProductList.jsx - FUNCIONALIDAD COMPLETAMENTE ARREGLADA
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -19,17 +19,16 @@ function getImageUrl(imagePath) {
 function ProductList() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(12);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const { addToCart, isStockExceeded } = useCart();
-  const [searchQuery, setSearchQuery] = useState("");
 
   const categoriaParam = searchParams.get("categoria");
   const busquedaParam = searchParams.get("busqueda");
@@ -48,6 +47,7 @@ function ProductList() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  // ✅ Cargar datos iniciales
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -55,70 +55,19 @@ function ProductList() {
         setError(null);
 
         // Cargar categorías
-        try {
-          const categoriesResponse = await api.get("/categorias");
-          const categoriesData = Array.isArray(categoriesResponse.data)
-            ? categoriesResponse.data
-            : [];
-          setCategories(categoriesData);
-        } catch (err) {
-          console.error("❌ Error cargando categorías:", err);
-          setCategories([]);
-        }
+        const categoriesResponse = await api.get("/categorias");
+        const categoriesData = Array.isArray(categoriesResponse.data)
+          ? categoriesResponse.data
+          : [];
+        setCategories(categoriesData);
 
-        // Cargar productos
-        let productsData = [];
-
-        try {
-          if (busquedaParam) {
-            // Búsqueda por término
-            const searchResponse = await api.get(`/productos/buscar?q=${busquedaParam}`);
-            productsData = Array.isArray(searchResponse.data) ? searchResponse.data : [];
-            setSearchQuery(busquedaParam);
-            setSelectedCategory("");
-            setSelectedCategoryId("");
-          } else if (categoriaParam) {
-            // ✅ ARREGLADO: categoriaParam es el ID de la categoría
-            try {
-              const categoryResponse = await api.get(`/categorias/${categoriaParam}`);
-              productsData = Array.isArray(categoryResponse.data) ? categoryResponse.data : [];
-
-              // Encontrar el nombre de la categoría
-              const foundCategory = categories.find(
-                c => String(c.id) === String(categoriaParam)
-              );
-              const categoryName = foundCategory?.nombre || `Categoría ${categoriaParam}`;
-              setSelectedCategory(categoryName);
-              setSelectedCategoryId(categoriaParam);
-
-              console.log(`✅ Productos cargados para categoría: ${categoryName}`);
-            } catch (categoryErr) {
-              console.warn(
-                `⚠️ Categoría con ID "${categoriaParam}" no encontrada`,
-                categoryErr
-              );
-              const allResponse = await api.get("/productos");
-              productsData = Array.isArray(allResponse.data) ? allResponse.data : [];
-              setSelectedCategory("");
-              setSelectedCategoryId("");
-            }
-            setSearchQuery("");
-          } else {
-            // Todos los productos
-            const allResponse = await api.get("/productos");
-            productsData = Array.isArray(allResponse.data) ? allResponse.data : [];
-            setSelectedCategory("");
-            setSelectedCategoryId("");
-            setSearchQuery("");
-          }
-
-          setProducts(productsData);
-        } catch (err) {
-          console.error("❌ Error cargando productos:", err);
-          setProducts([]);
-        }
+        // Cargar todos los productos
+        const allResponse = await api.get("/productos");
+        const allData = Array.isArray(allResponse.data) ? allResponse.data : [];
+        setAllProducts(allData);
+        console.log(`✅ ${allData.length} productos cargados`);
       } catch (err) {
-        console.error("❌ Error general:", err);
+        console.error("❌ Error cargando datos:", err);
         setError("Error al cargar productos");
       } finally {
         setLoading(false);
@@ -126,29 +75,54 @@ function ProductList() {
     };
 
     fetchData();
-  }, [categoriaParam, busquedaParam, categories]);
+  }, []);
 
-  // ✅ ARREGLADO: Filtrado correcto por categoría ID
-  const filteredProducts = products
+  // ✅ Procesar parámetros de URL
+  useEffect(() => {
+    if (categoriaParam) {
+      const catId = parseInt(categoriaParam);
+      setSelectedCategoryId(catId);
+
+      // Encontrar el nombre de la categoría
+      const foundCat = categories.find(c => c.id === catId);
+      if (foundCat) {
+        setSelectedCategoryName(foundCat.nombre);
+      }
+      setCurrentPage(1);
+    } else {
+      setSelectedCategoryId(null);
+      setSelectedCategoryName("");
+      setCurrentPage(1);
+    }
+  }, [categoriaParam, categories]);
+
+  // ✅ Filtrado LOCAL
+  const filteredProducts = allProducts
     .filter((product) => {
-      // Si hay búsqueda, mostrar todo
-      if (busquedaParam) return true;
-
-      // Si hay categoría seleccionada, filtrar por ella
-      if (selectedCategoryId) {
-        return String(product.categoria_id) === String(selectedCategoryId);
+      // Búsqueda por término
+      if (busquedaParam) {
+        const searchLower = busquedaParam.toLowerCase();
+        return (
+          (product.titulo || "").toLowerCase().includes(searchLower) ||
+          (product.descripcion || "").toLowerCase().includes(searchLower)
+        );
       }
 
-      // Si no hay categoría, mostrar todo
+      // Filtrado por categoría
+      if (selectedCategoryId) {
+        return product.categoria_id === selectedCategoryId;
+      }
+
+      // Mostrar todos
       return true;
     })
     .filter((product) => {
-      if (busquedaParam) return true;
+      // Filtro de precio
       const price = Number(product.precio) || 0;
       return price >= minPrice;
     })
     .filter((product) => {
-      if (busquedaParam) return true;
+      // Filtro de rating
       if (selectedRating === 0) return true;
       const rating = product.promedio_calificacion
         ? Math.round(parseFloat(product.promedio_calificacion))
@@ -177,56 +151,22 @@ function ProductList() {
   );
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  const handleCategoryChange = async (categoryId) => {
+  const handleCategoryChange = (categoryId) => {
     setCurrentPage(1);
-
-    const foundCategory = categories.find(c => String(c.id) === String(categoryId));
-    const categoryName = foundCategory?.nombre || `Categoría ${categoryId}`;
-
     if (categoryId === "") {
-      setSelectedCategory("");
-      setSelectedCategoryId("");
+      navigate("/productos");
     } else {
-      setSelectedCategory(categoryName);
-      setSelectedCategoryId(categoryId);
-    }
-
-    setLoading(true);
-
-    try {
-      let productsData = [];
-
-      if (!categoryId || categoryId === "") {
-        const response = await api.get("/productos");
-        productsData = Array.isArray(response.data) ? response.data : [];
-      } else {
-        try {
-          const response = await api.get(`/categorias/${categoryId}`);
-          productsData = Array.isArray(response.data) ? response.data : [];
-        } catch (err) {
-          console.warn(`⚠️ No se encontró la categoría con ID "${categoryId}"`);
-          productsData = [];
-        }
-      }
-
-      setProducts(productsData);
-    } catch (err) {
-      console.error("❌ Error al cargar productos de categoría:", err);
-      setProducts([]);
-      setError("Error al cargar productos");
-    } finally {
-      setLoading(false);
+      navigate(`/productos?categoria=${categoryId}`);
     }
   };
 
   const clearFilters = () => {
-    setSelectedCategory("");
-    setSelectedCategoryId("");
+    setSelectedCategoryId(null);
+    setSelectedCategoryName("");
     setSortBy("newest");
     setCurrentPage(1);
     setMinPrice(0);
     setSelectedRating(0);
-    setSearchQuery("");
     navigate("/productos");
   };
 
@@ -263,8 +203,8 @@ function ProductList() {
             <h1 className="text-2xl font-bold text-foreground">
               {busquedaParam
                 ? `Resultados para "${busquedaParam}"`
-                : selectedCategory
-                  ? `Productos en ${selectedCategory}`
+                : selectedCategoryName
+                  ? `Productos en ${selectedCategoryName}`
                   : "Todos los productos"}
             </h1>
             <p className="text-sm text-muted">
@@ -312,7 +252,7 @@ function ProductList() {
                 <button
                   key={category.id}
                   onClick={() => handleCategoryChange(category.id)}
-                  className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${selectedCategoryId === String(category.id)
+                  className={`w-full text-left text-sm px-3 py-2 rounded-lg transition ${selectedCategoryId === category.id
                     ? "bg-primary/10 text-primary font-semibold"
                     : "text-foreground hover:bg-muted/20"
                     }`}
@@ -444,7 +384,6 @@ function ProductList() {
                       <div
                         key={product.id}
                         className="group bg-background rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-300 flex flex-col"
-                        // ✅ ARREGLADO: Click en el card navega a ProductDetail
                         onClick={() => navigate(`/producto/${product.id}`)}
                       >
                         {/* Imagen */}
