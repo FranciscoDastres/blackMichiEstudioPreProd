@@ -45,12 +45,16 @@ exports.uploadImage = async (fileBuffer, originalFilename, bucket = "BlackMichiE
         }
 
         // Obtener URL pública
-        const { data: urlData } = supabase.storage
+        const urlResult = supabase.storage
             .from(bucket)
             .getPublicUrl(filePath);
 
+        if (!urlResult || !urlResult.data) {
+            throw new Error("No se pudo obtener URL pública de Supabase");
+        }
+
         return {
-            publicUrl: urlData.publicUrl,
+            publicUrl: urlResult.data.publicUrl || urlResult.publicUrl,
             path: filePath,
             filename: filename
         };
