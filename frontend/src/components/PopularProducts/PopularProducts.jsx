@@ -66,20 +66,18 @@ function PopularProducts() {
       );
 
   // 🔥 FUNCIÓN DE IMAGEN OPTIMIZADA
-  const getImageUrl = (imagePath, width = 600) => {
-    if (!imagePath) return "/placeholder.svg";
+  const getImageUrl = (url, width = 600) => {
+    if (!url) return "/placeholder.svg";
 
-    if (imagePath.startsWith("http")) {
-      if (imagePath.includes("supabase.co")) {
-        return `${imagePath}?width=${width}&quality=60&format=webp`;
-      }
-      return imagePath;
-    }
+    if (!url.includes("supabase.co")) return url;
 
-    const baseURL = api.defaults.baseURL?.replace("/api", "") || "";
-    const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+    const parts = url.split("/storage/v1/object/public/");
 
-    return `${baseURL}${cleanPath}?width=${width}&quality=60&format=webp`;
+    if (parts.length < 2) return url;
+
+    const path = parts[1];
+
+    return `https://nmgiibdaseiagubiihrb.supabase.co/storage/v1/render/image/public/${path}?width=${width}&quality=60`;
   };
 
   if (loading) {
@@ -189,8 +187,8 @@ function PopularProducts() {
                       <Star
                         key={i}
                         className={`w-3.5 h-3.5 ${i < avgRating
-                            ? "fill-yellow-500 text-yellow-500"
-                            : "text-muted"
+                          ? "fill-yellow-500 text-yellow-500"
+                          : "text-muted"
                           }`}
                       />
                     ))}
