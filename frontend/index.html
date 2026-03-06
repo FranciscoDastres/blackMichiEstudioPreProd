@@ -4,48 +4,52 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- ✅ Viewport optimizado para mobile y performance -->
+  <!-- Viewport optimizado -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-  <!-- ✅ Meta tags esenciales para SEO y performance -->
+  <!-- SEO -->
   <meta name="description" content="Black Michi Estudio - Tienda de productos premium handmade" />
+
+  <!-- Theme -->
   <meta name="theme-color" content="#000000" />
   <meta name="color-scheme" content="dark" />
 
-  <!-- ✅ PASO 1: Preconnect a orígenes críticos ANTES de preload -->
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <!-- Preconnect (reduce latencia DNS + TLS) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <!-- Supabase Storage -->
   <link rel="preconnect" href="https://nmgiibdaseiagubiihrb.supabase.co" crossorigin>
 
-  <!-- ✅ PASO 2: DNS prefetch para dominios secundarios -->
+  <!-- DNS Prefetch secundario -->
   <link rel="dns-prefetch" href="https://supabaseusercontent.com">
-  <link rel="dns-prefetch" href="https://nmgiibdaseiagubiihrb.supabase.co">
 
-  <!-- ✅ PASO 3: Preload de fuente crítica (Poppins 700 - la más importante) -->
+  <!-- Preload fuente crítica -->
   <link rel="preload" href="https://fonts.gstatic.com/s/poppins/v21/pxiGyp8kv8JHgFVrLPTucHtQOg.woff2" as="font"
-    type="font/woff2" crossorigin>
+    type="font/woff2" crossorigin />
 
-  <!-- ✅ PASO 4: Cargar fuentes con display=swap para evitar FOUT/FOIT -->
-  <!-- display=swap muestra texto con fuente fallback mientras carga Google Fonts -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
+  <!-- Google Fonts async (NO render blocking) -->
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+    onload="this.onload=null;this.rel='stylesheet'" />
 
-  <!-- ✅ PASO 5: Favicons optimizados -->
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
+  </noscript>
+
+  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any">
 
-  <!-- ✅ PASO 6: Resource hints para performance -->
-  <!-- Revertirse precarga de recursos que se cargarán después -->
-  <link rel="prefetch" href="/src/main.jsx">
-
   <title>Black Michi Estudio - Tienda Premium Handmade</title>
+
 </head>
 
 <body>
+
   <div id="root"></div>
-  <!-- ✅ Script con type module (async by default en módulos) -->
+
+  <!-- React entry -->
   <script type="module" src="/src/main.jsx"></script>
+
 </body>
 
 </html>
