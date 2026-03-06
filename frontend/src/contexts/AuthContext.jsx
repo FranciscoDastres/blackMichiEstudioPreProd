@@ -18,11 +18,26 @@ export function AuthProvider({ children }) {
 
   // Cargar sesión desde localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        // ✅ Validar estructura del usuario
+        if (parsed && typeof parsed === 'object' && parsed.email) {
+          setUser(parsed);
+        } else {
+          console.warn('⚠️ Datos de usuario inválidos en localStorage');
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error parsing user from localStorage:', err);
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   // LOGIN

@@ -33,13 +33,33 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// ✅ RESPONSE INTERCEPTOR CON VALIDACIÓN
 api.interceptors.response.use(
-  response => response,
+  response => {
+    // ✅ Validar que response.data existe
+    if (!response.data) {
+      console.warn('⚠️ Response sin data:', response);
+      return { ...response, data: {} };
+    }
+    return response;
+  },
   error => {
+    // ✅ Manejo seguro de errores
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
+
+    // ✅ Loguear error completo para debugging
+    console.error('❌ API Error:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+      url: error.config?.url
+    });
+
     return Promise.reject(error);
   }
 );

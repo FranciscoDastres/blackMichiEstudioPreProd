@@ -15,12 +15,18 @@ function safeJsonParse(value, fallback) {
 }
 
 function normalizeProduct(p) {
+  // ✅ SEGURIDAD: Validar que p existe
+  if (!p || typeof p !== 'object') {
+    console.warn('⚠️ normalizeProduct recibió valor inválido:', p);
+    return null;
+  }
+
   return {
-    id: p.id,
+    id: p.id || p._id || Math.random(),
     titulo: p.titulo || p.nombre || p.name || "Producto",
     precio: Number(p.precio ?? p.price ?? 0),
     imagen: p.imagen_principal || p.imagen || p.image || null,
-    stock: p.stock,
+    stock: p.stock !== undefined ? p.stock : Infinity,
   };
 }
 
