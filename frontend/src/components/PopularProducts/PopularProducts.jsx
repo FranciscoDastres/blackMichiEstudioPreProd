@@ -167,25 +167,28 @@ function PopularProducts() {
               <article
                 key={product.id}
                 className="group relative min-w-[300px] max-w-[300px] h-[550px] bg-card rounded-2xl border border-border/50 overflow-hidden cursor-pointer hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 flex flex-col"
-                style={{ contain: 'paint' }}
-                // ✅ ARREGLADO: Click en el card navega a ProductDetail
                 onClick={() => navigate(`/producto/${product.id}`)}
               >
-                {/* Imagen con aspect-ratio fijo */}
-                <div className="relative w-full aspect-square bg-secondary/10 overflow-hidden flex-shrink-0">
+                {/* Imagen - altura fija */}
+                <div className="relative w-full h-60 bg-secondary/10 overflow-hidden">
                   <img
                     src={getImageUrl(primaryImage)}
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
-                    style={{ aspectRatio: '1' }}
                   />
-                  {/* ✅ NO CARGAR IMAGEN HOVER AUTOMÁTICAMENTE - Solo en hover */}
+                  {/* ✅ Cargar imagen hover SOLO en hover */}
                   {additionalImages.length > 0 && (
                     <img
                       data-src={getImageUrl(additionalImages[0])}
-                      className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
+                      className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500 hover-image"
                       alt="Hover view"
+                      onMouseEnter={(e) => {
+                        if (e.target.dataset.src && !e.target.src) {
+                          e.target.src = e.target.dataset.src;
+                          e.target.removeAttribute('data-src');
+                        }
+                      }}
                     />
                   )}
                   {product.descuento && (

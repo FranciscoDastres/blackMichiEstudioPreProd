@@ -117,7 +117,7 @@ function RelatedProducts({ category = "vasos3d" }) {
                 onClick={() => navigate(`/producto/${product.id}`)}
               >
                 {/* Imagen */}
-                <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
+                <div className="relative w-full h-60 bg-secondary/10 overflow-hidden">
                   <img
                     src={getImageUrl(primaryImage)}
                     alt={product.titulo || "Producto"}
@@ -134,6 +134,12 @@ function RelatedProducts({ category = "vasos3d" }) {
                       data-src={getImageUrl(additionalImages[0])}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Vista alternativa"
+                      onMouseEnter={(e) => {
+                        if (e.target.dataset.src && !e.target.src) {
+                          e.target.src = e.target.dataset.src;
+                          e.target.removeAttribute('data-src');
+                        }
+                      }}
                       onError={(e) => {
                         e.target.style.display = "none";
                       }}
