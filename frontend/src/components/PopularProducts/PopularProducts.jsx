@@ -116,6 +116,8 @@ function PopularProducts() {
             <button
               key={cat || "otros"}
               onClick={() => setActiveCategory(cat)}
+              aria-label={`Filtrar por categoría ${cat === "todos" ? "Todos" : formatTitle(cat)}`}
+              aria-pressed={activeCategory === cat}
               className={`group relative px-5 py-2.5 rounded-full text-sm font-medium border transition-all duration-300 overflow-hidden ${activeCategory === cat
                 ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20"
                 : "bg-background text-foreground border-border hover:border-accent/50 hover:shadow-md"
@@ -151,16 +153,22 @@ function PopularProducts() {
               ? Math.round(parseFloat(product.promedio_calificacion))
               : 0;
 
-            // ✅ Función para obtener URL de imagen
-            const getImageUrl = (imagePath) => {
+            // ✅ Función para obtener URL de imagen con transformación Supabase
+            const getImageUrl = (imagePath, width = 600, height = 800) => {
               if (!imagePath) return "/placeholder.svg";
-              if (imagePath.startsWith('http')) return imagePath;
+              if (imagePath.startsWith('http')) {
+                // ✅ Si es URL de Supabase, agregar parámetros de transformación
+                if (imagePath.includes('supabase.co')) {
+                  return `${imagePath}?width=${width}&height=${height}&quality=80`;
+                }
+                return imagePath;
+              }
 
               const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
               const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
               const webpPath = cleanPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
 
-              return `${baseURL}${webpPath}`;
+              return `${baseURL}${webpPath}?width=${width}&height=${height}&quality=80`;
             };
 
             return (
@@ -172,7 +180,12 @@ function PopularProducts() {
                 {/* Imagen - altura fija */}
                 <div className="relative w-full h-60 bg-secondary/10 overflow-hidden">
                   <img
-                    src={getImageUrl(primaryImage)}
+                    src={getImageUrl(primaryImage, 300, 400)}
+                    srcSet={`
+                      ${getImageUrl(primaryImage, 300, 400)} 300w,
+                      ${getImageUrl(primaryImage, 600, 800)} 600w
+                    `}
+                    sizes="(max-width: 640px) 300px, 600px"
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
@@ -180,7 +193,7 @@ function PopularProducts() {
                   {/* ✅ Cargar imagen hover SOLO en hover */}
                   {additionalImages.length > 0 && (
                     <img
-                      data-src={getImageUrl(additionalImages[0])}
+                      data-src={getImageUrl(additionalImages[0], 300, 400)}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500 hover-image"
                       alt="Hover view"
                       onMouseEnter={(e) => {

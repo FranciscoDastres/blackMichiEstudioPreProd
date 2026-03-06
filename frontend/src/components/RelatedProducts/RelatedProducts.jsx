@@ -57,18 +57,24 @@ function RelatedProducts({ category = "vasos3d" }) {
   // ✅ Si no hay productos, no renderizar nada
   if (loading || !products.length) return null;
 
-  // ✅ Función segura para obtener URLs de imágenes
-  const getImageUrl = (imagePath) => {
+  // ✅ Función segura para obtener URLs de imágenes con transformación Supabase
+  const getImageUrl = (imagePath, width = 600, height = 800) => {
     if (!imagePath) return "/placeholder.svg";
 
-    // Si ya es URL completa, devolverla
-    if (imagePath.startsWith('http')) return imagePath;
+    // Si ya es URL completa
+    if (imagePath.startsWith('http')) {
+      // ✅ Si es Supabase, agregar transformación
+      if (imagePath.includes('supabase.co')) {
+        return `${imagePath}?width=${width}&height=${height}&quality=80`;
+      }
+      return imagePath;
+    }
 
     const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
     const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
     const webpPath = cleanPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
 
-    return `${baseURL}${webpPath}`;
+    return `${baseURL}${webpPath}?width=${width}&height=${height}&quality=80`;
   };
 
   return (
@@ -119,7 +125,12 @@ function RelatedProducts({ category = "vasos3d" }) {
                 {/* Imagen */}
                 <div className="relative w-full h-60 bg-secondary/10 overflow-hidden">
                   <img
-                    src={getImageUrl(primaryImage)}
+                    src={getImageUrl(primaryImage, 300, 400)}
+                    srcSet={`
+                      ${getImageUrl(primaryImage, 300, 400)} 300w,
+                      ${getImageUrl(primaryImage, 600, 800)} 600w
+                    `}
+                    sizes="(max-width: 640px) 300px, 600px"
                     alt={product.titulo || "Producto"}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
@@ -131,7 +142,7 @@ function RelatedProducts({ category = "vasos3d" }) {
 
                   {additionalImages.length > 0 && (
                     <img
-                      data-src={getImageUrl(additionalImages[0])}
+                      data-src={getImageUrl(additionalImages[0], 300, 400)}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Vista alternativa"
                       onMouseEnter={(e) => {
