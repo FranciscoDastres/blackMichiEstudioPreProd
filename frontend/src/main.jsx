@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { initHoverImageLoading, initIntersectionObserver } from "./utils/lazyImageLoader";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -20,3 +21,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </AuthProvider>
   </BrowserRouter>
 );
+
+// ✅ Cargar imágenes hover solo cuando sea necesario
+document.addEventListener('DOMContentLoaded', () => {
+  initHoverImageLoading();
+  initIntersectionObserver();
+});

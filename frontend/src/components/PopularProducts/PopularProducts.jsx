@@ -131,6 +131,7 @@ function PopularProducts() {
       {/* Contenedor del carousel */}
       <div className="relative">
         <button
+          aria-label="Ver productos anteriores"
           className="absolute -left-4 sm:-left-8 top-1/2 -translate-y-1/2 z-20 text-foreground/50 hover:text-accent transition-all duration-300 group/arrow"
           onClick={() => document.querySelector(".popular-products-container").scrollBy({ left: -400, behavior: "smooth" })}
         >
@@ -166,20 +167,23 @@ function PopularProducts() {
               <article
                 key={product.id}
                 className="group relative min-w-[300px] max-w-[300px] h-[550px] bg-card rounded-2xl border border-border/50 overflow-hidden cursor-pointer hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 flex flex-col"
+                style={{ contain: 'paint' }}
                 // ✅ ARREGLADO: Click en el card navega a ProductDetail
                 onClick={() => navigate(`/producto/${product.id}`)}
               >
-                {/* Imagen */}
-                <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
+                {/* Imagen con aspect-ratio fijo */}
+                <div className="relative w-full aspect-square bg-secondary/10 overflow-hidden flex-shrink-0">
                   <img
                     src={getImageUrl(primaryImage)}
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
+                    style={{ aspectRatio: '1' }}
                   />
+                  {/* ✅ NO CARGAR IMAGEN HOVER AUTOMÁTICAMENTE - Solo en hover */}
                   {additionalImages.length > 0 && (
                     <img
-                      src={getImageUrl(additionalImages[0])}
+                      data-src={getImageUrl(additionalImages[0])}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Hover view"
                     />
@@ -195,17 +199,17 @@ function PopularProducts() {
 
                 {/* Contenido */}
                 <div className="p-5 flex flex-col flex-1">
-                  {/* Categoría */}
-                  <span className="text-[10px] uppercase tracking-tighter text-accent font-bold h-4 mb-1">
-                    {product.categoria_nombre ? formatTitle(product.categoria_nombre) : ""}
+                  {/* Categoría - altura fija */}
+                  <span className="text-[10px] uppercase tracking-tighter text-accent font-bold h-4 mb-1 block">
+                    {product.categoria_nombre ? formatTitle(product.categoria_nombre) : " "}
                   </span>
 
-                  {/* Título */}
+                  {/* Título - altura fija */}
                   <h3 className="font-bold text-base text-foreground line-clamp-2 mb-2 group-hover:text-accent transition-colors duration-300 h-12 overflow-hidden">
                     {formatTitle(product.titulo)}
                   </h3>
 
-                  {/* Rating - Dinámico desde DB */}
+                  {/* Rating - altura fija */}
                   <div className="flex items-center gap-1 mb-3 h-5">
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
@@ -225,18 +229,18 @@ function PopularProducts() {
                     )}
                   </div>
 
-                  {/* Descripción */}
+                  {/* Descripción - altura fija */}
                   <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8 overflow-hidden">
                     {product.descripcion || "Sin descripción disponible"}
                   </p>
 
-                  {/* Precios */}
-                  <div className="mt-auto mb-4">
+                  {/* Precios - reserva espacio fijo */}
+                  <div className="mt-auto mb-4 h-14">
                     <div className="flex flex-col">
                       <span className="text-xl font-bold text-primary">
                         {CLP.format(product.precio)}
                       </span>
-                      <div className="h-5">
+                      <div className="h-5 min-h-5">
                         {product.precio_anterior && (
                           <span className="line-through text-muted text-xs">
                             {CLP.format(product.precio_anterior)}
@@ -248,6 +252,7 @@ function PopularProducts() {
 
                   {/* Botón */}
                   <button
+                    aria-label={outOfStock ? `${product.titulo} agotado` : `Agregar ${product.titulo} al carrito`}
                     className={`group/btn relative w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden ${outOfStock
                       ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-muted"
                       : "bg-sky-600 text-white border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
@@ -278,6 +283,7 @@ function PopularProducts() {
         </div>
 
         <button
+          aria-label="Ver próximos productos"
           className="absolute -right-4 sm:-right-8 top-1/2 -translate-y-1/2 z-20 text-foreground/50 hover:text-accent transition-all duration-300 group/arrow"
           onClick={() => document.querySelector(".popular-products-container").scrollBy({ left: 400, behavior: "smooth" })}
         >

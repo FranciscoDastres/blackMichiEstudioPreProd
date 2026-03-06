@@ -86,12 +86,12 @@ function RelatedProducts({ category = "vasos3d" }) {
       {/* Contenedor del carousel */}
       <div className="relative">
         <button
+          aria-label="Ver productos anteriores"
           className="absolute -left-4 sm:-left-8 top-1/2 -translate-y-1/2 z-20 text-foreground/50 hover:text-accent transition-all duration-300 group/arrow"
           onClick={() => {
             const container = document.querySelector(".related-products-container");
             if (container) container.scrollBy({ left: -400, behavior: "smooth" });
           }}
-          aria-label="Anterior"
         >
           <ChevronLeft className="w-8 h-8 sm:w-10 sm:h-10 transition-transform group-hover/arrow:-translate-x-2" />
         </button>
@@ -131,7 +131,7 @@ function RelatedProducts({ category = "vasos3d" }) {
 
                   {additionalImages.length > 0 && (
                     <img
-                      src={getImageUrl(additionalImages[0])}
+                      data-src={getImageUrl(additionalImages[0])}
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       alt="Vista alternativa"
                       onError={(e) => {

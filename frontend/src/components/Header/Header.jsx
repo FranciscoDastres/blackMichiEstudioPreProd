@@ -89,10 +89,10 @@ function Header() {
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-background bg-grid shadow-lg border-b border-border w-full">
+    <div className="sticky top-0 z-50 bg-background bg-grid shadow-lg border-b border-border w-full" style={{ contain: 'layout' }}>
 
       {/* HEADER DESKTOP */}
-      <header className="border-b border-border w-full hidden md:block">
+      <header className="border-b border-border w-full hidden md:block" style={{ contain: 'content' }}>
         <div className="w-full max-w-none mx-auto px-4 lg:px-20 xl:px-32">
           <div className="flex items-center justify-between py-0 sm:py-5">
             <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200">
