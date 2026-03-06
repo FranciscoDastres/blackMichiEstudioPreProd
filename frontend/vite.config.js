@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [
     react({
-      // ✅ Optimizar compilación de JSX
       jsxRuntime: 'automatic',
     })
   ],
@@ -22,7 +21,7 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
       }
     },
-    // ✅ Minificación agresiva
+    // ✅ Minificación agresiva con Terser
     minify: 'terser',
     terserOptions: {
       compress: {
@@ -35,17 +34,27 @@ export default defineConfig({
         comments: false,
       }
     },
-    // ✅ Optimizaciones generales
+    // ✅ Optimizaciones CSS
     cssMinify: true,
     cssCodeSplit: true,
+
+    // ✅ Límites de tamaño
     chunkSizeWarningLimit: 500,
     reportCompressedSize: true,
+
+    // ✅ Sin sourcemaps en producción
     sourcemap: false,
-    // ✅ Polyfills para navegadores modernos
+
+    // ✅ Target moderno (reduce polyfills)
     target: 'es2020',
+
+    // ✅ Output limpio
+    outDir: 'dist',
+    assetsDir: 'assets',
   },
+
+  // ✅ Optimizar dependencias en dev
   optimizeDeps: {
-    // ✅ Pre-bundlear dependencias pesadas
     include: [
       'react',
       'react-dom',
@@ -58,9 +67,8 @@ export default defineConfig({
       target: 'es2020',
     }
   },
+
   server: {
     preTransformRequests: true,
-    // ✅ Compresión de respuestas
-    middlewareMode: false,
-  },
+  }
 })

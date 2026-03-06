@@ -4,39 +4,47 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- ✅ Viewport optimizado para mobile -->
+  <!-- ✅ Viewport optimizado para mobile y performance -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-  <!-- ✅ Meta tags esenciales -->
-  <meta name="description" content="Black Michi Estudio - Tienda de productos premium" />
+  <!-- ✅ Meta tags esenciales para SEO y performance -->
+  <meta name="description" content="Black Michi Estudio - Tienda de productos premium handmade" />
   <meta name="theme-color" content="#000000" />
   <meta name="color-scheme" content="dark" />
 
-  <!-- ✅ Preconnect a orígenes críticos -->
+  <!-- ✅ PASO 1: Preconnect a orígenes críticos ANTES de preload -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Supabase Storage -->
   <link rel="preconnect" href="https://nmgiibdaseiagubiihrb.supabase.co" crossorigin>
 
-  <!-- ✅ DNS prefetch para Supabase -->
+  <!-- ✅ PASO 2: DNS prefetch para dominios secundarios -->
   <link rel="dns-prefetch" href="https://supabaseusercontent.com">
   <link rel="dns-prefetch" href="https://nmgiibdaseiagubiihrb.supabase.co">
 
-  <!-- ✅ Preload de fuente crítica (Poppins 700 es la más importante) -->
+  <!-- ✅ PASO 3: Preload de fuente crítica (Poppins 700 - la más importante) -->
   <link rel="preload" href="https://fonts.gstatic.com/s/poppins/v21/pxiGyp8kv8JHgFVrLPTucHtQOg.woff2" as="font"
     type="font/woff2" crossorigin>
 
-  <!-- ✅ Cargar fuentes con display=swap para evitar FOUT -->
+  <!-- ✅ PASO 4: Cargar fuentes con display=swap para evitar FOUT/FOIT -->
+  <!-- display=swap muestra texto con fuente fallback mientras carga Google Fonts -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
 
-  <!-- ✅ Favicon con múltiples tamaños -->
+  <!-- ✅ PASO 5: Favicons optimizados -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="192x192">
 
-  <title>Black Michi Estudio</title>
+  <!-- ✅ PASO 6: Resource hints para performance -->
+  <!-- Revertirse precarga de recursos que se cargarán después -->
+  <link rel="prefetch" href="/src/main.jsx">
+
+  <title>Black Michi Estudio - Tienda Premium Handmade</title>
 </head>
 
 <body>
   <div id="root"></div>
+  <!-- ✅ Script con type module (async by default en módulos) -->
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
