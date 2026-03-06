@@ -1,25 +1,11 @@
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Autoplay } from "swiper/modules";
-import { useState, useEffect } from "react";
-import "swiper/css";
-import "swiper/css/navigation";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Autoplay } from 'swiper/modules';
+import { useState, useEffect } from 'react';
+import 'swiper/css';
+import 'swiper/css/navigation';
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import { ChevronRight } from "lucide-react";
-
-/* OPTIMIZADOR DE IMÁGENES SUPABASE */
-const getOptimizedImage = (url, width = 1200) => {
-    if (!url) return "";
-
-    if (!url.includes("supabase.co")) return url;
-
-    const parts = url.split("/storage/v1/object/public/");
-    if (parts.length < 2) return url;
-
-    const path = parts[1];
-
-    return `https://nmgiibdaseiagubiihrb.supabase.co/storage/v1/render/image/public/${path}?width=${width}&quality=60&format=webp`;
-};
+import { ChevronRight } from 'lucide-react';
 
 export default function HeroSection() {
     const navigate = useNavigate();
@@ -32,43 +18,37 @@ export default function HeroSection() {
             try {
                 setLoading(true);
                 const { data } = await api.get("/hero-images/public");
-
-                const firstThreeSlides = Array.isArray(data)
-                    ? data.slice(0, 3)
-                    : data;
-
+                // Solo mostrar los primeros 3 slides
+                const firstThreeSlides = Array.isArray(data) ? data.slice(0, 3) : data;
                 setSlides(firstThreeSlides);
             } catch (error) {
                 console.error("Error cargando hero:", error);
-
+                // Slides de respaldo elegantes
                 setSlides([
                     {
                         id: "1",
                         title: "Black Michi Studio",
                         subtitle: "Diseños exclusivos para gamers",
-                        image:
-                            "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop",
+                        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop",
                         categoria: "all",
-                        buttonText: "Explorar Colección",
+                        buttonText: "Explorar Colección"
                     },
                     {
                         id: "2",
                         title: "Soportes Personalizados",
                         subtitle: "Arte y funcionalidad en cada diseño",
-                        image:
-                            "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&auto=format&fit=crop",
+                        image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&auto=format&fit=crop",
                         categoria: "soportes",
-                        buttonText: "Ver Soportes",
+                        buttonText: "Ver Soportes"
                     },
                     {
                         id: "3",
                         title: "Figuras Únicas",
                         subtitle: "Elaboradas completamente a mano",
-                        image:
-                            "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop",
+                        image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop",
                         categoria: "figuras",
-                        buttonText: "Ver Figuras",
-                    },
+                        buttonText: "Ver Figuras"
+                    }
                 ]);
             } finally {
                 setLoading(false);
@@ -82,7 +62,7 @@ export default function HeroSection() {
         return (
             <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
                 <div className="w-full max-w-[1800px] bg-secondary/20 border border-border rounded-3xl overflow-hidden animate-pulse">
-                    <div className="h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px]" />
+                    <div className="h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px]"></div>
                 </div>
             </div>
         );
@@ -90,21 +70,15 @@ export default function HeroSection() {
 
     return (
         <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
-            <div
-                className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border"
-                style={{
-                    contentVisibility: "auto",
-                    containIntrinsicSize: "100% 560px",
-                }}
-            >
+            <div className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border">
                 <Swiper
                     modules={[Navigation, Autoplay]}
                     spaceBetween={0}
                     slidesPerView={1}
                     centeredSlides
                     navigation={{
-                        nextEl: ".swiper-button-next",
-                        prevEl: ".swiper-button-prev",
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
                     }}
                     loop
                     autoplay={{ delay: 5000, disableOnInteraction: false }}
@@ -112,107 +86,94 @@ export default function HeroSection() {
                     onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
                     className="w-full"
                 >
-                    {slides.map(
-                        ({ id, title, subtitle, image, categoria, buttonText = "Explorar Colección" }, index) => (
-                            <SwiperSlide key={id}>
-                                <div className="relative h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] overflow-hidden">
+                    {slides.map(({ id, title, subtitle, image, categoria, buttonText = "Explorar Colección" }, index) => (
+                        <SwiperSlide key={id}>
+                            <div className="relative h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] overflow-hidden">
+                                {/* Fondo con gradiente usando tus colores */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary/20 to-background z-0"></div>
 
-                                    {/* fondo gradiente */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary/20 to-background z-0" />
+                                {/* Imagen de fondo con overlay */}
+                                <div
+                                    className="absolute inset-0 z-0 bg-cover bg-center opacity-20"
+                                    style={{ backgroundImage: `url(${image})` }}
+                                ></div>
 
-                                    {/* imagen fondo optimizada */}
-                                    <img
-                                        src={getOptimizedImage(image, 1200)}
-                                        alt={`${title} background`}
-                                        className="absolute inset-0 z-0 w-full h-full object-cover opacity-20"
-                                        fetchPriority={index === 0 ? "high" : "low"}
-                                        loading={index === 0 ? "eager" : "lazy"}
-                                        decoding="async"
-                                        width={1200}
-                                        height={560}
-                                    />
+                                {/* Contenido principal */}
+                                <div className="relative z-10 h-full flex items-center">
+                                    <div className="container mx-auto px-6 md:px-12 lg:px-24">
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                                            {/* Texto */}
+                                            <div className="text-left space-y-4 md:space-y-6">
+                                                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                                                    <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
+                                                        {title}
+                                                    </span>
+                                                </h1>
 
-                                    {/* contenido */}
-                                    <div className="relative z-10 h-full flex items-center">
-                                        <div className="container mx-auto px-6 md:px-12 lg:px-24">
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                                                <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-light max-w-xl">
+                                                    {subtitle}
+                                                </p>
 
-                                                {/* texto */}
-                                                <div className="text-left space-y-4 md:space-y-6">
-                                                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                                                        <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
-                                                            {title}
-                                                        </span>
-                                                    </h1>
+                                                <div className="pt-4">
+                                                    <button
+                                                        onClick={() => navigate("/productos")}
+                                                        className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground font-semibold rounded-full overflow-hidden transition-all duration-300 
+                                                        border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
+                                                    >
+                                                        {/* Texto y Icono */}
+                                                        <span className="relative z-10">{buttonText}</span>
+                                                        <ChevronRight className="relative z-10 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
 
-                                                    <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-light max-w-xl">
-                                                        {subtitle}
-                                                    </p>
+                                                        {/* Efecto de brillo celeste interno al hacer hover */}
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                                                    <div className="pt-4">
-                                                        <button
-                                                            onClick={() => navigate("/productos")}
-                                                            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground font-semibold rounded-full overflow-hidden transition-all duration-300 border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
-                                                        >
-                                                            <span className="relative z-10">
-                                                                {buttonText}
-                                                            </span>
-
-                                                            <ChevronRight className="relative z-10 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-
-                                                            <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                                        </button>
-                                                    </div>
+                                                        {/* Overlay original para mantener consistencia */}
+                                                        <div className="absolute inset-0 bg-accent/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0"></div>
+                                                    </button>
                                                 </div>
+                                            </div>
 
-                                                {/* imagen principal */}
-                                                <div className="relative hidden lg:block">
-                                                    <div className="relative">
-                                                        <div className="absolute -inset-4 bg-gradient-to-r from-accent/10 to-accent/5 blur-3xl rounded-full" />
-
-                                                        <img
-                                                            src={getOptimizedImage(image, 800)}
-                                                            alt={title}
-                                                            className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl transform transition-transform duration-700 hover:scale-105"
-                                                            fetchPriority={index === 0 ? "high" : "low"}
-                                                            loading={index === 0 ? "eager" : "lazy"}
-                                                            decoding="async"
-                                                            width={800}
-                                                            height={800}
-                                                        />
-
-                                                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-r from-accent/20 to-transparent rounded-full blur-2xl" />
-                                                    </div>
+                                            {/* Imagen principal */}
+                                            <div className="relative hidden lg:block">
+                                                <div className="relative">
+                                                    <div className="absolute -inset-4 bg-gradient-to-r from-accent/10 to-accent/5 blur-3xl rounded-full"></div>
+                                                    <img
+                                                        src={image}
+                                                        alt={title}
+                                                        className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl transform transition-transform duration-700 hover:scale-105"
+                                                    />
+                                                    {/* Efecto de brillo */}
+                                                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-r from-accent/20 to-transparent rounded-full blur-2xl"></div>
                                                 </div>
-
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* indicadores */}
-                                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-                                        <div className="flex items-center gap-2">
-                                            {slides.map((_, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    onClick={() => {
-                                                        const swiper =
-                                                            document.querySelector(".swiper")?.swiper;
-                                                        if (swiper) swiper.slideToLoop(idx);
-                                                    }}
-                                                    className={`w-2 h-2 rounded-full transition-all duration-300 ${activeIndex === idx
-                                                            ? "bg-accent scale-125"
-                                                            : "bg-muted hover:bg-accent/50"
-                                                        }`}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-
                                 </div>
-                            </SwiperSlide>
-                        )
-                    )}
+
+                                {/* Navegación personalizada - SOLO PUNTOS */}
+                                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+                                    <div className="flex items-center gap-2">
+                                        {slides.map((_, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => {
+                                                    const swiper = document.querySelector('.swiper')?.swiper;
+                                                    if (swiper) {
+                                                        swiper.slideToLoop(idx);
+                                                    }
+                                                }}
+                                                className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${activeIndex === idx
+                                                    ? 'bg-accent scale-125'
+                                                    : 'bg-muted hover:bg-accent/50'
+                                                    }`}
+                                                aria-label={`Ir al slide ${idx + 1}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </SwiperSlide>
+                    ))}
                 </Swiper>
             </div>
         </div>
