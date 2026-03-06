@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 
 /**
- * ✅ Componente de imagen lazy loading
- * Carga imágenes solo cuando están visibles en pantalla
- * Reduce significativamente el tiempo de carga inicial
+ * ✅ Componente LazyImage mejorado para Lighthouse
+ * 
+ * CAMBIOS:
+ * - fetchPriority para imágenes críticas
+ * - decoding="async" para no bloquear
+ * - width/height explícitos para evitar CLS
+ * - Intersection Observer para lazy loading
  */
 export default function LazyImage({
     src,
@@ -12,13 +16,20 @@ export default function LazyImage({
     placeholder = '/placeholder.svg',
     width,
     height,
-    objectFit = 'cover'
+    objectFit = 'cover',
+    priority = false, // ✅ NUEVO: marcar como crítica
+    loading = 'lazy',
 }) {
-    const [imageSrc, setImageSrc] = useState(placeholder);
+    const [imageSrc, setImageSrc] = useState(priority ? src : placeholder);
     const [isLoading, setIsLoading] = useState(true);
     const imgRef = useRef(null);
 
     useEffect(() => {
+        if (priority) {
+            setIsLoading(false);
+            return;
+        }
+
         // ✅ Usar Intersection Observer para lazy loading
         const observer = new IntersectionObserver(
             entries => {
@@ -43,7 +54,7 @@ export default function LazyImage({
                 observer.unobserve(imgRef.current);
             }
         };
-    }, [src]);
+    }, [src, priority]);
 
     return (
         <img
@@ -52,6 +63,11 @@ export default function LazyImage({
             alt={alt}
             className={`${className} ${isLoading ? 'animate-pulse bg-gray-200' : ''}`}
             onLoad={() => setIsLoading(false)}
+            // ✅ CAMBIOS PARA LIGHTHOUSE
+            fetchPriority={priority ? 'high' : 'low'}
+            loading={priority ? 'eager' : loading}
+            decoding="async"
+            // ✅ Dimensiones explícitas para evitar CLS
             width={width}
             height={height}
             style={{

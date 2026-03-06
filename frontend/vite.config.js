@@ -1,41 +1,66 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // ✅ Optimizar compilación de JSX
+      jsxRuntime: 'automatic',
+    })
+  ],
   build: {
-    // ✅ Code splitting aggressive
+    // ✅ Code splitting más agresivo
     rollupOptions: {
       output: {
         manualChunks: {
           'vendor': ['react', 'react-dom', 'react-router-dom'],
           'ui': ['lucide-react', 'swiper'],
           'utils': ['axios'],
-        }
+        },
+        // ✅ Comprimir nombres de chunks
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
       }
     },
-    // ✅ Optimizaciones
+    // ✅ Minificación agresiva
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
+        passes: 2, // ✅ Múltiples pases de compresión
+      },
+      mangle: true,
+      format: {
+        comments: false,
       }
     },
-    // ✅ Chunk size mínimo
-    chunkSizeWarningLimit: 600,
-    // ✅ Reporta compresión
-    reportCompressedSize: false,
-    // ✅ Sourcemaps solo en dev
-    sourcemap: false
+    // ✅ Optimizaciones generales
+    cssMinify: true,
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 500,
+    reportCompressedSize: true,
+    sourcemap: false,
+    // ✅ Polyfills para navegadores modernos
+    target: 'es2020',
   },
-  // ✅ Optimizar dependencias
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'axios', 'lucide-react', 'swiper']
+    // ✅ Pre-bundlear dependencias pesadas
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'axios',
+      'lucide-react',
+      'swiper'
+    ],
+    esbuildOptions: {
+      target: 'es2020',
+    }
   },
-  // ✅ Performance hints
   server: {
-    preTransformRequests: true
-  }
+    preTransformRequests: true,
+    // ✅ Compresión de respuestas
+    middlewareMode: false,
+  },
 })

@@ -18,12 +18,10 @@ export default function HeroSection() {
             try {
                 setLoading(true);
                 const { data } = await api.get("/hero-images/public");
-                // Solo mostrar los primeros 3 slides
                 const firstThreeSlides = Array.isArray(data) ? data.slice(0, 3) : data;
                 setSlides(firstThreeSlides);
             } catch (error) {
                 console.error("Error cargando hero:", error);
-                // Slides de respaldo elegantes
                 setSlides([
                     {
                         id: "1",
@@ -70,7 +68,14 @@ export default function HeroSection() {
 
     return (
         <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
-            <div className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border">
+            {/* ✅ content-visibility para optimizar renderizado */}
+            <div
+                className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border"
+                style={{
+                    contentVisibility: 'auto',
+                    containIntrinsicSize: '100% 560px',
+                }}
+            >
                 <Swiper
                     modules={[Navigation, Autoplay]}
                     spaceBetween={0}
@@ -89,14 +94,25 @@ export default function HeroSection() {
                     {slides.map(({ id, title, subtitle, image, categoria, buttonText = "Explorar Colección" }, index) => (
                         <SwiperSlide key={id}>
                             <div className="relative h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] overflow-hidden">
-                                {/* Fondo con gradiente usando tus colores */}
+                                {/* Fondo con gradiente */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary/20 to-background z-0"></div>
 
-                                {/* Imagen de fondo con overlay */}
-                                <div
-                                    className="absolute inset-0 z-0 bg-cover bg-center opacity-20"
-                                    style={{ backgroundImage: `url(${image})` }}
-                                ></div>
+                                {/* ✅ CAMBIO 1: Usar img en lugar de div backgroundImage para mejor performance */}
+                                {/* Imagen de fondo */}
+                                <img
+                                    src={image}
+                                    alt={`${title} background`}
+                                    className="absolute inset-0 z-0 w-full h-full object-cover opacity-20"
+                                    // ✅ fetchpriority para la primera imagen
+                                    fetchPriority={index === 0 ? "high" : "low"}
+                                    // ✅ Lazy load para slides que no son el primero
+                                    loading={index === 0 ? "eager" : "lazy"}
+                                    // ✅ Decoding async no bloquea renderizado
+                                    decoding="async"
+                                    // ✅ Dimensiones para evitar CLS
+                                    width={1800}
+                                    height={560}
+                                />
 
                                 {/* Contenido principal */}
                                 <div className="relative z-10 h-full flex items-center">
@@ -120,14 +136,9 @@ export default function HeroSection() {
                                                         className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground font-semibold rounded-full overflow-hidden transition-all duration-300 
                                                         border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
                                                     >
-                                                        {/* Texto y Icono */}
                                                         <span className="relative z-10">{buttonText}</span>
                                                         <ChevronRight className="relative z-10 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-
-                                                        {/* Efecto de brillo celeste interno al hacer hover */}
                                                         <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-                                                        {/* Overlay original para mantener consistencia */}
                                                         <div className="absolute inset-0 bg-accent/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0"></div>
                                                     </button>
                                                 </div>
@@ -137,12 +148,18 @@ export default function HeroSection() {
                                             <div className="relative hidden lg:block">
                                                 <div className="relative">
                                                     <div className="absolute -inset-4 bg-gradient-to-r from-accent/10 to-accent/5 blur-3xl rounded-full"></div>
+                                                    {/* ✅ CAMBIO 2: Agregar fetchpriority y decoding a imagen visible */}
                                                     <img
                                                         src={image}
                                                         alt={title}
                                                         className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl transform transition-transform duration-700 hover:scale-105"
+                                                        fetchPriority={index === 0 ? "high" : "low"}
+                                                        loading={index === 0 ? "eager" : "lazy"}
+                                                        decoding="async"
+                                                        // ✅ Dimensiones explícitas
+                                                        width={800}
+                                                        height={800}
                                                     />
-                                                    {/* Efecto de brillo */}
                                                     <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-r from-accent/20 to-transparent rounded-full blur-2xl"></div>
                                                 </div>
                                             </div>
@@ -150,7 +167,7 @@ export default function HeroSection() {
                                     </div>
                                 </div>
 
-                                {/* Navegación personalizada - SOLO PUNTOS */}
+                                {/* Navegación - SOLO PUNTOS */}
                                 <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
                                     <div className="flex items-center gap-2">
                                         {slides.map((_, idx) => (

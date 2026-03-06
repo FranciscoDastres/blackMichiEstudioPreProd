@@ -101,7 +101,14 @@ function PopularProducts() {
   }
 
   return (
-    <section className="w-full max-w-7xl mx-auto mt-4 mb-4 px-4 sm:px-6 lg:px-8 bg-grid rounded-xl">
+    <section
+      className="w-full max-w-7xl mx-auto mt-4 mb-4 px-4 sm:px-6 lg:px-8 bg-grid rounded-xl"
+      // ✅ Optimizar renderizado
+      style={{
+        contentVisibility: 'auto',
+        containIntrinsicSize: '100% 600px',
+      }}
+    >
       {/* Header y Filtros */}
       <div className="mb-10">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
@@ -144,7 +151,7 @@ function PopularProducts() {
           className="popular-products-container flex gap-6 pb-6 overflow-x-auto scrollbar-hide px-2"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {visibleProducts.map((product) => {
+          {visibleProducts.map((product, productIndex) => {
             const outOfStock = isStockExceeded(product);
             const primaryImage = product.imagen_principal;
             const additionalImages = product.imagenes_adicionales || [];
@@ -188,7 +195,14 @@ function PopularProducts() {
                     sizes="(max-width: 640px) 300px, 600px"
                     alt={product.titulo}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
+                    // ✅ CAMBIOS PARA LIGHTHOUSE
+                    // Las primeras 2 imágenes son críticas, el resto lazy
+                    loading={productIndex < 2 ? "eager" : "lazy"}
+                    fetchPriority={productIndex < 2 ? "high" : "low"}
+                    decoding="async"
+                    // ✅ Dimensiones explícitas
+                    width={300}
+                    height={400}
                   />
                   {/* ✅ Cargar imagen hover SOLO en hover */}
                   {additionalImages.length > 0 && (
@@ -202,6 +216,8 @@ function PopularProducts() {
                           e.target.removeAttribute('data-src');
                         }
                       }}
+                      // ✅ No cargar hasta hover
+                      decoding="async"
                     />
                   )}
                   {product.descuento && (
