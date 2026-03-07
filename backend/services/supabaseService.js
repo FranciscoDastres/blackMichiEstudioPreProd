@@ -1,5 +1,3 @@
-// backend/services/supabaseService.js
-
 const { createClient } = require("@supabase/supabase-js");
 const sharp = require("sharp");
 
@@ -9,135 +7,215 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_KEY
 );
 
-/**
- * Sanitizar nombres de carpeta
- */
-const sanitize = (text) => {
+const BUCKET = process.env.SUPABASE_BUCKET || "BlackMichiEstudio";
+
+/*
+-------------------------------------------------------
+SANITIZE TEXT (soporta acentos)
+-------------------------------------------------------
+*/
+const sanitize = (text = "") => {
     return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .replace(/\s+/g, "-")
-        .replace(/[^\w\-]+/g, "");
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-");
 };
 
-/**
- * Subir imagen a Supabase
- */
-exports.uploadImage = async (
-    fileBuffer,
-    bucket = "BlackMichiEstudio",
-    folder = "uploads"
-) => {
+
+/*
+-------------------------------------------------------
+OPTIMIZACIÓN DE IMÁGENES
+-------------------------------------------------------
+*/
+
+const imageSizes = {
+    thumb: 300,
+    card: 600,
+    full: 1000
+};
+
+const optimizeImage = async (buffer, width) => {
+    return sharp(buffer)
+        .rotate()
+        .resize({
+            width,
+            withoutEnlargement: true
+        })
+        .webp({
+            quality: 72,
+            effort: 5
+        })
+        .toBuffer();
+};
+
+
+/*
+-------------------------------------------------------
+SUBIR ARCHIVO A SUPABASE
+-------------------------------------------------------
+*/
+
+const uploadFile = async (buffer, path) => {
+
+    const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, buffer, {
+            contentType: "image/webp",
+            cacheControl: "31536000",
+            upsert: true
+        });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    const { data } = supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(path);
+
+    return data.publicUrl;
+};
+
+
+/*
+-------------------------------------------------------
+UPLOAD MULTI SIZE (thumb / card / full)
+-------------------------------------------------------
+*/
+
+const uploadResponsiveImage = async (buffer, baseFolder, baseName) => {
+
+    const uploads = {};
+
+    await Promise.all(
+        Object.entries(imageSizes).map(async ([sizeName, width]) => {
+
+            const optimized = await optimizeImage(buffer, width);
+
+            const path = `${baseFolder}/${baseName}-${sizeName}.webp`;
+
+            const url = await uploadFile(optimized, path);
+
+            uploads[sizeName] = url;
+
+        })
+    );
+
+    return uploads;
+};
+
+
+/*
+-------------------------------------------------------
+PRODUCT IMAGES
+-------------------------------------------------------
+*/
+
+exports.uploadProductImage = async (fileBuffer, productName) => {
 
     try {
 
-        // Convertir imagen a WebP optimizado
-        const processedBuffer = await sharp(fileBuffer)
-            .rotate()
-            .resize({
-                width: 1200,
-                withoutEnlargement: true
-            })
-            .webp({
-                quality: 70,
-                effort: 4
-            })
-            .toBuffer();
+        const folder = `productos/${sanitize(productName)}`;
+        const baseName = Date.now().toString();
 
-        // Nombre único
-        const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.webp`;
-
-        const filePath = `${folder}/${filename}`;
-
-        const { error } = await supabase.storage
-            .from(bucket)
-            .upload(filePath, processedBuffer, {
-                contentType: "image/webp",
-                cacheControl: "31536000",
-                upsert: false
-            });
-
-        if (error) {
-            throw new Error(error.message);
-        }
-
-        const { data } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(filePath);
+        const images = await uploadResponsiveImage(
+            fileBuffer,
+            folder,
+            baseName
+        );
 
         return {
-            publicUrl: data.publicUrl,
-            path: filePath,
-            filename
+            folder,
+            images
         };
 
     } catch (error) {
 
-        console.error("❌ Error subiendo imagen:", error);
+        console.error("❌ Error uploadProductImage:", error);
         throw error;
 
     }
 };
 
 
+/*
+-------------------------------------------------------
+HERO IMAGE
+-------------------------------------------------------
+*/
 
-/**
- * HERO IMAGES
- */
 exports.uploadHeroImage = async (fileBuffer, section) => {
 
-    const folder = `hero/${sanitize(section)}`;
+    try {
 
-    return exports.uploadImage(
-        fileBuffer,
-        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
-        folder
-    );
+        const folder = `hero/${sanitize(section)}`;
+        const baseName = "hero";
 
+        const optimized = await optimizeImage(fileBuffer, 1600);
+
+        const path = `${folder}/${baseName}.webp`;
+
+        const url = await uploadFile(optimized, path);
+
+        return {
+            url,
+            path
+        };
+
+    } catch (error) {
+
+        console.error("❌ Error uploadHeroImage:", error);
+        throw error;
+
+    }
 };
 
 
+/*
+-------------------------------------------------------
+LOGO
+-------------------------------------------------------
+*/
 
-/**
- * PRODUCT IMAGES
- */
-exports.uploadProductImage = async (fileBuffer, productName) => {
-
-    const folder = `productos/${sanitize(productName)}`;
-
-    return exports.uploadImage(
-        fileBuffer,
-        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
-        folder
-    );
-
-};
-
-
-
-/**
- * LOGO
- */
 exports.uploadLogo = async (fileBuffer) => {
 
-    return exports.uploadImage(
-        fileBuffer,
-        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
-        "logo"
-    );
+    try {
 
+        const optimized = await optimizeImage(fileBuffer, 500);
+
+        const path = `logo/logo.webp`;
+
+        const url = await uploadFile(optimized, path);
+
+        return {
+            url,
+            path
+        };
+
+    } catch (error) {
+
+        console.error("❌ Error uploadLogo:", error);
+        throw error;
+
+    }
 };
 
 
+/*
+-------------------------------------------------------
+DELETE FILE
+-------------------------------------------------------
+*/
 
-/**
- * Eliminar archivo
- */
-exports.deleteFile = async (filePath, bucket = "BlackMichiEstudio") => {
+exports.deleteFile = async (filePath) => {
 
     try {
 
         const { error } = await supabase.storage
-            .from(bucket)
+            .from(BUCKET)
             .remove([filePath]);
 
         if (error) {
@@ -152,20 +230,21 @@ exports.deleteFile = async (filePath, bucket = "BlackMichiEstudio") => {
         throw error;
 
     }
-
 };
 
 
+/*
+-------------------------------------------------------
+LIST FILES
+-------------------------------------------------------
+*/
 
-/**
- * Listar archivos
- */
-exports.listFiles = async (folder, bucket = "BlackMichiEstudio") => {
+exports.listFiles = async (folder) => {
 
     try {
 
         const { data, error } = await supabase.storage
-            .from(bucket)
+            .from(BUCKET)
             .list(folder);
 
         if (error) {
@@ -180,7 +259,6 @@ exports.listFiles = async (folder, bucket = "BlackMichiEstudio") => {
         throw error;
 
     }
-
 };
 
 module.exports = exports;
