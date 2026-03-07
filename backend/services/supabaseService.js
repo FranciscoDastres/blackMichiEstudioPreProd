@@ -2,68 +2,66 @@
 
 const { createClient } = require("@supabase/supabase-js");
 const sharp = require("sharp");
-const crypto = require("crypto");
 
+// Inicializar cliente Supabase
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY
 );
 
-const BUCKET = process.env.SUPABASE_BUCKET || "BlackMichiEstudio";
-
 /**
- * Optimizar imagen antes de subir
+ * Sanitizar nombres de carpeta
  */
-async function optimizeImage(buffer) {
-    return await sharp(buffer)
-        .rotate()
-        .resize({
-            width: 1000,
-            withoutEnlargement: true
-        })
-        .webp({
-            quality: 65,
-            effort: 4
-        })
-        .toBuffer();
-}
+const sanitize = (text) => {
+    return text
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "");
+};
 
 /**
- * Generar nombre único
- */
-function generateFilename() {
-    const id = crypto.randomBytes(6).toString("hex");
-    const timestamp = Date.now();
-    return `${timestamp}-${id}.webp`;
-}
-
-/**
- * Subir imagen genérica
+ * Subir imagen a Supabase
  */
 exports.uploadImage = async (
     fileBuffer,
+    bucket = "BlackMichiEstudio",
     folder = "uploads"
 ) => {
 
     try {
 
-        const optimized = await optimizeImage(fileBuffer);
+        // Convertir imagen a WebP optimizado
+        const processedBuffer = await sharp(fileBuffer)
+            .rotate()
+            .resize({
+                width: 1200,
+                withoutEnlargement: true
+            })
+            .webp({
+                quality: 70,
+                effort: 4
+            })
+            .toBuffer();
 
-        const filename = generateFilename();
+        // Nombre único
+        const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.webp`;
+
         const filePath = `${folder}/${filename}`;
 
         const { error } = await supabase.storage
-            .from(BUCKET)
-            .upload(filePath, optimized, {
+            .from(bucket)
+            .upload(filePath, processedBuffer, {
                 contentType: "image/webp",
                 cacheControl: "31536000",
                 upsert: false
             });
 
-        if (error) throw error;
+        if (error) {
+            throw new Error(error.message);
+        }
 
         const { data } = supabase.storage
-            .from(BUCKET)
+            .from(bucket)
             .getPublicUrl(filePath);
 
         return {
@@ -80,57 +78,71 @@ exports.uploadImage = async (
     }
 };
 
+
+
 /**
- * Subir imagen hero
+ * HERO IMAGES
  */
-exports.uploadHeroImage = async (buffer) => {
+exports.uploadHeroImage = async (fileBuffer, section) => {
+
+    const folder = `hero/${sanitize(section)}`;
 
     return exports.uploadImage(
-        buffer,
-        "uploads/hero"
+        fileBuffer,
+        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
+        folder
     );
 
 };
 
+
+
 /**
- * Subir imagen de producto
+ * PRODUCT IMAGES
  */
-exports.uploadProductImage = async (
-    buffer,
-    productSlug
-) => {
+exports.uploadProductImage = async (fileBuffer, productName) => {
+
+    const folder = `productos/${sanitize(productName)}`;
 
     return exports.uploadImage(
-        buffer,
-        `uploads/productos/${productSlug}`
+        fileBuffer,
+        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
+        folder
     );
 
 };
 
+
+
 /**
- * Subir logo
+ * LOGO
  */
-exports.uploadLogo = async (buffer) => {
+exports.uploadLogo = async (fileBuffer) => {
 
     return exports.uploadImage(
-        buffer,
-        "uploads/logo"
+        fileBuffer,
+        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
+        "logo"
     );
 
 };
+
+
 
 /**
  * Eliminar archivo
  */
-exports.deleteFile = async (filePath) => {
+exports.deleteFile = async (filePath, bucket = "BlackMichiEstudio") => {
 
     try {
 
         const { error } = await supabase.storage
-            .from(BUCKET)
+            .from(bucket)
             .remove([filePath]);
 
-        if (error) throw error;
+        if (error) {
+            throw new Error(error.message);
+        }
 
         return { success: true };
 
@@ -143,18 +155,22 @@ exports.deleteFile = async (filePath) => {
 
 };
 
+
+
 /**
  * Listar archivos
  */
-exports.listFiles = async (folder) => {
+exports.listFiles = async (folder, bucket = "BlackMichiEstudio") => {
 
     try {
 
         const { data, error } = await supabase.storage
-            .from(BUCKET)
+            .from(bucket)
             .list(folder);
 
-        if (error) throw error;
+        if (error) {
+            throw new Error(error.message);
+        }
 
         return data;
 
