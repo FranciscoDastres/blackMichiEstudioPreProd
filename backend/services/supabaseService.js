@@ -21,9 +21,13 @@ exports.uploadImage = async (fileBuffer, originalFilename, bucket = "BlackMichiE
 
         // Convertir a WebP
         const processedBuffer = await sharp(fileBuffer)
-            .rotate() // Auto-rotar según EXIF
+            .rotate()
+            .resize({
+                width: 1200,
+                withoutEnlargement: true
+            })
             .webp({
-                quality: 80,
+                quality: 70,
                 effort: 4
             })
             .toBuffer();
