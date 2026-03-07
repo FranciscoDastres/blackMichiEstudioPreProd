@@ -16,6 +16,7 @@ SANITIZE TEXT (soporta acentos)
 */
 const sanitize = (text = "") => {
     return text
+        .toString()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
@@ -118,6 +119,15 @@ exports.uploadProductImage = async (fileBuffer, productName) => {
 
     try {
 
+        // VALIDACIONES
+        if (!fileBuffer) {
+            throw new Error("No se recibió imagen");
+        }
+
+        if (!productName) {
+            productName = "producto";
+        }
+
         const folder = `productos/${sanitize(productName)}`;
         const baseName = Date.now().toString();
 
@@ -138,8 +148,8 @@ exports.uploadProductImage = async (fileBuffer, productName) => {
         throw error;
 
     }
-};
 
+};
 
 /*
 -------------------------------------------------------

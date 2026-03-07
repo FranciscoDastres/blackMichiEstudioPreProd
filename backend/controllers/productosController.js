@@ -35,24 +35,22 @@ exports.createProduct = async (req, res) => {
 
       const main = await supabaseService.uploadProductImage(
         req.files[0].buffer,
-        req.files[0].originalname,
         productSlug
       );
 
-      imagenPrincipal = main.publicUrl;
+      imagenPrincipal = main.images.card;
 
       if (req.files.length > 1) {
         const uploads = await Promise.all(
           req.files.slice(1).map(file =>
             supabaseService.uploadProductImage(
               file.buffer,
-              file.originalname,
               productSlug
             )
           )
         );
 
-        imagenesAdicionales = uploads.map(u => u.publicUrl);
+        imagenesAdicionales = uploads.map(u => u.images.card);
       }
     }
 
