@@ -128,7 +128,7 @@ exports.uploadProductImage = async (fileBuffer, productName) => {
             productName = "producto";
         }
 
-        const folder = `upload/productos/${sanitize(productName)}`;
+        const folder = `uploads/productos/${sanitize(productName)}`;
         const baseName = Date.now().toString();
 
         const images = await uploadResponsiveImage(
