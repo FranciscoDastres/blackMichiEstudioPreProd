@@ -1,27 +1,48 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 
 /**
- * ✅ Componente LazyImage mejorado para Lighthouse
- * 
- * CAMBIOS:
+ * Optimiza automáticamente imágenes de Supabase
+ * - Reduce tamaño
+ * - Reduce calidad
+ * - Usa CDN transformation
+ */
+const optimizeSupabaseImage = (url, width = 400, quality = 70) => {
+    if (!url) return url;
+
+    if (url.includes("supabase.co")) {
+        const separator = url.includes("?") ? "&" : "?";
+        return `${url}${separator}width=${width}&quality=${quality}`;
+    }
+
+    return url;
+};
+
+/**
+ * LazyImage optimizado para Lighthouse
+ *
+ * Features:
+ * - IntersectionObserver lazy loading
  * - fetchPriority para imágenes críticas
- * - decoding="async" para no bloquear
- * - width/height explícitos para evitar CLS
- * - Intersection Observer para lazy loading
+ * - decoding async
+ * - evita CLS con width/height
+ * - optimización automática Supabase
  */
 export default function LazyImage({
     src,
     alt,
-    className = '',
-    placeholder = '/placeholder.svg',
-    width,
+    className = "",
+    placeholder = "/placeholder.svg",
+    width = 400,
     height,
-    objectFit = 'cover',
-    priority = false, // ✅ NUEVO: marcar como crítica
-    loading = 'lazy',
+    objectFit = "cover",
+    priority = false,
+    loading = "lazy",
 }) {
-    const [imageSrc, setImageSrc] = useState(priority ? src : placeholder);
+    const optimizedSrc = optimizeSupabaseImage(src, width);
+
+    const [imageSrc, setImageSrc] = useState(priority ? optimizedSrc : placeholder);
     const [isLoading, setIsLoading] = useState(true);
+
     const imgRef = useRef(null);
 
     useEffect(() => {
@@ -30,18 +51,17 @@ export default function LazyImage({
             return;
         }
 
-        // ✅ Usar Intersection Observer para lazy loading
         const observer = new IntersectionObserver(
-            entries => {
-                entries.forEach(entry => {
+            (entries) => {
+                entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        setImageSrc(src);
+                        setImageSrc(optimizedSrc);
                         observer.unobserve(entry.target);
                     }
                 });
             },
             {
-                rootMargin: '50px' // Cargar 50px antes de aparecer
+                rootMargin: "50px",
             }
         );
 
@@ -54,25 +74,23 @@ export default function LazyImage({
                 observer.unobserve(imgRef.current);
             }
         };
-    }, [src, priority]);
+    }, [optimizedSrc, priority]);
 
     return (
         <img
             ref={imgRef}
             src={imageSrc}
             alt={alt}
-            className={`${className} ${isLoading ? 'animate-pulse bg-gray-200' : ''}`}
+            className={`${className} ${isLoading ? "animate-pulse bg-gray-200" : ""}`}
             onLoad={() => setIsLoading(false)}
-            // ✅ CAMBIOS PARA LIGHTHOUSE
-            fetchPriority={priority ? 'high' : 'low'}
-            loading={priority ? 'eager' : loading}
+            fetchPriority={priority ? "high" : "low"}
+            loading={priority ? "eager" : loading}
             decoding="async"
-            // ✅ Dimensiones explícitas para evitar CLS
             width={width}
             height={height}
             style={{
                 objectFit,
-                ...(isLoading && { backgroundColor: '#e5e7eb' })
+                ...(isLoading && { backgroundColor: "#e5e7eb" }),
             }}
         />
     );
