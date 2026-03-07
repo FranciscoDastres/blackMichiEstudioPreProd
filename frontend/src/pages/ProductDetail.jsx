@@ -1,5 +1,5 @@
 // ProductDetail.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import RelatedProducts from "../components/RelatedProducts/RelatedProducts";
 import api from "../services/api";
@@ -274,6 +274,9 @@ export default function ProductDetail() {
                   <img
                     src={mainImage}
                     alt={product.titulo || "Producto"}
+                    width="800"
+                    height="800"
+                    loading="eager"
                     className={`w-full h-full object-contain transition-transform duration-300 ${isZoomed ? 'scale-150' : ''}`}
                     style={{
                       transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
@@ -303,10 +306,10 @@ export default function ProductDetail() {
                         <img
                           src={img}
                           alt={`${product.titulo} ${index + 1}`}
+                          width="160"
+                          height="160"
+                          loading="lazy"
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "/placeholder.svg";
-                          }}
                         />
                       </button>
                     ))}
@@ -731,7 +734,9 @@ export default function ProductDetail() {
                 Ver todos →
               </Link>
             </div>
-            <RelatedProducts category={product.categoria_nombre} />
+            <div className="min-h-[400px]">
+              <RelatedProducts category={product.categoria_nombre} />
+            </div>
           </div>
         )}
       </div>

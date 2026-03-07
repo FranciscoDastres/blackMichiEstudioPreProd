@@ -370,7 +370,7 @@ function ProductList() {
           <main>
             {currentProducts.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 auto-rows-fr">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                   {currentProducts.map((product) => {
                     const outOfStock = isStockExceeded(product);
                     const primaryImage = product.imagen_principal;
@@ -392,6 +392,10 @@ function ProductList() {
                             <img
                               src={getImageUrl(primaryImage)}
                               alt={product.titulo || "Producto"}
+                              width="500"
+                              height="500"
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                               onError={(e) => {
                                 e.target.src = "/placeholder.svg";
@@ -401,11 +405,12 @@ function ProductList() {
                             {additionalImages.length > 0 && (
                               <img
                                 src={getImageUrl(additionalImages[0])}
+                                width="500"
+                                height="500"
+                                loading="lazy"
+                                decoding="async"
                                 alt={`${product.titulo} (vista alternativa)`}
                                 className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                onError={(e) => {
-                                  e.target.src = "/placeholder.svg";
-                                }}
                               />
                             )}
                           </div>
