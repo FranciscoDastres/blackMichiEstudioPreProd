@@ -126,7 +126,7 @@ exports.uploadHeroImage = async (req, res) => {
         console.log(`📝 Base de datos actualizada para ${section}`);
 
         // Eliminar imagen anterior de Supabase si existía
-        if (oldImage && oldImage.includes("supabaseusercontent.com")) {
+        if (oldImage && oldImage.includes("supabase.co")) {
             try {
                 // Extraer la ruta del archivo de la URL
                 const urlParts = oldImage.split("/object/public/BlackMichiEstudio/");
@@ -189,7 +189,7 @@ exports.deleteHeroImage = async (req, res) => {
         );
 
         // Eliminar de Supabase
-        if (imageUrl && imageUrl.includes("supabaseusercontent.com")) {
+        if (imageUrl && imageUrl.includes("supabase.co")) {
             try {
                 const urlParts = imageUrl.split("/object/public/BlackMichiEstudio/");
                 if (urlParts[1]) {

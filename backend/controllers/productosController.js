@@ -2,6 +2,17 @@
 const pool = require("../lib/db");
 const supabaseService = require("../services/supabaseService");
 
+if (oldImage && oldImage.includes("supabaseusercontent.com")) {
+  try {
+    const urlParts = oldImage.split("/object/public/BlackMichiEstudio/");
+    if (urlParts[1]) {
+      await supabaseService.deleteFile(urlParts[1]);
+    }
+  } catch (deleteError) {
+    console.warn("⚠️ No se pudo eliminar imagen anterior:", deleteError.message);
+  }
+}
+
 // ✅ CACHÉ EN MEMORIA (5 minutos)
 const cache = {
   allProducts: null,
@@ -156,7 +167,7 @@ exports.updateProduct = async (req, res) => {
     if (req.files && req.files.length > 0) {
       try {
         // Eliminar imágenes antiguas de Supabase
-        if (imagenPrincipal && imagenPrincipal.includes("supabaseusercontent.com")) {
+        if (imagenPrincipal && imagenPrincipal.includes("supabase.co")) {
           try {
             const urlParts = imagenPrincipal.split("/object/public/BlackMichiEstudio/");
             if (urlParts[1]) {
@@ -169,7 +180,7 @@ exports.updateProduct = async (req, res) => {
 
         if (imagenesAdicionales && imagenesAdicionales.length > 0) {
           for (const oldUrl of imagenesAdicionales) {
-            if (oldUrl.includes("supabaseusercontent.com")) {
+            if (oldUrl.includes("supabase.co")) {
               try {
                 const urlParts = oldUrl.split("/object/public/BlackMichiEstudio/");
                 if (urlParts[1]) {
@@ -329,7 +340,7 @@ exports.deleteProduct = async (req, res) => {
     // ✅ HARD DELETE - Eliminar completamente
 
     // Eliminar imágenes de Supabase
-    if (imagen_principal && imagen_principal.includes("supabaseusercontent.com")) {
+    if (imagen_principal && imagen_principal.includes("supabase.co")) {
       try {
         const urlParts = imagen_principal.split("/object/public/BlackMichiEstudio/");
         if (urlParts[1]) {
@@ -342,7 +353,7 @@ exports.deleteProduct = async (req, res) => {
 
     if (imagenes_adicionales && imagenes_adicionales.length > 0) {
       for (const imageUrl of imagenes_adicionales) {
-        if (imageUrl.includes("supabaseusercontent.com")) {
+        if (imageUrl.includes("supabase.co")) {
           try {
             const urlParts = imageUrl.split("/object/public/BlackMichiEstudio/");
             if (urlParts[1]) {
