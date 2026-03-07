@@ -1,162 +1,170 @@
 // backend/services/supabaseService.js
+
 const { createClient } = require("@supabase/supabase-js");
 const sharp = require("sharp");
+const crypto = require("crypto");
 
-// Inicializar cliente Supabase
 const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY // ⚠️ IMPORTANTE: Usar SERVICE KEY en backend
+    process.env.SUPABASE_SERVICE_KEY
 );
 
+const BUCKET = process.env.SUPABASE_BUCKET || "BlackMichiEstudio";
+
 /**
- * Subir imagen a Supabase Storage
- * @param {Buffer} fileBuffer - Contenido del archivo
- * @param {String} originalFilename - Nombre original del archivo
- * @param {String} bucket - Nombre del bucket (ej: 'BlackMichiEstudio')
- * @param {String} folder - Carpeta dentro del bucket (ej: 'hero', 'productos')
- * @returns {Promise<Object>} URL pública del archivo
+ * Optimizar imagen antes de subir
  */
-exports.uploadImage = async (fileBuffer, originalFilename, bucket = "BlackMichiEstudio", folder = "uploads") => {
+async function optimizeImage(buffer) {
+    return await sharp(buffer)
+        .rotate()
+        .resize({
+            width: 1000,
+            withoutEnlargement: true
+        })
+        .webp({
+            quality: 65,
+            effort: 4
+        })
+        .toBuffer();
+}
+
+/**
+ * Generar nombre único
+ */
+function generateFilename() {
+    const id = crypto.randomBytes(6).toString("hex");
+    const timestamp = Date.now();
+    return `${timestamp}-${id}.webp`;
+}
+
+/**
+ * Subir imagen genérica
+ */
+exports.uploadImage = async (
+    fileBuffer,
+    folder = "uploads"
+) => {
+
     try {
 
-        // Convertir a WebP
-        const processedBuffer = await sharp(fileBuffer)
-            .rotate()
-            .resize({
-                width: 1200,
-                withoutEnlargement: true
-            })
-            .webp({
-                quality: 70,
-                effort: 4
-            })
-            .toBuffer();
+        const optimized = await optimizeImage(fileBuffer);
 
-        // Generar nombre único
-        const timestamp = Date.now();
-        const randomStr = Math.random().toString(36).substring(7);
-        const filename = `${timestamp}-${randomStr}.webp`;
-
-        // Ruta completa en Supabase
+        const filename = generateFilename();
         const filePath = `${folder}/${filename}`;
 
-        // Subir a Supabase Storage
-        const { data, error } = await supabase.storage
-            .from(bucket)
-            .upload(filePath, processedBuffer, {
+        const { error } = await supabase.storage
+            .from(BUCKET)
+            .upload(filePath, optimized, {
                 contentType: "image/webp",
-                cacheControl: "31536000", // 🔥 CACHE 1 AÑO (OPTIMIZACIÓN IMPORTANTE)
-                upsert: false,
+                cacheControl: "31536000",
+                upsert: false
             });
 
-        if (error) {
-            throw new Error(`Error Supabase: ${error.message}`);
-        }
+        if (error) throw error;
 
-        // Obtener URL pública
-        const urlResult = supabase.storage
-            .from(bucket)
+        const { data } = supabase.storage
+            .from(BUCKET)
             .getPublicUrl(filePath);
 
-        if (!urlResult || !urlResult.data) {
-            throw new Error("No se pudo obtener URL pública de Supabase");
-        }
-
         return {
-            publicUrl: urlResult.data.publicUrl || urlResult.publicUrl,
+            publicUrl: data.publicUrl,
             path: filePath,
-            filename: filename
+            filename
         };
 
     } catch (error) {
-        console.error("❌ Error subiendo a Supabase:", error);
+
+        console.error("❌ Error subiendo imagen:", error);
         throw error;
+
     }
 };
 
-
 /**
- * Subir imagen hero específica
+ * Subir imagen hero
  */
-exports.uploadHeroImage = async (fileBuffer, originalFilename, section) => {
+exports.uploadHeroImage = async (buffer) => {
+
     return exports.uploadImage(
-        fileBuffer,
-        originalFilename,
-        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
+        buffer,
         "uploads/hero"
     );
-};
 
+};
 
 /**
  * Subir imagen de producto
  */
-exports.uploadProductImage = async (fileBuffer, originalFilename, productId) => {
-    return exports.uploadImage(
-        fileBuffer,
-        originalFilename,
-        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
-        `uploads/productos/${productId}`
-    );
-};
+exports.uploadProductImage = async (
+    buffer,
+    productSlug
+) => {
 
+    return exports.uploadImage(
+        buffer,
+        `uploads/productos/${productSlug}`
+    );
+
+};
 
 /**
  * Subir logo
  */
-exports.uploadLogo = async (fileBuffer, originalFilename) => {
+exports.uploadLogo = async (buffer) => {
+
     return exports.uploadImage(
-        fileBuffer,
-        originalFilename,
-        process.env.SUPABASE_BUCKET || "BlackMichiEstudio",
+        buffer,
         "uploads/logo"
     );
+
 };
 
-
 /**
- * Eliminar archivo de Supabase
+ * Eliminar archivo
  */
-exports.deleteFile = async (filePath, bucket = "BlackMichiEstudio") => {
+exports.deleteFile = async (filePath) => {
+
     try {
 
         const { error } = await supabase.storage
-            .from(bucket)
+            .from(BUCKET)
             .remove([filePath]);
 
-        if (error) {
-            throw new Error(`Error eliminando: ${error.message}`);
-        }
+        if (error) throw error;
 
         return { success: true };
 
     } catch (error) {
+
         console.error("❌ Error eliminando archivo:", error);
         throw error;
+
     }
+
 };
 
-
 /**
- * Listar archivos en una carpeta
+ * Listar archivos
  */
-exports.listFiles = async (folder, bucket = "BlackMichiEstudio") => {
+exports.listFiles = async (folder) => {
+
     try {
 
         const { data, error } = await supabase.storage
-            .from(bucket)
+            .from(BUCKET)
             .list(folder);
 
-        if (error) {
-            throw new Error(`Error listando: ${error.message}`);
-        }
+        if (error) throw error;
 
         return data;
 
     } catch (error) {
+
         console.error("❌ Error listando archivos:", error);
         throw error;
+
     }
+
 };
 
 module.exports = exports;
