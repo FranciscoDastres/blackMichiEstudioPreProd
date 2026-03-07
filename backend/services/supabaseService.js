@@ -161,7 +161,7 @@ exports.uploadHeroImage = async (fileBuffer, section) => {
 
     try {
 
-        const folder = `hero/${sanitize(section)}`;
+        const folder = `uploads/hero/${sanitize(section)}`
         const baseName = "hero";
 
         const optimized = await optimizeImage(fileBuffer, 1600);

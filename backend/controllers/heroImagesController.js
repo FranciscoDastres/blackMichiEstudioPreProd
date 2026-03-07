@@ -94,11 +94,10 @@ exports.uploadHeroImage = async (req, res) => {
         // Subir a Supabase
         const uploadResult = await supabaseService.uploadHeroImage(
             req.file.buffer,
-            req.file.originalname,
             section
         );
 
-        console.log(`✅ Subido a Supabase: ${uploadResult.publicUrl}`);
+        console.log(`✅ Subido a Supabase: ${uploadResult.url}`);
 
         // Obtener imagen antigua para eliminarla
         const oldImageResult = await pool.query(
@@ -120,7 +119,7 @@ exports.uploadHeroImage = async (req, res) => {
                 button_text = $5, 
                 categoria = $6, 
                 updated_at = NOW()`,
-            [section, uploadResult.publicUrl, title, subtitle, buttonText, categoria]
+            [section, uploadResult.url, title, subtitle, buttonText, categoria]
         );
 
         console.log(`📝 Base de datos actualizada para ${section}`);
@@ -143,7 +142,7 @@ exports.uploadHeroImage = async (req, res) => {
             ok: true,
             message: `✅ ${section} actualizado correctamente`,
             data: {
-                imageUrl: uploadResult.publicUrl,
+                imageUrl: uploadResult.url,
                 title,
                 subtitle,
                 buttonText,
