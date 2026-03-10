@@ -1,97 +1,65 @@
 import { useState, useEffect, useRef } from "react";
 
-/**
- * Optimiza automáticamente imágenes de Supabase
- * - Reduce tamaño
- * - Reduce calidad
- * - Usa CDN transformation
- */
-const optimizeSupabaseImage = (url, width = 400, quality = 70) => {
-    if (!url) return url;
+let observer;
 
-    if (url.includes("supabase.co")) {
-        const separator = url.includes("?") ? "&" : "?";
-        return `${url}${separator}width=${width}&quality=${quality}`;
+function getObserver() {
+    if (!observer) {
+        observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        observer.unobserve(img);
+                    }
+                });
+            },
+            {
+                rootMargin: "100px",
+            }
+        );
     }
 
-    return url;
-};
+    return observer;
+}
 
-/**
- * LazyImage optimizado para Lighthouse
- *
- * Features:
- * - IntersectionObserver lazy loading
- * - fetchPriority para imágenes críticas
- * - decoding async
- * - evita CLS con width/height
- * - optimización automática Supabase
- */
 export default function LazyImage({
     src,
     alt,
     className = "",
     placeholder = "/placeholder.svg",
-    width = 400,
+    width,
     height,
-    objectFit = "cover",
     priority = false,
-    loading = "lazy",
 }) {
-    const optimizedSrc = optimizeSupabaseImage(src, width);
-
-    const [imageSrc, setImageSrc] = useState(priority ? optimizedSrc : placeholder);
-    const [isLoading, setIsLoading] = useState(true);
-
     const imgRef = useRef(null);
+    const [imageSrc, setImageSrc] = useState(priority ? src : placeholder);
 
     useEffect(() => {
-        if (priority) {
-            setIsLoading(false);
-            return;
-        }
+        if (priority) return;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setImageSrc(optimizedSrc);
-                        observer.unobserve(entry.target);
-                    }
-                });
-            },
-            {
-                rootMargin: "50px",
-            }
-        );
+        const img = imgRef.current;
 
-        if (imgRef.current) {
-            observer.observe(imgRef.current);
-        }
+        if (!img) return;
 
-        return () => {
-            if (imgRef.current) {
-                observer.unobserve(imgRef.current);
-            }
-        };
-    }, [optimizedSrc, priority]);
+        img.dataset.src = src;
+
+        const obs = getObserver();
+        obs.observe(img);
+
+        return () => obs.unobserve(img);
+    }, [src, priority]);
 
     return (
         <img
             ref={imgRef}
             src={imageSrc}
             alt={alt}
-            className={`${className} ${isLoading ? "animate-pulse bg-gray-200" : ""}`}
-            onLoad={() => setIsLoading(false)}
-            fetchPriority={priority ? "high" : "low"}
-            loading={priority ? "eager" : loading}
-            decoding="async"
             width={width}
             height={height}
-            style={{
-                objectFit,
-                ...(isLoading && { backgroundColor: "#e5e7eb" }),
-            }}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            className={className}
         />
     );
 }
