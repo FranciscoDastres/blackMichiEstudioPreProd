@@ -10,9 +10,10 @@ function Layout({ children }) {
 
   return (
     <div className="min-h-screen font-sans bg-background">
-      {/* Banner superior */}
-      {!isLogin && <TopBanner />}
-      {/* Header principal */}
+      <div className="min-h-[40px]">
+        {!isLogin && <TopBanner />}
+      </div>
+
       {!isLogin && <Header />}
       {/* Contenido principal */}
       <main className="bg-background transition-colors duration-200">
