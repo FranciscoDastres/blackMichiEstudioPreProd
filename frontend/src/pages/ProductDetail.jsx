@@ -20,7 +20,7 @@ import {
   User,
   MessageSquare,
 } from "lucide-react";
-
+import { getImageUrl } from "../utils/getImageUrl";
 function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,20 +35,6 @@ function useAuth() {
   }, []);
 
   return { user, loading, isLoggedIn: !!localStorage.getItem("token") };
-}
-
-// ✅ Función segura para convertir imágenes a webp
-function getImageUrl(imagePath) {
-  if (!imagePath) return "/placeholder.svg";
-
-  // Si es URL completa, devolverla
-  if (imagePath.startsWith('http')) return imagePath;
-
-  const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
-  const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  const webpPath = cleanPath.replace(/\.(jpg|jpeg|png|gif)$/i, '.webp');
-
-  return `${baseURL}${webpPath}`;
 }
 
 export default function ProductDetail() {

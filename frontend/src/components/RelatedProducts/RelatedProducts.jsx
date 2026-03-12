@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ShoppingCart, Star, ChevronRight, ChevronLeft } from "lucide-react";
-
+import { getImageUrl } from "../../utils/getImageUrl";
 const formatTitle = (text) => {
   if (!text) return "";
   return text
@@ -56,26 +56,6 @@ function RelatedProducts({ category = "vasos3d" }) {
 
   // ✅ Si no hay productos, no renderizar nada
   if (loading || !products.length) return null;
-
-  // ✅ Función segura para obtener URLs de imágenes con transformación Supabase
-  const getImageUrl = (imagePath, width = 600, height = 800) => {
-    if (!imagePath) return "/placeholder.svg";
-
-    // Si ya es URL completa
-    if (imagePath.startsWith('http')) {
-      // ✅ Si es Supabase, agregar transformación
-      if (imagePath.includes('supabase.co')) {
-        return `${imagePath}?width=${width}&height=${height}&quality=80`;
-      }
-      return imagePath;
-    }
-
-    const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
-    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    const webpPath = cleanPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-
-    return `${baseURL}${webpPath}?width=${width}&height=${height}&quality=80`;
-  };
 
   return (
     <section className="w-full max-w-6xl mx-auto mt-16 mb-20 px-4 sm:px-6">

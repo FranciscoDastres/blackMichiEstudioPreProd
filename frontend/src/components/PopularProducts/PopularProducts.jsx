@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { ChevronRight, ChevronLeft, ShoppingCart, Star, Zap } from "lucide-react";
+import { getImageUrl } from "../../utils/getImageUrl";
 
 const formatTitle = (text) => {
   if (!text) return "";
@@ -150,18 +151,6 @@ function PopularProducts() {
             const avgRating = product.promedio_calificacion
               ? Math.round(parseFloat(product.promedio_calificacion))
               : 0;
-
-            // ✅ Función para obtener URL de imagen
-            const getImageUrl = (imagePath) => {
-              if (!imagePath) return "/placeholder.svg";
-              if (imagePath.startsWith('http')) return imagePath;
-
-              const baseURL = api.defaults.baseURL?.replace('/api', '') || '';
-              const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-              const webpPath = cleanPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-
-              return `${baseURL}${webpPath}`;
-            };
 
             return (
               <article

@@ -4,17 +4,7 @@ import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import LazyImage from "../components/LazyImage/LazyImage";
-
-function getImageUrl(imagePath) {
-  if (!imagePath) return "/placeholder.svg";
-  if (imagePath.startsWith("http")) return imagePath;
-
-  const baseURL = api.defaults.baseURL?.replace("/api", "") || "";
-  const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
-  const webpPath = cleanPath.replace(/\.(jpg|jpeg|png|gif)$/i, ".webp");
-
-  return `${baseURL}${webpPath}`;
-}
+import { getImageUrl } from "../utils/getImageUrl";
 
 function ProductList() {
   const [searchParams] = useSearchParams();
