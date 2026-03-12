@@ -252,16 +252,20 @@ function Header() {
                 </div>
 
                 <div className="flex space-x-4 xl:space-x-6 overflow-x-auto scrollbar-hide">
-                  {categories.map((category) => (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryClick(category.id, category.nombre)}
-                      className="text-foreground transition-colors duration-200 whitespace-nowrap font-semibold relative capitalize group px-3 py-1.5 rounded-lg hover:text-primary active:outline-none focus:outline-none overflow-hidden"
-                    >
-                      <span className="relative z-10">{capitalize(category.nombre)}</span>
-                      <span className="pointer-events-none absolute left-1/2 top-1/2 w-0 h-0 rounded-full bg-primary/30 opacity-0 group-active:opacity-100 group-active:w-[220%] group-active:h-[400%] group-active:transition-all group-active:duration-400 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"></span>
-                    </button>
-                  ))}
+                  {loading
+                    ? Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="w-20 h-6 bg-muted animate-pulse rounded"></div>
+                    ))
+                    : categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryClick(category.id, category.nombre)}
+                        className="text-foreground transition-colors duration-200 whitespace-nowrap font-semibold relative capitalize group px-3 py-1.5 rounded-lg hover:text-primary active:outline-none focus:outline-none overflow-hidden"
+                      >
+                        <span className="relative z-10">{capitalize(category.nombre)}</span>
+                        <span className="pointer-events-none absolute left-1/2 top-1/2 w-0 h-0 rounded-full bg-primary/30 opacity-0 group-active:opacity-100 group-active:w-[220%] group-active:h-[400%] group-active:transition-all group-active:duration-400 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"></span>
+                      </button>
+                    ))}
                 </div>
               </div>
               <div className="flex items-center space-x-3 text-base text-muted">
