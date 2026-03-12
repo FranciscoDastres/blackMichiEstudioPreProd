@@ -75,15 +75,14 @@ function CategoryCards() {
 
     return (
         <div className="w-full flex justify-center mt-4">
-            <div className="flex gap-4 overflow-x-scroll pb-2 scrollbar-hide min-h-[120px]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-[900px] w-full">
                 {shownCategories.map((cat) => (
                     <button
                         key={cat.id}
                         type="button"
                         onClick={() => handleCategoryClick(cat.id, cat.nombre)}
-                        className="flex flex-col items-center justify-center bg-background rounded-xl shadow-sm hover:shadow-md transition px-6 py-4 flex-shrink-0 cursor-pointer hover:bg-muted/20"
-                        style={{ width: 130, height: 120 }}
-                        aria-label={`Ver productos en ${cat.nombre}`}
+                        className="flex flex-col items-center justify-center bg-background rounded-xl shadow-sm hover:shadow-md transition px-6 py-4 cursor-pointer hover:bg-muted/20"
+                        style={{ height: 120 }}
                     >
                         <span className="text-3xl mb-2 text-foreground">
                             📦
