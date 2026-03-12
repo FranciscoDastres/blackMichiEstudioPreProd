@@ -1,3 +1,4 @@
+// SecondaryHeroSection.jsx
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import { useState, useEffect } from 'react';
@@ -149,8 +150,8 @@ export default function SecondaryHeroSection() {
                   <div className="relative w-full h-full overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/90 z-0"></div>
                     <img
-                      src={image}
-                      alt=""
+                      src={imageUrl}
+                      alt={slide.title}
                       fetchpriority="high"
                       className="absolute inset-0 w-full h-full object-cover opacity-20"
                     />
