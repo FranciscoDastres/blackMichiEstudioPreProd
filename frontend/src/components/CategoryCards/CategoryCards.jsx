@@ -75,18 +75,19 @@ function CategoryCards() {
 
     return (
         <div className="w-full mt-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-[900px] mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-[900px] mx-auto justify-items-center">
                 {shownCategories.map((cat) => (
                     <button
                         key={cat.id}
                         type="button"
                         onClick={() => handleCategoryClick(cat.id, cat.nombre)}
                         className="flex flex-col items-center justify-center bg-background rounded-xl shadow-sm hover:shadow-md transition px-6 py-4 cursor-pointer hover:bg-muted/20"
-                        style={{ height: 120 }}
+                        style={{ height: 120, width: 130 }}
                     >
                         <span className="text-3xl mb-2 text-foreground">
                             📦
                         </span>
+
                         <span className="text-xs font-medium text-foreground text-center line-clamp-2">
                             {cat.nombre || "Categoría"}
                         </span>
