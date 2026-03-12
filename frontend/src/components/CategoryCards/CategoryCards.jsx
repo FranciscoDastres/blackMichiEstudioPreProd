@@ -52,7 +52,15 @@ function CategoryCards() {
     if (loading) {
         return (
             <div className="w-full flex justify-center mt-4">
-                <div className="text-muted">Cargando categorías...</div>
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide min-h-[120px]">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                            key={i}
+                            className="bg-secondary/20 border border-border rounded-xl animate-pulse flex-shrink-0"
+                            style={{ width: 130, height: 120 }}
+                        />
+                    ))}
+                </div>
             </div>
         );
     }
