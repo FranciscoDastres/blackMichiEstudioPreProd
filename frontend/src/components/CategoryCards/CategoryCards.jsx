@@ -74,8 +74,8 @@ function CategoryCards() {
     }
 
     return (
-        <div className="w-full flex justify-center mt-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-[900px] w-full">
+        <div className="w-full mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-[900px] mx-auto">
                 {shownCategories.map((cat) => (
                     <button
                         key={cat.id}
