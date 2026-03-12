@@ -110,10 +110,13 @@ export default function SecondaryHeroSection() {
 
   if (loading) {
     return (
-      <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-12">
-        <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[380px]">
-          <div className="lg:col-span-2 bg-secondary/20 border border-border rounded-3xl overflow-hidden animate-pulse h-[380px]"></div>
-          <div className="bg-secondary/20 border border-border rounded-3xl overflow-hidden animate-pulse h-[380px]"></div>
+      <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
+        <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
+
+          <div className="lg:col-span-2 h-[380px] rounded-3xl border border-border bg-secondary/20 animate-pulse"></div>
+
+          <div className="h-[380px] rounded-3xl border border-border bg-secondary/20 animate-pulse"></div>
+
         </div>
       </div>
     );
