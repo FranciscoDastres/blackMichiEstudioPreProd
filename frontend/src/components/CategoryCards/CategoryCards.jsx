@@ -67,7 +67,7 @@ function CategoryCards() {
 
     return (
         <div className="w-full flex justify-center mt-4">
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide min-h-[120px]">
                 {shownCategories.map((cat) => (
                     <button
                         key={cat.id}
