@@ -52,7 +52,7 @@ function CategoryCards() {
     if (loading) {
         return (
             <div className="w-full flex justify-center mt-4">
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide min-h-[120px]">
+                <div className="flex gap-4 overflow-x-scroll pb-2 scrollbar-hide min-h-[120px]">
                     {Array.from({ length: 6 }).map((_, i) => (
                         <div
                             key={i}
@@ -75,7 +75,7 @@ function CategoryCards() {
 
     return (
         <div className="w-full flex justify-center mt-4">
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide min-h-[120px]">
+            <div className="flex gap-4 overflow-x-scroll pb-2 scrollbar-hide min-h-[120px]">
                 {shownCategories.map((cat) => (
                     <button
                         key={cat.id}

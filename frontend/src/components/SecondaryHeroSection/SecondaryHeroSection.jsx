@@ -115,7 +115,7 @@ export default function SecondaryHeroSection() {
 
           <div className="lg:col-span-2 h-[380px] rounded-3xl border border-border bg-secondary/20 animate-pulse"></div>
 
-          <div className="h-[380px] rounded-3xl border border-border bg-secondary/20 animate-pulse"></div>
+          <div className="h-[380px] rounded-3xl border border-border bg-secondary/20 opacity-70"></div>
 
         </div>
       </div>
