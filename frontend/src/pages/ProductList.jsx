@@ -199,6 +199,7 @@ function ProductList() {
                     alt={product.titulo}
                     width={300}
                     height={300}
+                    sizes="(max-width: 768px) 50vw, 300px"
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
 
@@ -208,6 +209,7 @@ function ProductList() {
                       alt={`${product.titulo} alternativa`}
                       width={300}
                       height={300}
+                      sizes="(max-width: 768px) 50vw, 300px"
                       className="hover-image w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     />
                   )}

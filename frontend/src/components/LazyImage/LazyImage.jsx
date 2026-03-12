@@ -23,10 +23,8 @@ function getObserver() {
             }
         );
     }
-
     return observer;
 }
-
 export default function LazyImage({
     src,
     alt,
@@ -35,10 +33,11 @@ export default function LazyImage({
     width,
     height,
     priority = false,
+    sizes,
+    srcSet
 }) {
     const imgRef = useRef(null);
     const [imageSrc, setImageSrc] = useState(priority ? src : placeholder);
-
     useEffect(() => {
         if (priority) return;
 
@@ -55,24 +54,23 @@ export default function LazyImage({
                 }
             });
         };
-
         const localObserver = new IntersectionObserver(handleIntersect, {
             rootMargin: "300px",
         });
-
         localObserver.observe(img);
-
         return () => localObserver.disconnect();
     }, [src, priority]);
-
     return (
         <img
             ref={imgRef}
             src={imageSrc}
+            srcSet={srcSet}
+            sizes={sizes}
             alt={alt}
             width={width}
             height={height}
             loading={priority ? "eager" : "lazy"}
+            fetchpriority={priority ? "high" : "auto"}
             decoding="async"
             className={className}
         />
