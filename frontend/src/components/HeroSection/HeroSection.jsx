@@ -1,3 +1,4 @@
+// Herosection.jsx
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import { useState, useEffect } from 'react';
@@ -140,7 +141,9 @@ export default function HeroSection() {
                                                     <img
                                                         src={image}
                                                         alt={title}
-                                                        className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl transform transition-transform duration-700 hover:scale-105"
+                                                        width="800"
+                                                        height="500"
+                                                        className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl"
                                                     />
                                                     {/* Efecto de brillo */}
                                                     <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-r from-accent/20 to-transparent rounded-full blur-2xl"></div>
