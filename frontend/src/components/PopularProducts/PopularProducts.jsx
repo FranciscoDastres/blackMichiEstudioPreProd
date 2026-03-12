@@ -139,7 +139,7 @@ function PopularProducts() {
         </button>
 
         <div
-          className="popular-products-container flex gap-6 pb-6 overflow-x-auto scrollbar-hide px-2"
+          className="popular-products-container flex gap-6 pb-6 overflow-x-auto scrollbar-hide px-2 min-h-[560px]"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {visibleProducts.map((product) => {
