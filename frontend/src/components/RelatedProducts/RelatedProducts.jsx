@@ -126,9 +126,11 @@ function RelatedProducts({ category = "vasos3d" }) {
                 <div className="relative w-full h-60 bg-secondary/10 overflow-hidden">
                   <img
                     src={getImageUrl(primaryImage, 300, 400)}
+                    width="300"
+                    height="400"
                     srcSet={`
-                      ${getImageUrl(primaryImage, 300, 400)} 300w,
-                      ${getImageUrl(primaryImage, 600, 800)} 600w
+                    ${getImageUrl(primaryImage, 300, 400)} 300w,
+                    ${getImageUrl(primaryImage, 600, 800)} 600w
                     `}
                     sizes="(max-width: 640px) 300px, 600px"
                     alt={product.titulo || "Producto"}
@@ -139,7 +141,6 @@ function RelatedProducts({ category = "vasos3d" }) {
                       e.target.onerror = null;
                     }}
                   />
-
                   {additionalImages.length > 0 && (
                     <img
                       data-src={getImageUrl(additionalImages[0], 300, 400)}

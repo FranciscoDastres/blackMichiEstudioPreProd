@@ -197,8 +197,8 @@ function ProductList() {
                   <LazyImage
                     src={getImageUrl(primaryImage)}
                     alt={product.titulo}
-                    width={500}
-                    height={500}
+                    width={300}
+                    height={300}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
 
@@ -206,8 +206,8 @@ function ProductList() {
                     <LazyImage
                       src={getImageUrl(additionalImages[0])}
                       alt={`${product.titulo} alternativa`}
-                      width={500}
-                      height={500}
+                      width={300}
+                      height={300}
                       className="hover-image w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     />
                   )}
@@ -225,8 +225,8 @@ function ProductList() {
                       <svg
                         key={i}
                         className={`w-4 h-4 ${i < avgRating
-                            ? "text-yellow-500 fill-yellow-500"
-                            : "text-muted fill-muted"
+                          ? "text-yellow-500 fill-yellow-500"
+                          : "text-muted fill-muted"
                           }`}
                         viewBox="0 0 24 24"
                       >
@@ -243,8 +243,8 @@ function ProductList() {
 
                   <button
                     className={`w-full py-2 rounded-xl font-semibold text-sm mt-auto ${outOfStock
-                        ? "bg-muted text-muted cursor-not-allowed"
-                        : "border border-primary text-primary hover:bg-primary/10"
+                      ? "bg-muted text-muted cursor-not-allowed"
+                      : "border border-primary text-primary hover:bg-primary/10"
                       }`}
                     onClick={(e) => {
                       e.stopPropagation();

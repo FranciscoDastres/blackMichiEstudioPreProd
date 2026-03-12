@@ -178,6 +178,7 @@ function PopularProducts() {
                     width="300"
                     height="240"
                     loading="lazy"
+                    sizes="(max-width:768px) 100vw, 300px"
                     className="w-full h-full object-cover"
                   />
                   {additionalImages.length > 0 && (
@@ -186,6 +187,8 @@ function PopularProducts() {
                       alt="Hover view"
                       width="300"
                       height="240"
+                      loading="lazy"
+                      sizes="(max-width:768px) 100vw, 300px"
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                     />
                   )}

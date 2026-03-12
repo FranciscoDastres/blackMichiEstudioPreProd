@@ -148,10 +148,12 @@ export default function SecondaryHeroSection() {
                 <SwiperSlide key={`${slide.id}-${idx}`} className="h-full">
                   <div className="relative w-full h-full overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-background/90 z-0"></div>
-                    <div
-                      className="absolute inset-0 z-0 bg-cover bg-center opacity-30"
-                      style={{ backgroundImage: `url(${imageUrl})` }}
-                    ></div>
+                    <img
+                      src={image}
+                      alt=""
+                      fetchpriority="high"
+                      className="absolute inset-0 w-full h-full object-cover opacity-20"
+                    />
 
                     <div className="relative z-10 h-full flex items-center px-4 sm:px-6 md:px-12">
                       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-center">
