@@ -107,7 +107,7 @@ function Header() {
               </div>
             </Link>
 
-            <div className="flex items-center space-x-4 xl:space-x-8">
+            <div className="flex items-center space-x-4 xl:space-x-8 min-h-[40px]">
               {user ? (
                 <>
                   <div className="relative user-menu">
