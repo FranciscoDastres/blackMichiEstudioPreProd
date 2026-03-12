@@ -80,7 +80,7 @@ function PopularProducts() {
           </h2>
           <p className="text-lg text-muted-foreground mb-6">Los artículos más populares de nuestra colección</p>
         </div>
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-[560px]">
           <div className="relative">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
             <div className="absolute inset-0 animate-ping rounded-full border-2 border-accent/30"></div>
