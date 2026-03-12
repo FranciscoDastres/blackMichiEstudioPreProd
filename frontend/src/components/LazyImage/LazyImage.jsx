@@ -9,7 +9,11 @@ function getObserver() {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-                        img.src = img.dataset.src;
+
+                        if (img.dataset.src) {
+                            img.setAttribute("data-loaded", "true");
+                        }
+
                         observer.unobserve(img);
                     }
                 });
@@ -39,15 +43,26 @@ export default function LazyImage({
         if (priority) return;
 
         const img = imgRef.current;
-
         if (!img) return;
 
-        img.dataset.src = src;
-
         const obs = getObserver();
-        obs.observe(img);
 
-        return () => obs.unobserve(img);
+        const handleIntersect = (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    setImageSrc(src);
+                    obs.unobserve(img);
+                }
+            });
+        };
+
+        const localObserver = new IntersectionObserver(handleIntersect, {
+            rootMargin: "300px",
+        });
+
+        localObserver.observe(img);
+
+        return () => localObserver.disconnect();
     }, [src, priority]);
 
     return (
