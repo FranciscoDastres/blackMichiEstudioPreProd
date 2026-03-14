@@ -18,6 +18,14 @@ if (missingVars.length > 0) {
   console.warn('⚠️ Usando DATABASE_URL si está disponible...');
 }
 
+// ✅ VERIFICAR VARIABLES PARA FLOW Y URLS
+console.log('\n🔍 Variables de entorno críticas:');
+console.log('  ✓ BACKEND_URL:', process.env.BACKEND_URL || '❌ NO CONFIGURADO');
+console.log('  ✓ FRONTEND_URL:', process.env.FRONTEND_URL || '❌ NO CONFIGURADO');
+console.log('  ✓ FLOW_API_KEY:', process.env.FLOW_API_KEY ? '✓ Configurado' : '❌ NO CONFIGURADO');
+console.log('  ✓ FLOW_SECRET_KEY:', process.env.FLOW_SECRET_KEY ? '✓ Configurado' : '❌ NO CONFIGURADO');
+console.log('  ✓ FLOW_ENV:', process.env.FLOW_ENV || 'sandbox (default)');
+
 // ✅ CONEXIÓN A BD CON MEJOR MANEJO
 let pool;
 try {
@@ -252,8 +260,8 @@ try {
   console.log('⏳ Montando /api/featured...');
   app.use('/api/featured', featuredRoutes);
 
-  console.log('⏳ Montando /reviews...');
-  app.use('/reviews', reviewsRoutes);
+  console.log('⏳ Montando /api/reviews...');
+  app.use('/api/reviews', reviewsRoutes);
 
   console.log('⏳ Montando /api/client...');
   app.use('/api/client', requireAuth, clientRoutes);

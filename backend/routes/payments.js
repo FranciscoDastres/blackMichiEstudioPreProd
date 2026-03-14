@@ -10,6 +10,15 @@ const db = require('../lib/db');
 router.post('/flow/create', async (req, res) => {
     const { items, total, email, nombre, notas, telefono, direccion } = req.body;
 
+    // ✅ VALIDATE ENVIRONMENT VARIABLES
+    if (!process.env.BACKEND_URL) {
+        console.error('❌ BACKEND_URL environment variable is not set');
+        return res.status(500).json({
+            success: false,
+            message: 'Error de configuración del servidor. BACKEND_URL no está definido.'
+        });
+    }
+
     try {
         // Validaciones básicas
         if (!email || !email.includes('@')) {
@@ -192,13 +201,24 @@ router.post('/flow/create', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error creando pago:', error);
+        console.error('📋 Error details:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack?.split('\n')[0]
+        });
 
         let message = 'Error al procesar el pago. Por favor intenta nuevamente.';
+        let statusCode = 500;
+
         if (error.message?.includes('Flow')) {
             message = 'Error al conectar con Flow. Verifica tu conexión.';
+        } else if (error.message?.includes('BACKEND_URL')) {
+            message = 'Error de configuración del servidor.';
+        } else if (error.message?.includes('database')) {
+            message = 'Error de base de datos. Por favor intenta más tarde.';
         }
 
-        res.status(500).json({
+        res.status(statusCode).json({
             success: false,
             message,
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
