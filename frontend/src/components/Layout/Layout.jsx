@@ -1,4 +1,3 @@
-// Layout.jsx
 import TopBanner from "../TopBanner/TopBanner";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
@@ -10,16 +9,13 @@ function Layout({ children }) {
 
   return (
     <div className="min-h-screen font-sans bg-background">
-      <div className="min-h-[40px]">
+      <div className="h-[40px]">
         {!isLogin && <TopBanner />}
       </div>
-
       {!isLogin && <Header />}
-      {/* Contenido principal */}
-      <main className="bg-background transition-colors duration-200 min-h-screen">
+      <main className="bg-background min-h-screen">
         {children}
       </main>
-      {/* Footer */}
       {!isLogin && <Footer />}
     </div>
   );
