@@ -162,20 +162,18 @@ exports.uploadHeroImage = async (fileBuffer, section) => {
         const folder = `uploads/hero/${sanitize(section)}`;
         const baseName = "hero";
 
+        console.log('📁 Subiendo a path:', `${folder}/${baseName}.webp`);
+
         const optimized = await sharp(fileBuffer)
             .rotate()
-            .resize({
-                width: 800,
-                withoutEnlargement: true
-            })
-            .webp({
-                quality: 75,
-                effort: 5
-            })
+            .resize({ width: 800, withoutEnlargement: true })
+            .webp({ quality: 75, effort: 5 })
             .toBuffer();
 
         const path = `${folder}/${baseName}.webp`;
         const url = await uploadFile(optimized, path);
+
+        console.log('✅ URL generada:', url);
 
         return { url, path };
     } catch (error) {
