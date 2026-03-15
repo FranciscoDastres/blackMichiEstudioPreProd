@@ -81,6 +81,24 @@ async function deleteUser(req, res) {
   }
 }
 
+// ✅ Actualizar rol de usuario
+async function updateUserRole(req, res) {
+  try {
+    const { id } = req.params;
+    const { rol } = req.body;
+
+    if (!id || !rol) {
+      return res.status(400).json({ error: "ID y rol requeridos" });
+    }
+
+    const updatedUser = await adminService.updateUserRole(id, rol);
+    res.json({ ok: true, user: updatedUser, message: "Rol actualizado" });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ error: error.message || "Error actualizando rol" });
+  }
+}
+
 module.exports = {
   getAllProducts,
   getAllOrders,
@@ -88,4 +106,5 @@ module.exports = {
   getStats,
   getAllUsers,
   deleteUser,
+  updateUserRole,
 };
