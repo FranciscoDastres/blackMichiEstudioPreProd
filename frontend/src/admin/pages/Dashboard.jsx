@@ -1,5 +1,5 @@
-import { Link, Suspense, lazy } from "react";
 import { lazy, Suspense } from "react";
+import { Link } from "react-router-dom";
 import { Link } from "react-router-dom";
 import AdminTable from "../components/AdminTable";
 import StatusBadge from "../components/StatusBadge";
