@@ -303,3 +303,29 @@ exports.listFiles = async (folder) => {
 
     }
 };
+
+exports.uploadHeroImage = async (fileBuffer, section) => {
+    try {
+        const sanitized = section.toString().toLowerCase().replace(/\s+/g, "-");
+        const folder = `uploads/hero/${sanitized}`;
+        const baseName = "hero";
+
+        console.log('📁 Subiendo a path:', `${folder}/${baseName}.webp`);
+
+        const optimized = await sharp(fileBuffer)
+            .rotate()
+            .resize({ width: 800, withoutEnlargement: true })
+            .webp({ quality: 75, effort: 5 })
+            .toBuffer();
+
+        const path = `${folder}/${baseName}.webp`;
+        const url = await uploadFile(optimized, path);
+
+        console.log('✅ URL generada:', url);
+
+        return { url, path };
+    } catch (error) {
+        console.error("❌ Error uploadHeroImage:", error);
+        throw error;
+    }
+};
