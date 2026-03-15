@@ -3,16 +3,12 @@ export function getImageUrl(imagePath, width = null, height = null, quality = 75
 
     if (imagePath.startsWith("http")) {
         let url = imagePath;
-
-        // Convertir object/public a render/image para transformaciones
-        url = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
-
         const params = [];
         if (width) params.push(`width=${width}`);
         if (height) params.push(`height=${height}`);
         if (quality) params.push(`quality=${quality}`);
         if (params.length) {
-            url = url.split('?')[0] + '?' + params.join("&");
+            url += (url.includes('?') ? '&' : '?') + params.join("&");
         }
         return url;
     }
