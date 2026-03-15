@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Eye } from "lucide-react";
 import useProducts from "../hooks/useProducts";
 import api from '../../services/api';
-const API_URL = api.defaults.baseURL.replace('/api', '');
 
 export default function ProductTable() {
+    const API_URL = (api.defaults.baseURL || '').replace('/api', '');
     const { products, loading, deleteProduct } = useProducts();
     const navigate = useNavigate();
     const [loadingDelete, setLoadingDelete] = useState(null);
