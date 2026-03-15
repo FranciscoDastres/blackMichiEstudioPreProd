@@ -60,8 +60,7 @@ export default function HeroSection() {
     if (loading) {
         return (
             <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
-                <div className="w-full max-w-[1800px] bg-secondary/20 border border-border rounded-3xl overflow-hidden animate-pulse">
-                    <div className="h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px]"></div>
+                <div className="w-full max-w-[1800px] bg-secondary/20 border border-border rounded-3xl overflow-hidden h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px]">
                 </div>
             </div>
         );
