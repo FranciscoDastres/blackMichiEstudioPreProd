@@ -69,7 +69,7 @@ export default function HeroSection() {
 
     return (
         <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
-            <div className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border" style={{ minHeight: '300px' }}>
+            <div className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px]">
                 <Swiper
                     modules={[Navigation, Autoplay]}
                     spaceBetween={0}
@@ -80,7 +80,7 @@ export default function HeroSection() {
                     autoplay={{ delay: 5000, disableOnInteraction: false }}
                     speed={800}
                     onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
-                    className="w-full"
+                    className="w-full h-full"
                 >
                     {slides.map(({ id, title, subtitle, image_url, categoria, buttonText = "Explorar Colección" }, index) => (
                         <SwiperSlide key={id}>

@@ -113,7 +113,7 @@ export default function SecondaryHeroSection() {
   if (loading) {
     return (
       <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
-        <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
+        <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end min-h-[380px]">
 
           <div className="lg:col-span-2 h-[380px] rounded-3xl border border-border bg-secondary/20 animate-pulse"></div>
 
@@ -126,7 +126,7 @@ export default function SecondaryHeroSection() {
 
   return (
     <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
-      <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
+      <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end min-h-[380px]">
         {/* --- Carousel Principal (2/3) --- */}
         <div className="lg:col-span-2 relative rounded-3xl overflow-hidden shadow-2xl border border-border bg-gradient-to-br from-background via-secondary/5 to-background h-[380px]">
           <Swiper
