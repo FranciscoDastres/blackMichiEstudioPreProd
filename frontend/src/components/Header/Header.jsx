@@ -177,7 +177,7 @@ function Header() {
 
         {/* NAV CATEGORÍAS */}
         <div className="w-full h-[1px] bg-border mb-0 mt-1" />
-        <nav className="border-b border-border bg-background w-full overflow-x-auto scrollbar-hide">
+        <nav className="border-b border-border bg-background w-full overflow-x-auto scrollbar-hide min-h-[60px]">
           <div className="px-4 lg:px-20 xl:px-32 mx-auto w-full max-w-none">
             <div className="flex items-center justify-between py-4">
               <div className="flex items-center space-x-6 xl:space-x-10">
@@ -251,7 +251,7 @@ function Header() {
                   </div>
                 </div>
 
-                <div className="flex space-x-4 xl:space-x-6 overflow-x-auto scrollbar-hide">
+                <div className="flex space-x-4 xl:space-x-6 overflow-x-auto scrollbar-hide h-[36px] items-center">
                   {loading
                     ? Array.from({ length: 5 }).map((_, i) => (
                       <div key={i} className="w-20 h-6 bg-muted animate-pulse rounded"></div>
