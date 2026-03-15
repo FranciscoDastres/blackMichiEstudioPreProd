@@ -22,10 +22,10 @@ async function getHeroImages() {
 
         result.rows.forEach((row) => {
             images[row.section] = {
-                imageUrl: row.image_url,
+                image_url: row.image_url,
                 title: row.title,
                 subtitle: row.subtitle,
-                buttonText: row.button_text,
+                button_text: row.button_text,
                 categoria: row.categoria,
             };
         });
@@ -51,8 +51,8 @@ async function getPublicHeroImages() {
             section: row.section,
             title: row.title,
             subtitle: row.subtitle,
-            buttonText: row.button_text,
-            image: row.image_url,
+            button_text: row.button_text,
+            image_url: row.image_url,
             categoria: row.categoria,
         }));
 
@@ -123,10 +123,10 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
         }
 
         return {
-            imageUrl: uploadResult.url,
+            image_url: uploadResult.url,
             title,
             subtitle,
-            buttonText,
+            button_text: buttonText,
             categoria,
             section,
         };
