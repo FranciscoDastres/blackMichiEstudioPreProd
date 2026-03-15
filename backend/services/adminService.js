@@ -98,6 +98,28 @@ async function deleteUser(id) {
     }
 }
 
+// ✅ Actualizar rol de usuario
+async function updateUserRole(id, rol) {
+    try {
+        if (!['cliente', 'admin'].includes(rol)) {
+            throw new Error("Rol inválido. Debe ser 'cliente' o 'admin'");
+        }
+
+        const result = await pool.query(
+            `UPDATE usuarios SET rol = $1, updated_at = NOW() WHERE id = $2 RETURNING id, nombre, email, rol`,
+            [rol, id]
+        );
+
+        if (!result.rows.length) {
+            throw new Error("Usuario no encontrado");
+        }
+
+        return result.rows[0];
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
     getAllProducts,
     getAllOrders,
@@ -105,4 +127,5 @@ module.exports = {
     getStats,
     getAllUsers,
     deleteUser,
+    updateUserRole,
 };
