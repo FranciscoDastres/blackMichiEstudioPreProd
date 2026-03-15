@@ -157,30 +157,64 @@ HERO IMAGE
 -------------------------------------------------------
 */
 
-exports.uploadHeroImage = async (fileBuffer, section) => {
+async function uploadHeroImage(buffer, section, title, subtitle, buttonText, categoria) {
     try {
-        const folder = `uploads/hero/${sanitize(section)}`;
-        const baseName = "hero";
+        if (!section || !section.match(/^section[1-6]$/)) {
+            throw new Error("Sección inválida. Debe ser section1-section6");
+        }
 
-        console.log('📁 Subiendo a path:', `${folder}/${baseName}.webp`);
+        if (!title || !buffer) {
+            throw new Error("Se requieren título e imagen");
+        }
 
-        const optimized = await sharp(fileBuffer)
-            .rotate()
-            .resize({ width: 800, withoutEnlargement: true })
-            .webp({ quality: 75, effort: 5 })
-            .toBuffer();
+        // Obtener imagen antigua PRIMERO
+        const oldImageResult = await pool.query(
+            `SELECT image_url FROM hero_images WHERE section = $1`,
+            [section]
+        );
+        const oldImage = oldImageResult.rows[0]?.image_url;
 
-        const path = `${folder}/${baseName}.webp`;
-        const url = await uploadFile(optimized, path);
+        // Eliminar imagen antigua de Supabase ANTES de subir la nueva
+        if (oldImage && oldImage.includes("supabase.co")) {
+            try {
+                const urlParts = oldImage.split("/object/public/BlackMichiEstudio/");
+                if (urlParts[1]) {
+                    await supabaseService.deleteFile(urlParts[1]);
+                    console.log(`🗑️ Imagen antigua eliminada`);
+                }
+            } catch (deleteError) {
+                console.warn("⚠️ No se pudo eliminar imagen anterior:", deleteError.message);
+            }
+        }
 
-        console.log('✅ URL generada:', url);
+        // Subir nueva imagen
+        console.log(`📤 Subiendo hero image: ${section}`);
+        const uploadResult = await supabaseService.uploadHeroImage(buffer, section);
+        console.log(`✅ Subido a Supabase: ${uploadResult.url}`);
 
-        return { url, path };
+        // Actualizar BD
+        await pool.query(
+            `INSERT INTO hero_images (section, image_url, title, subtitle, button_text, categoria, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (section) 
+             DO UPDATE SET 
+                image_url = $2, title = $3, subtitle = $4, 
+                button_text = $5, categoria = $6, updated_at = NOW()`,
+            [section, uploadResult.url, title, subtitle, buttonText, categoria]
+        );
+
+        console.log(`📝 Base de datos actualizada para ${section}`);
+
+        return {
+            image_url: uploadResult.url,
+            title, subtitle,
+            button_text: buttonText,
+            categoria, section,
+        };
     } catch (error) {
-        console.error("❌ Error uploadHeroImage:", error);
         throw error;
     }
-};
+}
 
 
 /*
