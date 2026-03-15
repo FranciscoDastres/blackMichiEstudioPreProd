@@ -26,7 +26,7 @@ export default function SecondaryHeroSection() {
             id: item.id || item._id || Math.random(),
             title: item.title || item.nombre || "",
             subtitle: item.subtitle || item.descripcion || "",
-            image: item.image || item.imageUrl || item.imagen || "",
+            image: item.image_url || item.image || item.imageUrl || item.imagen || "",
             categoria: item.categoria || item.category || "",
             precio: item.precio || 0,
             precioOriginal: item.precioOriginal || item.precio_original || 0,

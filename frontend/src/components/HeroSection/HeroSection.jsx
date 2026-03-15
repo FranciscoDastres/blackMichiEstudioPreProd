@@ -88,7 +88,7 @@ export default function HeroSection() {
                     onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
                     className="w-full"
                 >
-                    {slides.map(({ id, title, subtitle, image, categoria, buttonText = "Explorar Colección" }, index) => (
+                    {slides.map(({ id, title, subtitle, image_url, categoria, buttonText = "Explorar Colección" }, index) => (
                         <SwiperSlide key={id}>
                             <div className="relative h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] overflow-hidden">
                                 {/* Fondo con gradiente usando tus colores */}
@@ -96,7 +96,7 @@ export default function HeroSection() {
 
                                 {/* Imagen de fondo con overlay - LCP Image */}
                                 <img
-                                    src={getImageUrl(image, 702, 460, 85)}
+                                    src={getImageUrl(image_url, 702, 460, 85)}
                                     alt=""
                                     className="absolute inset-0 z-0 w-full h-full object-cover opacity-20"
                                     fetchPriority={index === 0 ? "high" : "auto"}
