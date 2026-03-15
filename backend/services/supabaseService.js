@@ -303,5 +303,3 @@ exports.listFiles = async (folder) => {
 
     }
 };
-
-module.exports = exports;
