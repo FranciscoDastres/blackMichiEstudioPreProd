@@ -171,7 +171,6 @@ export default function Dashboard() {
                             </div>
                         )}
                     </div>
-
                     <div className="overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60">
                         <AdminTable columns={columns} data={lastOrders} />
                     </div>
