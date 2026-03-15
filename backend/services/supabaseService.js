@@ -158,28 +158,29 @@ HERO IMAGE
 */
 
 exports.uploadHeroImage = async (fileBuffer, section) => {
-
     try {
-
-        const folder = `uploads/hero/${sanitize(section)}`
+        const folder = `uploads/hero/${sanitize(section)}`;
         const baseName = "hero";
 
-        const optimized = await optimizeImage(fileBuffer, 1600);
+        const optimized = await sharp(fileBuffer)
+            .rotate()
+            .resize({
+                width: 800,
+                withoutEnlargement: true
+            })
+            .webp({
+                quality: 75,
+                effort: 5
+            })
+            .toBuffer();
 
         const path = `${folder}/${baseName}.webp`;
-
         const url = await uploadFile(optimized, path);
 
-        return {
-            url,
-            path
-        };
-
+        return { url, path };
     } catch (error) {
-
         console.error("❌ Error uploadHeroImage:", error);
         throw error;
-
     }
 };
 
