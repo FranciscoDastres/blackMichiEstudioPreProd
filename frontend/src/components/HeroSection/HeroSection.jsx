@@ -69,7 +69,7 @@ export default function HeroSection() {
 
     return (
         <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
-            <div className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border">
+            <div className="w-full max-w-[1800px] relative rounded-3xl overflow-hidden shadow-2xl border border-border" style={{ minHeight: '300px' }}>
                 <Swiper
                     modules={[Navigation, Autoplay]}
                     spaceBetween={0}

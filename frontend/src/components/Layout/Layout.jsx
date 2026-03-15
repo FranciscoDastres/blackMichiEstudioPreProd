@@ -16,7 +16,7 @@ function Layout({ children }) {
 
       {!isLogin && <Header />}
       {/* Contenido principal */}
-      <main className="bg-background transition-colors duration-200">
+      <main className="bg-background transition-colors duration-200 min-h-screen">
         {children}
       </main>
       {/* Footer */}
