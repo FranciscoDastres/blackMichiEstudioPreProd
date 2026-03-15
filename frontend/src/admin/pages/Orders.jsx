@@ -30,9 +30,7 @@ export default function Orders() {
                 <div className="flex flex-col">
                     <span className="font-medium">{row?.comprador_nombre}</span>
                     <span className="text-xs text-muted-foreground">
-                        {row?.direccion_envio
-                            ? `${row.direccion_envio.calle || ''}, ${row.direccion_envio.ciudad || ''}`.trim() || "Sin dirección"
-                            : "Sin dirección"}
+                        {row?.direccion_envio || "Sin dirección"}
                     </span>
                 </div>
             ),

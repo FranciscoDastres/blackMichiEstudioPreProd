@@ -30,7 +30,7 @@ export default function useOrders() {
                 id: order.id,
                 estado: String(order.estado || "pendiente").toLowerCase().trim(),
                 total: !isNaN(parseFloat(order.total)) ? parseFloat(order.total) : 0,
-                comprador_nombre: order.comprador_nombre || order.comprador_email || order.direccion_envio || "Cliente"
+                comprador_nombre: order.usuario_nombre || order.usuario_email || "Cliente"
             }));
 
             setOrders(formattedOrders);
