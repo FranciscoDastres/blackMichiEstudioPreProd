@@ -2,10 +2,10 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 
-import Home from "../pages/Home";
 import NotFound from "../components/NotFound/NotFound";
 import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
 import PrivateRoute from "./PrivateRoute";
+
 
 const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const ProductList = lazy(() => import("../pages/ProductList"));
@@ -13,6 +13,7 @@ const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
 const Checkout = lazy(() => import("../pages/Checkout"));
 const Success = lazy(() => import("../pages/Success"));
+const Home = lazy(() => import("../pages/Home"));
 
 const AdminLayout = lazy(() => import("../admin/layout/AdminLayout"));
 const AdminDashboard = lazy(() => import("../admin/pages/Dashboard"));
@@ -53,7 +54,11 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* PÚBLICAS */}
-      <Route path="/" element={<Layout><Home /></Layout>} />
+      <Route path="/" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Layout><Home /></Layout>
+        </Suspense>
+      } />
       <Route path="/productos" element={
         <Suspense fallback={<LoadingFallback />}>
           <Layout><ProductList /></Layout>
@@ -79,6 +84,7 @@ export default function AppRoutes() {
           <Register />
         </Suspense>
       } />
+
       <Route path="/success" element={<SuccessRouteWrapper />} />
       <Route path="/payment/return" element={<PaymentReceipt />} />
 
