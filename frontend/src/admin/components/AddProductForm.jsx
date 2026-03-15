@@ -15,7 +15,7 @@ export default function AddProductForm() {
 
     const [imagenes, setImagenes] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);
+    const [message, setMessage] = useState(null); // Cambio: solo guardar tipo y texto
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -61,8 +61,7 @@ export default function AddProductForm() {
             setImagenes([]);
             setMessage({
                 type: "success",
-                text: "✅ Producto creado correctamente",
-                icon: <Check className="w-5 h-5" />
+                text: "✅ Producto creado correctamente"
             });
 
             if (formRef.current) {
@@ -77,8 +76,7 @@ export default function AddProductForm() {
             console.error(error);
             setMessage({
                 type: "error",
-                text: "❌ Error al crear producto",
-                icon: <X className="w-5 h-5" />
+                text: "❌ Error al crear producto"
             });
             setTimeout(() => {
                 setMessage(null);
@@ -313,7 +311,7 @@ export default function AddProductForm() {
                         <div className="flex items-center gap-3">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${message.type === 'success' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'
                                 }`}>
-                                {message.icon}
+                                {message.type === 'success' ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
                             </div>
                             <div>
                                 <p className={`font-medium ${message.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
