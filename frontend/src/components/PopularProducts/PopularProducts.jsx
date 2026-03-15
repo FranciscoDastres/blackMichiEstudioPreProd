@@ -133,6 +133,7 @@ function PopularProducts() {
       {/* Contenedor del carousel */}
       <div className="relative">
         <button
+          aria-label="Productos siguientes"
           className="absolute -right-4 sm:-right-8 top-1/2 -translate-y-1/2 z-20 text-foreground/50 hover:text-accent transition-all duration-300 group/arrow"
           onClick={() => document.querySelector(".popular-products-container").scrollBy({ left: 400, behavior: "smooth" })}
         >
