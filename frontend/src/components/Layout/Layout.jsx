@@ -8,12 +8,12 @@ function Layout({ children }) {
   const isLogin = location.pathname === "/login";
 
   return (
-    <div className="min-h-screen font-sans bg-background">
-      <div className="h-[40px]">
+    <div className="min-h-screen font-sans bg-background flex flex-col">
+      <div className="h-[40px] shrink-0">
         {!isLogin && <TopBanner />}
       </div>
       {!isLogin && <Header />}
-      <main className="bg-background min-h-screen">
+      <main className="bg-background flex-1">
         {children}
       </main>
       {!isLogin && <Footer />}
