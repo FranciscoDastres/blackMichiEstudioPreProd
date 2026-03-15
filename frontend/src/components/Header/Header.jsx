@@ -32,13 +32,11 @@ function Header() {
         setLoading(true);
         setError(null);
         const response = await api.get("/categorias");
-        // ✅ Validar que sea un array
         const data = Array.isArray(response.data) ? response.data : [];
         setCategories(data);
       } catch (err) {
         console.error("❌ Error cargando categorías:", err);
         setError("Error al cargar categorías");
-        // ✅ Fallback con categorías por defecto
         setCategories([
           { id: 1, nombre: "Vasos 3D", descripcion: "Vasos personalizados en 3D" },
           { id: 2, nombre: "Placas Navi", descripcion: "Placas decorativas Navi" },
@@ -65,24 +63,19 @@ function Header() {
     const handleStorageChange = () => {
       console.log('🔄 Storage cambió - actualizando header');
     };
-
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('cart-cleared', handleStorageChange);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('cart-cleared', handleStorageChange);
     };
   }, []);
 
-  // ✅ ARREGLADO: Función para navegar a categoría usando ID
   const handleCategoryClick = (categoryId, categoryName) => {
-    // ✅ Usar el ID de la categoría
     navigate(`/productos?categoria=${categoryId}`);
     setSidebarOpen(false);
   };
 
-  // ✅ Función para ir a todos los productos
   const handleAllProducts = () => {
     navigate('/productos');
     setSidebarOpen(false);
@@ -112,6 +105,7 @@ function Header() {
                 <>
                   <div className="relative user-menu">
                     <button
+                      aria-label="Menú de usuario"
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
                       className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors"
                     >
@@ -142,6 +136,7 @@ function Header() {
                           </Link>
                         )}
                         <button
+                          aria-label="Cerrar sesión"
                           onClick={() => {
                             logout();
                             setUserMenuOpen(false);
@@ -163,7 +158,11 @@ function Header() {
                   <Link to="/register" className="text-foreground hover:text-primary font-medium">Registro</Link>
                 </>
               )}
-              <button aria-label="Abrir carrito de compras" className="p-2 hover:text-primary transition-colors relative" onClick={() => setCartSidebarOpen(true)}>
+              <button
+                aria-label="Abrir carrito de compras"
+                className="p-2 hover:text-primary transition-colors relative"
+                onClick={() => setCartSidebarOpen(true)}
+              >
                 <ShoppingCart className="w-6 h-6" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
@@ -183,6 +182,7 @@ function Header() {
               <div className="flex items-center space-x-6 xl:space-x-10">
                 <div className="relative">
                   <button
+                    aria-label="Abrir menú de categorías"
                     onClick={() => setSidebarOpen(true)}
                     className="flex items-center space-x-2 transition-colors duration-200 font-semibold text-foreground"
                   >
@@ -191,7 +191,6 @@ function Header() {
                     <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${sidebarOpen ? "rotate-180" : ""}`} />
                   </button>
 
-                  {/* OVERLAY CATEGORÍAS */}
                   {sidebarOpen && (
                     <div
                       className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
@@ -199,7 +198,6 @@ function Header() {
                     />
                   )}
 
-                  {/* SIDEBAR CATEGORÍAS */}
                   <div
                     className={`fixed top-0 left-0 h-full w-80 bg-background shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
                   >
@@ -215,14 +213,16 @@ function Header() {
                           <div className="text-xs text-muted">Impresiones 3D Personalizadas</div>
                         </div>
                       </div>
-                      <button onClick={() => setSidebarOpen(false)}>
+                      <button
+                        aria-label="Cerrar menú de categorías"
+                        onClick={() => setSidebarOpen(false)}
+                      >
                         <X className="w-6 h-6 text-muted" />
                       </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-6 py-4">
                       <ul className="space-y-2">
-                        {/* ✅ ARREGLADO: Botón "Todos los Productos" - Limpio sin hover especial */}
                         <li>
                           <button
                             onClick={handleAllProducts}
@@ -231,11 +231,7 @@ function Header() {
                             Todos los Productos
                           </button>
                         </li>
-
-                        {/* ✅ Separador visual */}
                         <li className="border-t border-border mt-4 pt-4"></li>
-
-                        {/* ✅ Mapear categorías */}
                         {categories.map((cat) => (
                           <li key={cat.id}>
                             <button
@@ -296,7 +292,10 @@ function Header() {
             <ShoppingCart className="w-6 h-6 text-primary" />
             <span className="font-bold text-lg text-foreground">Carrito de compras</span>
           </div>
-          <button onClick={() => setCartSidebarOpen(false)}>
+          <button
+            aria-label="Cerrar carrito"
+            onClick={() => setCartSidebarOpen(false)}
+          >
             <X className="w-6 h-6 text-muted" />
           </button>
         </div>
@@ -306,6 +305,7 @@ function Header() {
             <ShoppingCart className="w-16 h-16 text-muted opacity-30 mb-4" />
             <p className="text-muted mb-2">Tu carrito está vacío</p>
             <button
+              aria-label="Ver productos"
               onClick={() => {
                 setCartSidebarOpen(false);
                 navigate('/');
@@ -328,10 +328,10 @@ function Header() {
                       <p className="text-primary font-semibold text-sm mb-2">
                         {CLP.format(item.precio)}
                       </p>
-
                       <div className="flex items-center gap-2">
                         <div className="flex items-center border border-border rounded">
                           <button
+                            aria-label="Reducir cantidad"
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="p-1 hover:bg-muted/20 transition-colors"
                             disabled={item.quantity <= 1}
@@ -340,6 +340,7 @@ function Header() {
                           </button>
                           <span className="px-3 text-sm font-medium">{item.quantity}</span>
                           <button
+                            aria-label="Aumentar cantidad"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="p-1 hover:bg-muted/20 transition-colors"
                             disabled={item.stock && item.quantity >= item.stock}
@@ -347,8 +348,8 @@ function Header() {
                             <Plus className="w-4 h-4 text-muted" />
                           </button>
                         </div>
-
                         <button
+                          aria-label="Eliminar producto del carrito"
                           onClick={() => removeFromCart(item.id)}
                           className="p-1 hover:bg-red-50 rounded transition-colors"
                         >
@@ -356,7 +357,6 @@ function Header() {
                         </button>
                       </div>
                     </div>
-
                     <div className="text-right">
                       <p className="font-semibold text-foreground text-sm">
                         {CLP.format(item.precio * item.quantity)}
@@ -373,12 +373,17 @@ function Header() {
                 <span>{CLP.format(cartTotal)}</span>
               </div>
               <button
+                aria-label="Ir a pagar"
                 className="w-full bg-primary text-primary-foreground py-2 rounded hover:bg-primary/90 transition mb-2"
                 onClick={() => { setCartSidebarOpen(false); navigate('/checkout'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               >
                 Ir a pagar
               </button>
-              <button className="w-full text-xs text-muted underline" onClick={clearCart}>
+              <button
+                aria-label="Vaciar carrito"
+                className="w-full text-xs text-muted underline"
+                onClick={clearCart}
+              >
                 Vaciar carrito
               </button>
             </div>

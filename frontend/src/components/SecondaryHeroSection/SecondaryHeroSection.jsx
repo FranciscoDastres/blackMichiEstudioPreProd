@@ -135,7 +135,10 @@ export default function SecondaryHeroSection() {
             slidesPerView={1}
             centeredSlides
             loop
-            navigation
+            navigation={{
+              nextEl: '.secondary-swiper-next',
+              prevEl: '.secondary-swiper-prev',
+            }}
             autoplay={{ delay: 6000, disableOnInteraction: false }}
             speed={800}
             onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
@@ -226,6 +229,9 @@ export default function SecondaryHeroSection() {
               );
             })}
           </Swiper>
+          <button aria-label="Slide anterior" className="secondary-swiper-prev absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center" />
+          <button aria-label="Slide siguiente" className="secondary-swiper-next absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center" />
+
         </div>
 
         {/* --- Sidebar Promocional (1/3) --- */}
