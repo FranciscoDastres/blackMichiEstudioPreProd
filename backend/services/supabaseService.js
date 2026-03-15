@@ -175,17 +175,17 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
         const oldImage = oldImageResult.rows[0]?.image_url;
 
         // Eliminar imagen antigua de Supabase ANTES de subir la nueva
-        if (oldImage && oldImage.includes("supabase.co")) {
-            try {
-                const urlParts = oldImage.split("/object/public/BlackMichiEstudio/");
-                if (urlParts[1]) {
-                    await supabaseService.deleteFile(urlParts[1]);
-                    console.log(`🗑️ Imagen antigua eliminada`);
-                }
-            } catch (deleteError) {
-                console.warn("⚠️ No se pudo eliminar imagen anterior:", deleteError.message);
-            }
-        }
+        // if (oldImage && oldImage.includes("supabase.co")) {
+        //     try {
+        //         const urlParts = oldImage.split("/object/public/BlackMichiEstudio/");
+        //         if (urlParts[1]) {
+        //             await supabaseService.deleteFile(urlParts[1]);
+        //             console.log(`🗑️ Imagen antigua eliminada`);
+        //         }
+        //     } catch (deleteError) {
+        //         console.warn("⚠️ No se pudo eliminar imagen anterior:", deleteError.message);
+        //     }
+        // }
 
         // Subir nueva imagen
         console.log(`📤 Subiendo hero image: ${section}`);
