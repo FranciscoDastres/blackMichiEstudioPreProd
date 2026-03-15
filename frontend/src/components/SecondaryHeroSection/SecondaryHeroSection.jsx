@@ -7,6 +7,7 @@ import { MessageCircle, Tag, Palette, Sparkles, Headphones } from 'lucide-react'
 import api from "../../services/api";
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { getImageUrl } from "../../utils/getImageUrl";
 
 export default function SecondaryHeroSection() {
   const navigate = useNavigate();
@@ -141,9 +142,7 @@ export default function SecondaryHeroSection() {
             className="w-full h-full"
           >
             {slides.map((slide, idx) => {
-              const imageUrl = slide.image?.startsWith("http")
-                ? slide.image
-                : `${import.meta.env.VITE_API_URL}${slide.image}`;
+              const imageUrl = getImageUrl(slide.image, 689, 460, 80);
 
               return (
                 <SwiperSlide key={`${slide.id}-${idx}`} className="h-full">
