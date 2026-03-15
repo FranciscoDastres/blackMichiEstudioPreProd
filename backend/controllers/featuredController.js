@@ -48,7 +48,7 @@ async function removeFeaturedProduct(req, res) {
 }
 
 module.exports = {
-  getFeaturedProducts,
-  addFeaturedProduct,
-  removeFeaturedProduct,
+  getFeaturedProductos: getFeaturedProducts,
+  addFeaturedProducto: addFeaturedProduct,
+  removeFeaturedProducto: removeFeaturedProduct,
 };
