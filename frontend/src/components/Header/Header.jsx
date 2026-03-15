@@ -163,7 +163,7 @@ function Header() {
                   <Link to="/register" className="text-foreground hover:text-primary font-medium">Registro</Link>
                 </>
               )}
-              <button className="p-2 hover:text-primary transition-colors relative" onClick={() => setCartSidebarOpen(true)}>
+              <button aria-label="Abrir carrito de compras" className="p-2 hover:text-primary transition-colors relative" onClick={() => setCartSidebarOpen(true)}>
                 <ShoppingCart className="w-6 h-6" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">

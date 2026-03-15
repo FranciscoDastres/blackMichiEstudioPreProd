@@ -214,6 +214,7 @@ export default function SecondaryHeroSection() {
                         {slides.map((_, i) => (
                           <button
                             key={i}
+                            aria-label={`Ir al slide ${i + 1}`}
                             onClick={() => document.querySelector('.swiper')?.swiper.slideToLoop(i)}
                             className={`w-2 h-2 rounded-full transition-all ${activeIndex === i ? 'bg-accent' : 'bg-white/60'}`}
                           />
