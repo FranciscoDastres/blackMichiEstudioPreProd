@@ -1,6 +1,5 @@
 // hooks/useOrders.js
 import { useEffect, useState, useCallback } from "react";
-import axios from 'axios';
 import api from "../../services/api";
 
 export default function useOrders() {
