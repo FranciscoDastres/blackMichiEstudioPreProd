@@ -1,25 +1,28 @@
-//appRoutes.jsx
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 
 import Home from "../pages/Home";
+import NotFound from "../components/NotFound/NotFound";
+import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
+import PrivateRoute from "./PrivateRoute";
 
-// ✅ LAZY LOAD - Solo se cargan cuando se necesitan
 const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const ProductList = lazy(() => import("../pages/ProductList"));
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
 const Checkout = lazy(() => import("../pages/Checkout"));
 const Success = lazy(() => import("../pages/Success"));
-const AdminRoutes = lazy(() => import("../admin/admin.routes"));
+
+const AdminLayout = lazy(() => import("../admin/layout/AdminLayout"));
+const AdminDashboard = lazy(() => import("../admin/pages/Dashboard"));
+const AdminOrders = lazy(() => import("../admin/pages/Orders"));
+const AdminUsers = lazy(() => import("../admin/pages/Users"));
+const AdminProducts = lazy(() => import("../admin/pages/Products"));
+const AdminSettings = lazy(() => import("../admin/pages/Settings"));
+
 const UserRoutes = lazy(() => import("../user/user.routes"));
 
-import NotFound from "../components/NotFound/NotFound";
-import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
-import PrivateRoute from "./PrivateRoute";
-
-// ✅ Loading fallback
 function LoadingFallback() {
   return (
     <Layout>
@@ -33,11 +36,8 @@ function LoadingFallback() {
   );
 }
 
-/* ------------------ helpers ------------------ */
-
 function SuccessRouteWrapper() {
   const { state } = useLocation();
-
   return (
     <Layout>
       <Success
@@ -49,12 +49,10 @@ function SuccessRouteWrapper() {
   );
 }
 
-/* ------------------ routes ------------------ */
-
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* 🌐 PÚBLICAS */}
+      {/* PÚBLICAS */}
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/productos" element={
         <Suspense fallback={<LoadingFallback />}>
@@ -71,7 +69,6 @@ export default function AppRoutes() {
           <Layout><Checkout /></Layout>
         </Suspense>
       } />
-
       <Route path="/login" element={
         <Suspense fallback={<LoadingFallback />}>
           <Login />
@@ -83,23 +80,47 @@ export default function AppRoutes() {
         </Suspense>
       } />
       <Route path="/success" element={<SuccessRouteWrapper />} />
-
-      {/* 💳 Retorno de pago */}
       <Route path="/payment/return" element={<PaymentReceipt />} />
 
-      {/* 🔐 ADMIN */}
+      {/* ADMIN — un solo <Routes>, rutas hijas directas */}
       <Route
-        path="/admin/*"
+        path="/admin"
         element={
           <Suspense fallback={<LoadingFallback />}>
             <PrivateRoute requiredRole="admin">
-              <AdminRoutes />
+              <AdminLayout />
             </PrivateRoute>
           </Suspense>
         }
-      />
+      >
+        <Route index element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminDashboard />
+          </Suspense>
+        } />
+        <Route path="orders" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminOrders />
+          </Suspense>
+        } />
+        <Route path="users" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminUsers />
+          </Suspense>
+        } />
+        <Route path="products" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminProducts />
+          </Suspense>
+        } />
+        <Route path="settings" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminSettings />
+          </Suspense>
+        } />
+      </Route>
 
-      {/* 👤 USER / CLIENTE */}
+      {/* USER */}
       <Route
         path="/user/*"
         element={
@@ -111,7 +132,7 @@ export default function AppRoutes() {
         }
       />
 
-      {/* ❌ 404 */}
+      {/* 404 */}
       <Route path="*" element={<Layout><NotFound /></Layout>} />
     </Routes>
   );
