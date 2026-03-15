@@ -51,8 +51,8 @@ function CategoryCards() {
 
     if (loading) {
         return (
-            <div className="w-full flex justify-center mt-4">
-                <div className="flex gap-4 overflow-x-scroll pb-2 scrollbar-hide min-h-[120px]">
+            <div className="w-full mt-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-w-[900px] mx-auto justify-items-center">
                     {Array.from({ length: 6 }).map((_, i) => (
                         <div
                             key={i}
