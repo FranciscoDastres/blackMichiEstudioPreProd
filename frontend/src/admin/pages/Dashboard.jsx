@@ -67,7 +67,7 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="space-y-8 p- sm:p-6 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 min-h-screen">
+        <div className="space-y-8 p-4 sm:p-6 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 min-h-screen">
             {/* Fondo con patrón sutil */}
             <div className="absolute inset-0 opacity-5 z-0 pointer-events-none"
                 style={{
