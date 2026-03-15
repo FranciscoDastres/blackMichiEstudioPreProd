@@ -307,7 +307,7 @@ exports.listFiles = async (folder) => {
 exports.uploadHeroImage = async (fileBuffer, section) => {
     try {
         const sanitized = section.toString().toLowerCase().replace(/\s+/g, "-");
-        const folder = `uploads/hero/${sanitized}`;
+        const folder = `hero/${sanitized}`;
         const baseName = "hero";
 
         console.log('📁 Subiendo a path:', `${folder}/${baseName}.webp`);
