@@ -6,6 +6,7 @@ export default function useUsers() {
 
     useEffect(() => {
         // MOCK (luego API)
+        console.log('📋 useUsers: Usando datos MOCK (no real)');
         setTimeout(() => {
             setUsers([
                 {

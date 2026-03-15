@@ -9,6 +9,7 @@ export default function useAdminStats() {
         setLoading(true);
         try {
             const res = await api.get("/admin/stats");
+            console.log('✅ Stats cargados:', res.data);
             setStats({
                 totalSales: res.data.totalVentas || 0,
                 orders: res.data.totalPedidos || 0,
@@ -16,7 +17,8 @@ export default function useAdminStats() {
                 products: res.data.totalProductos || 0,
             });
         } catch (err) {
-            console.error("Error cargando stats:", err);
+            console.error("❌ Error cargando stats:", err.response?.status, err.response?.data);
+            setStats({});
         } finally {
             setLoading(false);
         }

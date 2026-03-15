@@ -36,7 +36,7 @@ export default function useOrders() {
             setOrders(formattedOrders);
             console.log("✅ Pedidos formateados (post-normalización):", formattedOrders);
         } catch (err) {
-            console.error("[useOrders] Error:", err);
+            console.error("[useOrders] Error:", err.response?.status, err.response?.data, err.message);
             setError(err.response?.data?.message || "Error al cargar pedidos");
             setOrders([]);
         } finally {

@@ -13,9 +13,16 @@ export default function useProducts() {
         setLoading(true);
         try {
             const { data } = await api.get("/admin/productos");
-            setProducts(data);
+            console.log('✅ Productos cargados:', data);
+            if (Array.isArray(data)) {
+                setProducts(data);
+            } else {
+                console.error('❌ Datos no son un array:', data);
+                setProducts([]);
+            }
         } catch (err) {
-            console.error("Error cargando productos:", err);
+            console.error("❌ Error cargando productos:", err.response?.status, err.response?.data);
+            setProducts([]);
         } finally {
             setLoading(false);
         }
