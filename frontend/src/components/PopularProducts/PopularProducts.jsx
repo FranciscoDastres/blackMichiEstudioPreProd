@@ -104,8 +104,8 @@ function PopularProducts() {
 
   return (
     <section className="w-full max-w-7xl mx-auto mt-4 mb-4 px-4 sm:px-6 lg:px-8 bg-grid rounded-xl">
-      {/* Header y Filtros */}
-      <div className="mb-10">
+      {/* Header y Filtros - ALTURA FIJA PARA CLS */}
+      <div className="mb-10 pt-4" style={{ minHeight: '200px', maxHeight: '220px' }}>
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
           <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
             Productos Populares
@@ -113,7 +113,7 @@ function PopularProducts() {
         </h2>
         <p className="text-lg text-muted-foreground mb-6">Los artículos más populares de nuestra colección</p>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 overflow-hidden" style={{ maxHeight: '120px' }}>
           {categoriesTabs.map((cat) => (
             <button
               key={cat || "otros"}

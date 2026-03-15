@@ -6,6 +6,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { getImageUrl } from "../../utils/getImageUrl";
 import { ChevronRight } from 'lucide-react';
 
 export default function HeroSection() {
@@ -95,13 +96,17 @@ export default function HeroSection() {
 
                                 {/* Imagen de fondo con overlay - LCP Image */}
                                 <img
-                                    src={image}
+                                    src={getImageUrl(image, 702, 460, 85)}
                                     alt=""
                                     className="absolute inset-0 z-0 w-full h-full object-cover opacity-20"
                                     fetchPriority={index === 0 ? "high" : "auto"}
                                     loading={index === 0 ? "eager" : "lazy"}
-                                    srcSet={`${image}?w=702 702w, ${image}?w=1024 1024w, ${image}?w=1440 1440w`}
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1440px"
+                                    srcSet={`
+                                        ${getImageUrl(image, 345, 230, 85)} 345w,
+                                        ${getImageUrl(image, 702, 460, 85)} 702w,
+                                        ${getImageUrl(image, 1024, 670, 85)} 1024w
+                                    `.trim().split('\n').join(' ')}
+                                    sizes="(max-width: 640px) 345px, (max-width: 1024px) 702px, 1024px"
                                     style={{ objectPosition: 'center' }}
                                     aria-hidden="true"
                                 />
@@ -146,13 +151,17 @@ export default function HeroSection() {
                                                 <div className="relative">
                                                     <div className="absolute -inset-4 bg-gradient-to-r from-accent/10 to-accent/5 blur-3xl rounded-full"></div>
                                                     <img
-                                                        src={image}
+                                                        src={getImageUrl(image, 600, 375, 85)}
                                                         alt={title}
                                                         width="800"
                                                         height="500"
                                                         fetchPriority={index === 0 ? "high" : "auto"}
                                                         loading={index === 0 ? "eager" : "lazy"}
-                                                        srcSet={`${image}?w=600 600w, ${image}?w=800 800w, ${image}?w=1000 1000w`}
+                                                        srcSet={`
+                                                            ${getImageUrl(image, 400, 250, 85)} 400w,
+                                                            ${getImageUrl(image, 600, 375, 85)} 600w,
+                                                            ${getImageUrl(image, 800, 500, 85)} 800w
+                                                        `.trim().split('\n').join(' ')}
                                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
                                                         className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl"
                                                     />
