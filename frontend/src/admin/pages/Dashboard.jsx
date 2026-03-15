@@ -8,71 +8,67 @@ import { ShoppingBag, Users, Package, DollarSign, Home, BarChart3, CreditCard } 
 
 const AddProductForm = lazy(() => import("../components/AddProductForm"));
 
-const columns = [
-    {
-        header: "Pedido",
-        accessor: "id",
-        cell: (value) => (
-            <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
-                    <span className="text-xs font-medium text-accent">#{value}</span>
-                </div>
-            </div>
-        )
-    },
-    {
-        header: "Cliente",
-        accessor: "comprador_nombre",
-        cell: (value, row) => (
-            <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">
-                    {row?.comprador_nombre || row?.comprador_email || "Cliente invitado"}
-                </span>
-            </div>
-        )
-    },
-    {
-        header: "Total",
-        accessor: "total",
-        cell: (value, row) => (
-            <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-emerald-500" />
-                <span className="font-bold text-foreground">
-                    ${Number(row?.total || 0).toLocaleString('es-CL')}
-                </span>
-            </div>
-        )
-    },
-    {
-        header: "Estado",
-        accessor: "estado",
-        cell: (value) => <StatusBadge status={value} />
-    },
-];
-
 export default function Dashboard() {
     const { stats = {}, loading: loadingStats } = useAdminStats();
     const { orders = [], loading: loadingOrders } = useOrders();
 
     const lastOrders = orders.filter(order => order != null).slice(0, 5);
 
+    const columns = [
+        {
+            header: "Pedido",
+            accessor: "id",
+            cell: (value) => (
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                        <span className="text-xs font-medium text-accent">#{value}</span>
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: "Cliente",
+            accessor: "comprador_nombre",
+            cell: (value, row) => (
+                <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-medium">
+                        {row?.comprador_nombre || row?.comprador_email || "Cliente invitado"}
+                    </span>
+                </div>
+            )
+        },
+        {
+            header: "Total",
+            accessor: "total",
+            cell: (value, row) => (
+                <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-emerald-500" />
+                    <span className="font-bold text-foreground">
+                        ${Number(row?.total || 0).toLocaleString('es-CL')}
+                    </span>
+                </div>
+            )
+        },
+        {
+            header: "Estado",
+            accessor: "estado",
+            cell: (value) => <StatusBadge status={value} />
+        },
+    ];
+
     if (loadingStats || loadingOrders) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex items-center justify-center">
-                <div className="relative">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
-                    <div className="absolute inset-0 animate-ping rounded-full border-2 border-accent/30"></div>
-                </div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
             </div>
         );
     }
 
     return (
         <div className="space-y-8 p-4 sm:p-6 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 min-h-screen">
-
             <div className="relative z-10">
-                {/* Header */}
+
                 <div className="mb-10">
                     <h1 className="text-4xl md:text-5xl font-bold mb-6">
                         <span className="bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
@@ -88,7 +84,6 @@ export default function Dashboard() {
                     </Link>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <div className="bg-gray-900/90 rounded-2xl border border-gray-800 p-6 shadow-xl">
                         <div className="flex items-center justify-between mb-6">
@@ -139,7 +134,6 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Agregar producto */}
                 <div className="bg-gray-900/80 rounded-2xl border border-gray-800 shadow-xl p-6 md:p-8 mb-8">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
@@ -157,7 +151,6 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Últimos pedidos */}
                 <div className="bg-gray-900/80 rounded-2xl border border-gray-800 shadow-xl p-6 md:p-8 mb-8">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                         <div className="flex items-center gap-3">
@@ -193,6 +186,7 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
+
             </div>
         </div>
     );
