@@ -140,8 +140,8 @@ function PopularProducts() {
         </button>
 
         <div
-          className="popular-products-container flex gap-6 pb-6 overflow-x-auto scrollbar-hide px-2 min-h-[560px]"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="popular-products-container flex gap-6 pb-6 overflow-x-auto scrollbar-hide px-2"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", height: '560px' }}
         >
           {visibleProducts.map((product) => {
             const outOfStock = isStockExceeded(product);
@@ -155,28 +155,31 @@ function PopularProducts() {
             return (
               <article
                 key={product.id}
-                className="group relative min-w-[300px] max-w-[300px] h-[550px] bg-card rounded-2xl border border-border/50 overflow-hidden cursor-pointer hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 flex flex-col"
-                // ✅ ARREGLADO: Click en el card navega a ProductDetail
+                className="group relative flex-shrink-0 min-w-[300px] max-w-[300px] w-[300px] h-[520px] bg-card rounded-2xl border border-border/50 overflow-hidden cursor-pointer hover:shadow-2xl hover:border-accent/30 transition-all duration-500 hover:-translate-y-2 flex flex-col"
                 onClick={() => navigate(`/producto/${product.id}`)}
               >
                 {/* Imagen */}
-                <div className="relative w-full h-60 min-h-[240px] bg-secondary/10 overflow-hidden">
+                <div className="relative w-full h-60 bg-secondary/10 overflow-hidden flex-shrink-0">
                   <img
-                    src={getImageUrl(primaryImage)}
+                    src={getImageUrl(primaryImage, 300, 240, 80)}
                     alt={product.titulo}
                     width="300"
                     height="240"
                     loading="lazy"
+                    decoding="async"
+                    srcSet={`${getImageUrl(primaryImage, 300, 240, 80)} 300w, ${getImageUrl(primaryImage, 600, 480, 80)} 600w`}
                     sizes="(max-width:768px) 100vw, 300px"
                     className="w-full h-full object-cover"
                   />
                   {additionalImages.length > 0 && (
                     <img
-                      src={getImageUrl(additionalImages[0])}
+                      src={getImageUrl(additionalImages[0], 300, 240, 80)}
                       alt="Hover view"
                       width="300"
                       height="240"
                       loading="lazy"
+                      decoding="async"
+                      srcSet={`${getImageUrl(additionalImages[0], 300, 240, 80)} 300w, ${getImageUrl(additionalImages[0], 600, 480, 80)} 600w`}
                       sizes="(max-width:768px) 100vw, 300px"
                       className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                     />

@@ -93,11 +93,18 @@ export default function HeroSection() {
                                 {/* Fondo con gradiente usando tus colores */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary/20 to-background z-0"></div>
 
-                                {/* Imagen de fondo con overlay */}
-                                <div
-                                    className="absolute inset-0 z-0 bg-cover bg-center opacity-20"
-                                    style={{ backgroundImage: `url(${image})` }}
-                                ></div>
+                                {/* Imagen de fondo con overlay - LCP Image */}
+                                <img
+                                    src={image}
+                                    alt=""
+                                    className="absolute inset-0 z-0 w-full h-full object-cover opacity-20"
+                                    fetchPriority={index === 0 ? "high" : "auto"}
+                                    loading={index === 0 ? "eager" : "lazy"}
+                                    srcSet={`${image}?w=702 702w, ${image}?w=1024 1024w, ${image}?w=1440 1440w`}
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1440px"
+                                    style={{ objectPosition: 'center' }}
+                                    aria-hidden="true"
+                                />
 
                                 {/* Contenido principal */}
                                 <div className="relative z-10 h-full flex items-center">
@@ -143,6 +150,10 @@ export default function HeroSection() {
                                                         alt={title}
                                                         width="800"
                                                         height="500"
+                                                        fetchPriority={index === 0 ? "high" : "auto"}
+                                                        loading={index === 0 ? "eager" : "lazy"}
+                                                        srcSet={`${image}?w=600 600w, ${image}?w=800 800w, ${image}?w=1000 1000w`}
+                                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
                                                         className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl"
                                                     />
                                                     {/* Efecto de brillo */}

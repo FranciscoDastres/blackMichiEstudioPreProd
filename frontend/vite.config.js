@@ -11,10 +11,28 @@ export default defineConfig({
     // ✅ Code splitting más agresivo
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui': ['lucide-react', 'swiper'],
-          'utils': ['axios'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules/react') && id.includes('react-dom')) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/react-router')) {
+            return 'router';
+          }
+          if (id.includes('node_modules/swiper')) {
+            return 'swiper';
+          }
+          if (id.includes('node_modules/lucide')) {
+            return 'icons';
+          }
+          if (id.includes('node_modules/axios')) {
+            return 'api';
+          }
+          if (id.includes('/admin/')) {
+            return 'admin';
+          }
+          if (id.includes('/user/')) {
+            return 'user';
+          }
         },
         // ✅ Comprimir nombres de chunks
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -27,9 +45,17 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        passes: 2, // ✅ Múltiples pases de compresión
+        passes: 3,
+        arguments: true,
+        booleans: true,
+        reduce_vars: true,
+        unused: true,
       },
-      mangle: true,
+      mangle: {
+        properties: {
+          keep_quoted: true,
+        }
+      },
       format: {
         comments: false,
       }

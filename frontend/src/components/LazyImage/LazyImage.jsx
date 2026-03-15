@@ -34,7 +34,8 @@ export default function LazyImage({
     height,
     priority = false,
     sizes,
-    srcSet
+    srcSet,
+    decoding = "async"
 }) {
     const imgRef = useRef(null);
     const [imageSrc, setImageSrc] = useState(priority ? src : placeholder);
@@ -71,7 +72,7 @@ export default function LazyImage({
             height={height}
             loading={priority ? "eager" : "lazy"}
             fetchpriority={priority ? "high" : "auto"}
-            decoding="async"
+            decoding={decoding}
             className={className}
         />
     );
