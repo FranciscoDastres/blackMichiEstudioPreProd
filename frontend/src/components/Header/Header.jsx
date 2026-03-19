@@ -90,7 +90,7 @@ function Header() {
           <div className="flex items-center justify-between py-0 sm:py-5">
             <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200">
               <img
-                src="/logoBlackMichiEstudio.png"
+                src="../public/blackmichi-logo.png"
                 alt="Black Michi Estudio logo"
                 className="h-12 w-12"
                 width="150"
