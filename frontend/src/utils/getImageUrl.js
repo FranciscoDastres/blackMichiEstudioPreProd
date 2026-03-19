@@ -1,6 +1,39 @@
+// frontend/src/utils/getImageUrl.js
+
+/**
+ * Genera una URL de imagen optimizada.
+ *
+ * - Si la URL es de Cloudinary → aplica transformaciones nativas (w_, h_, q_, f_)
+ * - Si la URL es de Supabase (imágenes viejas) → las sirve tal cual
+ * - Si es una ruta relativa → construye la URL del backend
+ */
 export function getImageUrl(imagePath, width = null, height = null, quality = 75) {
     if (!imagePath) return "/placeholder.svg";
 
+    // ── Cloudinary: transformaciones nativas ──────────────────────────────────
+    if (imagePath.includes("res.cloudinary.com")) {
+        const transforms = ["f_webp"];
+        if (width) transforms.push(`w_${width}`);
+        if (height) transforms.push(`h_${height}`);
+        if (quality) transforms.push(`q_${quality}`);
+
+        // Inserta las transformaciones justo antes de "/upload/"
+        // Ejemplo:
+        // https://res.cloudinary.com/demo/image/upload/blackmichi/productos/...
+        // →
+        // https://res.cloudinary.com/demo/image/upload/f_webp,w_300,q_75/blackmichi/productos/...
+        return imagePath.replace(
+            "/upload/",
+            `/upload/${transforms.join(",")}/`
+        );
+    }
+
+    // ── Supabase (imágenes antiguas): se sirven tal cual ─────────────────────
+    if (imagePath.includes("supabase.co")) {
+        return imagePath;
+    }
+
+    // ── URL externa genérica: añade query params ──────────────────────────────
     if (imagePath.startsWith("http")) {
         let url = imagePath;
         const params = [];
@@ -8,12 +41,14 @@ export function getImageUrl(imagePath, width = null, height = null, quality = 75
         if (height) params.push(`height=${height}`);
         if (quality) params.push(`quality=${quality}`);
         if (params.length) {
-            url += (url.includes('?') ? '&' : '?') + params.join("&");
+            url += (url.includes("?") ? "&" : "?") + params.join("&");
         }
         return url;
     }
 
-    const baseURL = import.meta.env.VITE_API_BASE_URL?.replace("/api", "") || "";
+    // ── Ruta relativa (servida desde el backend) ──────────────────────────────
+    const baseURL =
+        import.meta.env.VITE_API_BASE_URL?.replace("/api", "") || "";
     const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
     const webpPath = cleanPath.replace(/\.(jpg|jpeg|png|gif)$/i, ".webp");
     let url = `${baseURL}${webpPath}`;
