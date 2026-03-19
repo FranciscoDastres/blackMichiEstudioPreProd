@@ -65,7 +65,6 @@ async function getPublicHeroImages() {
 // ✅ Subir/actualizar hero image
 async function uploadHeroImage(buffer, section, title, subtitle, buttonText, categoria) {
     try {
-        // Validar sección
         if (!section || !section.match(/^section[1-6]$/)) {
             throw new Error("Sección inválida. Debe ser section1-section6");
         }
@@ -76,17 +75,15 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
 
         console.log(`📤 Subiendo hero image: ${section}`);
 
-        // Subir a Supabase
         const uploadResult = await cloudinaryService.uploadHeroImage(buffer, section);
 
-        console.log(`✅ Subido a Supabase: ${uploadResult.url}`);
+        console.log(`✅ Subido a Cloudinary: ${uploadResult.url}`);
 
-        // Obtener imagen antigua
+        // Obtener imagen antigua antes de reemplazar
         const oldImageResult = await pool.query(
             `SELECT image_url FROM hero_images WHERE section = $1`,
             [section]
         );
-
         const oldImage = oldImageResult.rows[0]?.image_url;
 
         // Actualizar en BD
@@ -106,19 +103,20 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
 
         console.log(`📝 Base de datos actualizada para ${section}`);
 
-        // Eliminar imagen anterior
-        if (oldImage && oldImage.includes("supabase.co")) {
+        // Eliminar imagen anterior de Cloudinary si existía
+        if (oldImage && oldImage.includes("cloudinary.com")) {
             try {
-                const urlParts = oldImage.split("/object/public/BlackMichiEstudio/");
+                const urlParts = oldImage.split("/upload/");
                 if (urlParts[1]) {
-                    await cloudinaryService.deleteFile(urlParts[1]);
-                    console.log(`🗑️ Imagen antigua eliminada`);
+                    // Quita extensión y prefijo de versión (v1234567890/)
+                    const publicId = urlParts[1]
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/^v\d+\//, "");
+                    await cloudinaryService.deleteFile(publicId);
+                    console.log(`🗑️ Imagen anterior eliminada de Cloudinary`);
                 }
             } catch (deleteError) {
-                console.warn(
-                    "⚠️ No se pudo eliminar imagen anterior:",
-                    deleteError.message
-                );
+                console.warn("⚠️ No se pudo eliminar imagen anterior:", deleteError.message);
             }
         }
 
@@ -138,17 +136,14 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
 // ✅ Eliminar hero image
 async function deleteHeroImage(section) {
     try {
-        // Validar sección
         if (!section || !section.match(/^section[1-6]$/)) {
             throw new Error("Sección inválida");
         }
 
-        // Obtener imagen
         const result = await pool.query(
             `SELECT image_url FROM hero_images WHERE section = $1`,
             [section]
         );
-
         const imageUrl = result.rows[0]?.image_url;
 
         // Eliminar de BD
@@ -157,18 +152,19 @@ async function deleteHeroImage(section) {
             [section]
         );
 
-        // Eliminar de Supabase
-        if (imageUrl && imageUrl.includes("supabase.co")) {
+        // Eliminar de Cloudinary si existe
+        if (imageUrl && imageUrl.includes("cloudinary.com")) {
             try {
-                const urlParts = imageUrl.split("/object/public/BlackMichiEstudio/");
+                const urlParts = imageUrl.split("/upload/");
                 if (urlParts[1]) {
-                    await cloudinaryService.deleteFile(urlParts[1]);
+                    const publicId = urlParts[1]
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/^v\d+\//, "");
+                    await cloudinaryService.deleteFile(publicId);
+                    console.log(`🗑️ Imagen eliminada de Cloudinary`);
                 }
             } catch (deleteError) {
-                console.warn(
-                    "⚠️ No se pudo eliminar de Supabase:",
-                    deleteError.message
-                );
+                console.warn("⚠️ No se pudo eliminar de Cloudinary:", deleteError.message);
             }
         }
 

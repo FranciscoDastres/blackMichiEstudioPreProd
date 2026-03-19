@@ -1,6 +1,6 @@
 // backend/services/productService.js
 const pool = require("../lib/db");
-const supabaseService = require("./supabaseService");
+const cloudinaryService = require("./cloudinaryService");
 
 // ===============================
 // CACHE SIMPLE (5 minutos)
@@ -26,7 +26,7 @@ async function createProduct(nombre, precio, stock, categoria, descripcion, file
         if (files?.length) {
             const productSlug = nombre.toLowerCase().replace(/\s+/g, "-");
 
-            const main = await supabaseService.uploadProductImage(
+            const main = await cloudinaryService.uploadProductImage(
                 files[0].buffer,
                 productSlug
             );
@@ -36,7 +36,7 @@ async function createProduct(nombre, precio, stock, categoria, descripcion, file
             if (files.length > 1) {
                 const uploads = await Promise.all(
                     files.slice(1).map((file) =>
-                        supabaseService.uploadProductImage(file.buffer, productSlug)
+                        cloudinaryService.uploadProductImage(file.buffer, productSlug)
                     )
                 );
 
@@ -105,7 +105,7 @@ async function updateProduct(id, titulo, precio, stock, categoria, descripcion, 
         if (files?.length) {
             const productSlug = titulo.toLowerCase().replace(/\s+/g, "-");
 
-            const main = await supabaseService.uploadProductImage(
+            const main = await cloudinaryService.uploadProductImage(
                 files[0].buffer,
                 files[0].originalname,
                 productSlug
@@ -117,7 +117,7 @@ async function updateProduct(id, titulo, precio, stock, categoria, descripcion, 
             if (files.length > 1) {
                 const uploads = await Promise.all(
                     files.slice(1).map((file) =>
-                        supabaseService.uploadProductImage(
+                        cloudinaryService.uploadProductImage(
                             file.buffer,
                             file.originalname,
                             productSlug
