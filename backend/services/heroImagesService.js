@@ -1,6 +1,6 @@
 // backend/services/heroImagesService.js
 const pool = require("../lib/db");
-const supabaseService = require("./supabaseService");
+const cloudinaryService = require("../services/cloudinaryService");
 
 // ✅ Obtener todas las hero images (Admin)
 async function getHeroImages() {
@@ -77,7 +77,7 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
         console.log(`📤 Subiendo hero image: ${section}`);
 
         // Subir a Supabase
-        const uploadResult = await supabaseService.uploadHeroImage(buffer, section);
+        const uploadResult = await cloudinaryService.uploadHeroImage(buffer, section);
 
         console.log(`✅ Subido a Supabase: ${uploadResult.url}`);
 
@@ -111,7 +111,7 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
             try {
                 const urlParts = oldImage.split("/object/public/BlackMichiEstudio/");
                 if (urlParts[1]) {
-                    await supabaseService.deleteFile(urlParts[1]);
+                    await cloudinaryService.deleteFile(urlParts[1]);
                     console.log(`🗑️ Imagen antigua eliminada`);
                 }
             } catch (deleteError) {
@@ -162,7 +162,7 @@ async function deleteHeroImage(section) {
             try {
                 const urlParts = imageUrl.split("/object/public/BlackMichiEstudio/");
                 if (urlParts[1]) {
-                    await supabaseService.deleteFile(urlParts[1]);
+                    await cloudinaryService.deleteFile(urlParts[1]);
                 }
             } catch (deleteError) {
                 console.warn(
