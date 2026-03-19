@@ -89,11 +89,13 @@ function Header() {
         <div className="w-full max-w-none mx-auto px-4 lg:px-20 xl:px-32">
           <div className="flex items-center justify-between py-0 sm:py-5">
             <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
-              </div>
+              <img
+                src="/logoBlackMichiEstudio.png"
+                alt="Black Michi Estudio logo"
+                className="h-12 w-12"
+                width="150"
+                height="150"
+              />
               <div>
                 <div className="font-bold text-xl xl:text-2xl text-foreground">Black Michi Studio</div>
                 <div className="text-sm xl:text-base text-muted">Impresiones 3D Personalizadas</div>
