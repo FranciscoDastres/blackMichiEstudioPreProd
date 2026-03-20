@@ -46,7 +46,7 @@ async function getPublicHeroImages() {
        ORDER BY section`
         );
 
-        const images = result.rows.map((row) => ({
+        return result.rows.map((row) => ({
             id: row.section.replace("section", ""),
             section: row.section,
             title: row.title,
@@ -55,8 +55,33 @@ async function getPublicHeroImages() {
             image_url: row.image_url,
             categoria: row.categoria,
         }));
+    } catch (error) {
+        throw error;
+    }
+}
 
-        return images;
+// ✅ Obtener SOLO la primera hero image (para preload LCP)
+// Respuesta mínima y rápida — solo los campos necesarios para renderizar el primer slide
+async function getFirstHeroImage() {
+    try {
+        const result = await pool.query(
+            `SELECT image_url, title, subtitle, button_text, categoria
+             FROM hero_images
+             WHERE image_url IS NOT NULL
+             ORDER BY section
+             LIMIT 1`
+        );
+
+        if (!result.rows.length) return null;
+
+        const row = result.rows[0];
+        return {
+            image_url: row.image_url,
+            title: row.title,
+            subtitle: row.subtitle,
+            button_text: row.button_text,
+            categoria: row.categoria,
+        };
     } catch (error) {
         throw error;
     }
@@ -79,14 +104,12 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
 
         console.log(`✅ Subido a Cloudinary: ${uploadResult.url}`);
 
-        // Obtener imagen antigua antes de reemplazar
         const oldImageResult = await pool.query(
             `SELECT image_url FROM hero_images WHERE section = $1`,
             [section]
         );
         const oldImage = oldImageResult.rows[0]?.image_url;
 
-        // Actualizar en BD
         await pool.query(
             `INSERT INTO hero_images (section, image_url, title, subtitle, button_text, categoria, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, NOW())
@@ -103,12 +126,10 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
 
         console.log(`📝 Base de datos actualizada para ${section}`);
 
-        // Eliminar imagen anterior de Cloudinary si existía
         if (oldImage && oldImage.includes("cloudinary.com")) {
             try {
                 const urlParts = oldImage.split("/upload/");
                 if (urlParts[1]) {
-                    // Quita extensión y prefijo de versión (v1234567890/)
                     const publicId = urlParts[1]
                         .replace(/\.[^/.]+$/, "")
                         .replace(/^v\d+\//, "");
@@ -146,13 +167,11 @@ async function deleteHeroImage(section) {
         );
         const imageUrl = result.rows[0]?.image_url;
 
-        // Eliminar de BD
         await pool.query(
             `DELETE FROM hero_images WHERE section = $1`,
             [section]
         );
 
-        // Eliminar de Cloudinary si existe
         if (imageUrl && imageUrl.includes("cloudinary.com")) {
             try {
                 const urlParts = imageUrl.split("/upload/");
@@ -177,6 +196,7 @@ async function deleteHeroImage(section) {
 module.exports = {
     getHeroImages,
     getPublicHeroImages,
+    getFirstHeroImage,
     uploadHeroImage,
     deleteHeroImage,
 };

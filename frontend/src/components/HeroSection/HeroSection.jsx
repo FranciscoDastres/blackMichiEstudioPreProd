@@ -1,4 +1,4 @@
-// Herosection.jsx
+// frontend/src/components/HeroSection/HeroSection.jsx
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import { useState, useEffect } from 'react';
@@ -9,55 +9,80 @@ import api from "../../services/api";
 import { getImageUrl } from "../../utils/getImageUrl";
 import { ChevronRight } from 'lucide-react';
 
+const FALLBACK_SLIDES = [
+    {
+        id: "1",
+        title: "Black Michi Studio",
+        subtitle: "Diseños exclusivos para gamers",
+        image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop",
+        categoria: "all",
+        button_text: "Explorar Colección"
+    },
+    {
+        id: "2",
+        title: "Soportes Personalizados",
+        subtitle: "Arte y funcionalidad en cada diseño",
+        image_url: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&auto=format&fit=crop",
+        categoria: "soportes",
+        button_text: "Ver Soportes"
+    },
+    {
+        id: "3",
+        title: "Figuras Únicas",
+        subtitle: "Elaboradas completamente a mano",
+        image_url: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop",
+        categoria: "figuras",
+        button_text: "Ver Figuras"
+    }
+];
+
 export default function HeroSection() {
     const navigate = useNavigate();
     const [slides, setSlides] = useState([]);
+    const [firstSlide, setFirstSlide] = useState(null); // ✅ primera imagen precargada
     const [loading, setLoading] = useState(true);
     const [activeIndex, setActiveIndex] = useState(0);
 
     useEffect(() => {
-        const fetchHeroImages = async () => {
+        // ✅ Paso 1: cargar solo la primera imagen (LCP) — respuesta mínima y cacheada
+        const fetchFirst = async () => {
             try {
-                setLoading(true);
+                const { data } = await api.get("/hero-images/first");
+                if (data?.image_url) {
+                    setFirstSlide({ ...data, id: "first" });
+                    setLoading(false); // mostrar hero apenas llega la primera imagen
+                }
+            } catch {
+                // silencioso — fetchAll maneja el fallback
+            }
+        };
+
+        // ✅ Paso 2: cargar todos los slides en paralelo
+        const fetchAll = async () => {
+            try {
                 const { data } = await api.get("/hero-images/public");
-                const firstThreeSlides = Array.isArray(data) ? data.slice(0, 3) : data;
-                setSlides(firstThreeSlides);
-            } catch (error) {
-                console.error("Error cargando hero:", error);
-                setSlides([
-                    {
-                        id: "1",
-                        title: "Black Michi Studio",
-                        subtitle: "Diseños exclusivos para gamers",
-                        image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop",
-                        categoria: "all",
-                        button_text: "Explorar Colección"
-                    },
-                    {
-                        id: "2",
-                        title: "Soportes Personalizados",
-                        subtitle: "Arte y funcionalidad en cada diseño",
-                        image_url: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800&auto=format&fit=crop",
-                        categoria: "soportes",
-                        button_text: "Ver Soportes"
-                    },
-                    {
-                        id: "3",
-                        title: "Figuras Únicas",
-                        subtitle: "Elaboradas completamente a mano",
-                        image_url: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop",
-                        categoria: "figuras",
-                        button_text: "Ver Figuras"
-                    }
-                ]);
+                const allSlides = Array.isArray(data) ? data.slice(0, 3) : [];
+                setSlides(allSlides.length ? allSlides : FALLBACK_SLIDES);
+            } catch {
+                setSlides(FALLBACK_SLIDES);
             } finally {
                 setLoading(false);
             }
         };
-        fetchHeroImages();
+
+        fetchFirst();
+        fetchAll();
     }, []);
 
-    if (loading) {
+    // Usar todos los slides cuando estén listos, si no el primero precargado
+    const activeSlides = slides.length > 0
+        ? slides
+        : firstSlide
+            ? [firstSlide]
+            : FALLBACK_SLIDES;
+
+    // Solo mostrar skeleton si no hay nada aún
+    if (loading && !firstSlide) {
         return (
             <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
                 <div className="w-full max-w-[1800px] bg-secondary/20 border border-border rounded-3xl overflow-hidden h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px]" />
@@ -80,11 +105,11 @@ export default function HeroSection() {
                     onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
                     className="w-full h-full"
                 >
-                    {slides.map(({ id, title, subtitle, image_url, categoria, button_text = "Explorar Colección" }, index) => (
+                    {activeSlides.map(({ id, title, subtitle, image_url, button_text = "Explorar Colección" }, index) => (
                         <SwiperSlide key={id}>
                             <div className="relative h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] overflow-hidden bg-background">
 
-                                {/* Imagen de fondo que cubre toda la mitad derecha, difuminada */}
+                                {/* Imagen de fondo */}
                                 <img
                                     src={getImageUrl(image_url, 629, 412, 85)}
                                     srcSet={`${getImageUrl(image_url, 400, 260, 80)} 400w, ${getImageUrl(image_url, 629, 412, 85)} 629w, ${getImageUrl(image_url, 900, 590, 85)} 900w`}
@@ -97,10 +122,10 @@ export default function HeroSection() {
                                     style={{ objectPosition: 'right center' }}
                                 />
 
-                                {/* Un solo gradiente suave */}
+                                {/* Gradiente */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent z-10" />
 
-                                {/* Imagen derecha — absolute, cubre todo el alto, pegada al borde derecho */}
+                                {/* Imagen derecha */}
                                 <img
                                     src={getImageUrl(image_url, 407, 380, 90)}
                                     srcSet={`${getImageUrl(image_url, 300, 280, 85)} 300w, ${getImageUrl(image_url, 407, 380, 90)} 407w, ${getImageUrl(image_url, 560, 520, 90)} 560w`}
@@ -111,7 +136,7 @@ export default function HeroSection() {
                                     className="absolute right-[8%] top-0 h-full w-auto object-contain z-20"
                                 />
 
-                                {/* Texto izquierda */}
+                                {/* Texto */}
                                 <div className="relative z-30 h-full flex items-center">
                                     <div className="container mx-auto px-6 md:px-12 lg:px-20 xl:px-28">
                                         <div className="text-left space-y-4 md:space-y-6 max-w-lg">
@@ -137,10 +162,10 @@ export default function HeroSection() {
                                     </div>
                                 </div>
 
-                                {/* Dots de navegación */}
+                                {/* Dots */}
                                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
                                     <div className="flex items-center gap-2">
-                                        {slides.map((_, idx) => (
+                                        {activeSlides.map((_, idx) => (
                                             <button
                                                 key={idx}
                                                 onClick={() => {
@@ -156,7 +181,6 @@ export default function HeroSection() {
                                         ))}
                                     </div>
                                 </div>
-
                             </div>
                         </SwiperSlide>
                     ))}

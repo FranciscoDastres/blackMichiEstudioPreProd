@@ -1,5 +1,4 @@
-// routes/heroImages.routes.js
-
+// backend/routes/heroImages.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -18,9 +17,7 @@ const upload = multer({
             path.extname(file.originalname).toLowerCase()
         );
         const mimetype = allowedTypes.test(file.mimetype);
-
         if (mimetype && extname) return cb(null, true);
-
         cb(new Error("Solo se permiten imágenes"));
     }
 });
@@ -35,7 +32,10 @@ router.post(
     heroController.uploadHeroImage
 );
 
-// Público
+// ✅ Público — solo la primera imagen (para preload LCP, respuesta mínima y cacheada)
+router.get("/first", heroController.getFirstHeroImage);
+
+// Público — todas las imágenes
 router.get("/public", heroController.getPublicHeroImages);
 
-module.exports = router; 
+module.exports = router;

@@ -24,6 +24,19 @@ async function getPublicHeroImages(req, res) {
   }
 }
 
+// ✅ Obtener SOLO la primera hero image (para preload LCP)
+async function getFirstHeroImage(req, res) {
+  try {
+    const image = await heroImagesService.getFirstHeroImage();
+    // Cache agresivo: la primera imagen cambia poco
+    res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
+    res.json(image);
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ error: "Error obteniendo imagen" });
+  }
+}
+
 // ✅ Subir/actualizar hero image
 async function uploadHeroImage(req, res) {
   try {
@@ -73,6 +86,7 @@ async function deleteHeroImage(req, res) {
 module.exports = {
   getHeroImages,
   getPublicHeroImages,
+  getFirstHeroImage,
   uploadHeroImage,
   deleteHeroImage,
 };
