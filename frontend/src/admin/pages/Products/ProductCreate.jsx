@@ -1,6 +1,7 @@
+// frontend/src/admin/pages/Products/ProductCreate.jsx
 import { useNavigate } from "react-router-dom";
 import ProductForm from "../../components/ProductForm";
-import useProducts from "../../hooks/useProducts";
+import { useProducts } from "../../contexts/ProductsContext";
 
 export default function ProductCreate() {
     const navigate = useNavigate();

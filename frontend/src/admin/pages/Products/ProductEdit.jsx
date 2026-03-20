@@ -1,6 +1,7 @@
+// frontend/src/admin/pages/Products/ProductEdit.jsx
 import { useNavigate, useParams } from "react-router-dom";
 import ProductForm from "../../components/ProductForm";
-import useProducts from "../../hooks/useProducts";
+import { useProducts } from "../../contexts/ProductsContext";
 
 export default function ProductEdit() {
     const { productId } = useParams();
@@ -15,7 +16,7 @@ export default function ProductEdit() {
     };
 
     if (!product) {
-        return <p className="p-6 text-center">Producto no encontrado.</p>;
+        return <p className="p-6 text-center text-muted">Producto no encontrado.</p>;
     }
 
     return (
