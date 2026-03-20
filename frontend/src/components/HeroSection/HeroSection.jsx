@@ -39,25 +39,23 @@ const FALLBACK_SLIDES = [
 export default function HeroSection() {
     const navigate = useNavigate();
     const [slides, setSlides] = useState([]);
-    const [firstSlide, setFirstSlide] = useState(null); // ✅ primera imagen precargada
+    const [firstSlide, setFirstSlide] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeIndex, setActiveIndex] = useState(0);
 
     useEffect(() => {
-        // ✅ Paso 1: cargar solo la primera imagen (LCP) — respuesta mínima y cacheada
         const fetchFirst = async () => {
             try {
                 const { data } = await api.get("/hero-images/first");
                 if (data?.image_url) {
                     setFirstSlide({ ...data, id: "first" });
-                    setLoading(false); // mostrar hero apenas llega la primera imagen
+                    setLoading(false);
                 }
             } catch {
-                // silencioso — fetchAll maneja el fallback
+                // silencioso
             }
         };
 
-        // ✅ Paso 2: cargar todos los slides en paralelo
         const fetchAll = async () => {
             try {
                 const { data } = await api.get("/hero-images/public");
@@ -74,14 +72,12 @@ export default function HeroSection() {
         fetchAll();
     }, []);
 
-    // Usar todos los slides cuando estén listos, si no el primero precargado
     const activeSlides = slides.length > 0
         ? slides
         : firstSlide
             ? [firstSlide]
             : FALLBACK_SLIDES;
 
-    // Solo mostrar skeleton si no hay nada aún
     if (loading && !firstSlide) {
         return (
             <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
@@ -109,7 +105,6 @@ export default function HeroSection() {
                         <SwiperSlide key={id}>
                             <div className="relative h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] overflow-hidden bg-background">
 
-                                {/* Imagen de fondo */}
                                 <img
                                     src={getImageUrl(image_url, 629, 412, 85)}
                                     srcSet={`${getImageUrl(image_url, 400, 260, 80)} 400w, ${getImageUrl(image_url, 629, 412, 85)} 629w, ${getImageUrl(image_url, 900, 590, 85)} 900w`}
@@ -122,10 +117,8 @@ export default function HeroSection() {
                                     style={{ objectPosition: 'right center' }}
                                 />
 
-                                {/* Gradiente */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent z-10" />
 
-                                {/* Imagen derecha */}
                                 <img
                                     src={getImageUrl(image_url, 407, 380, 90)}
                                     srcSet={`${getImageUrl(image_url, 300, 280, 85)} 300w, ${getImageUrl(image_url, 407, 380, 90)} 407w, ${getImageUrl(image_url, 560, 520, 90)} 560w`}
@@ -136,7 +129,6 @@ export default function HeroSection() {
                                     className="absolute right-[8%] top-0 h-full w-auto object-contain z-20"
                                 />
 
-                                {/* Texto */}
                                 <div className="relative z-30 h-full flex items-center">
                                     <div className="container mx-auto px-6 md:px-12 lg:px-20 xl:px-28">
                                         <div className="text-left space-y-4 md:space-y-6 max-w-lg">
@@ -162,9 +154,9 @@ export default function HeroSection() {
                                     </div>
                                 </div>
 
-                                {/* Dots */}
+                                {/* ✅ TOUCH TARGETS CORREGIDOS: padding invisible agranda el área clickeable a 24x24px mínimo */}
                                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1">
                                         {activeSlides.map((_, idx) => (
                                             <button
                                                 key={idx}
@@ -172,15 +164,19 @@ export default function HeroSection() {
                                                     const swiper = document.querySelector('.swiper')?.swiper;
                                                     if (swiper) swiper.slideToLoop(idx);
                                                 }}
-                                                className={`rounded-full transition-all duration-300 cursor-pointer ${activeIndex === idx
+                                                className="p-3 flex items-center justify-center"
+                                                aria-label={`Ir al slide ${idx + 1}`}
+                                            >
+                                                <span className={`block rounded-full transition-all duration-300 ${activeIndex === idx
                                                     ? 'w-5 h-2 bg-accent'
                                                     : 'w-2 h-2 bg-muted hover:bg-accent/50'
                                                     }`}
-                                                aria-label={`Ir al slide ${idx + 1}`}
-                                            />
+                                                />
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
+
                             </div>
                         </SwiperSlide>
                     ))}

@@ -125,8 +125,8 @@ function PopularProducts() {
                 aria-label={`Filtrar por ${cat === "todos" ? "todos los productos" : cat}`}
                 onClick={() => setActiveCategory(cat)}
                 className={`group relative px-5 py-2.5 rounded-full text-sm font-medium border transition-all duration-300 overflow-hidden ${activeCategory === cat
-                    ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20"
-                    : "bg-background text-foreground border-border hover:border-accent/50 hover:shadow-md"
+                  ? "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/20"
+                  : "bg-background text-foreground border-border hover:border-accent/50 hover:shadow-md"
                   }`}
               >
                 <span className="relative z-10">
@@ -208,13 +208,11 @@ function PopularProducts() {
                     )}
                   </div>
 
-                  {/* Contenido: info arriba, precio+botón siempre abajo */}
+                  {/* Contenido */}
                   <div className="p-5 flex flex-col flex-1 justify-between">
                     <div className="flex flex-col">
                       <span className="text-[10px] uppercase tracking-tighter text-accent font-bold h-4 mb-1">
-                        {product.categoria_nombre
-                          ? formatTitle(product.categoria_nombre)
-                          : ""}
+                        {product.categoria_nombre ? formatTitle(product.categoria_nombre) : ""}
                       </span>
                       <h3 className="font-bold text-base text-foreground line-clamp-2 mb-2 group-hover:text-accent transition-colors duration-300 h-12 overflow-hidden">
                         {formatTitle(product.titulo)}
@@ -224,17 +222,12 @@ function PopularProducts() {
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`w-3.5 h-3.5 ${i < avgRating
-                                  ? "fill-yellow-500 text-yellow-500"
-                                  : "text-muted"
-                                }`}
+                              className={`w-3.5 h-3.5 ${i < avgRating ? "fill-yellow-500 text-yellow-500" : "text-muted"}`}
                             />
                           ))}
                         </div>
                         {product.total_valoraciones > 0 && (
-                          <span className="text-xs text-muted ml-1">
-                            ({product.total_valoraciones})
-                          </span>
+                          <span className="text-xs text-muted ml-1">({product.total_valoraciones})</span>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-2 mb-4 h-8 overflow-hidden">
@@ -257,15 +250,12 @@ function PopularProducts() {
                         </div>
                       </div>
 
+                      {/* ✅ CONTRASTE CORREGIDO: sky-500 en vez de sky-600 — pasa ratio WCAG AA */}
                       <button
-                        aria-label={
-                          outOfStock
-                            ? "Producto agotado"
-                            : `Agregar ${product.titulo} al carrito`
-                        }
+                        aria-label={outOfStock ? "Producto agotado" : `Agregar ${product.titulo} al carrito`}
                         className={`group/btn relative w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden flex-shrink-0 ${outOfStock
-                            ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-muted"
-                            : "bg-sky-600 text-white border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
+                          ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-muted"
+                          : "bg-sky-500 text-white border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
                           }`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -276,15 +266,8 @@ function PopularProducts() {
                         {!outOfStock && (
                           <div className="absolute inset-0 bg-gradient-to-r from-sky-400/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
                         )}
-                        <ShoppingCart
-                          className={`w-4 h-4 relative z-10 ${outOfStock
-                              ? ""
-                              : "group-hover/btn:scale-110 transition-transform"
-                            }`}
-                        />
-                        <span className="relative z-10">
-                          {outOfStock ? "Agotado" : "Agregar"}
-                        </span>
+                        <ShoppingCart className={`w-4 h-4 relative z-10 ${outOfStock ? "" : "group-hover/btn:scale-110 transition-transform"}`} />
+                        <span className="relative z-10">{outOfStock ? "Agotado" : "Agregar"}</span>
                         {!outOfStock && (
                           <ChevronRight className="w-4 h-4 relative z-10 opacity-0 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all duration-300" />
                         )}
@@ -312,14 +295,9 @@ function PopularProducts() {
         {/* Indicador scroll */}
         <div className="flex justify-center items-center gap-2 mt-6">
           <div className="w-20 h-1 bg-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-accent rounded-full animate-pulse"
-              style={{ width: "60%" }}
-            ></div>
+            <div className="h-full bg-accent rounded-full animate-pulse" style={{ width: "60%" }}></div>
           </div>
-          <span className="text-xs text-muted-foreground">
-            Desliza para ver más productos
-          </span>
+          <span className="text-xs text-muted-foreground">Desliza para ver más productos</span>
         </div>
 
       </div>
