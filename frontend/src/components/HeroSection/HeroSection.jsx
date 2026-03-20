@@ -91,12 +91,12 @@ export default function HeroSection() {
                                     aria-hidden="true"
                                     fetchPriority={index === 0 ? "high" : "auto"}
                                     loading={index === 0 ? "eager" : "lazy"}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-40 scale-110"
+                                    className="absolute inset-0 w-full h-full object-cover opacity-15 scale-110"
                                     style={{ objectPosition: 'right center' }}
                                 />
 
-                                {/* Overlay gradiente: oscuro a la izquierda, transparente a la derecha */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/10 z-10" />
+                                {/* Un solo gradiente suave */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent z-10" />
 
                                 {/* Imagen derecha — absolute, cubre todo el alto, pegada al borde derecho */}
                                 <img
@@ -106,9 +106,6 @@ export default function HeroSection() {
                                     loading={index === 0 ? "eager" : "lazy"}
                                     className="absolute right-[8%] top-0 h-full w-auto object-contain z-20"
                                 />
-
-                                {/* Gradiente encima de la imagen para mezclar con el fondo */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent z-20 pointer-events-none" />
 
                                 {/* Texto izquierda */}
                                 <div className="relative z-30 h-full flex items-center">
@@ -147,8 +144,8 @@ export default function HeroSection() {
                                                     if (swiper) swiper.slideToLoop(idx);
                                                 }}
                                                 className={`rounded-full transition-all duration-300 cursor-pointer ${activeIndex === idx
-                                                    ? 'w-5 h-2 bg-accent'
-                                                    : 'w-2 h-2 bg-muted hover:bg-accent/50'
+                                                        ? 'w-5 h-2 bg-accent'
+                                                        : 'w-2 h-2 bg-muted hover:bg-accent/50'
                                                     }`}
                                                 aria-label={`Ir al slide ${idx + 1}`}
                                             />
