@@ -36,7 +36,7 @@
     h2,
     h3,
     .font-display {
-        font-family: 'Outfit', sans-serif;
+        font-family: 'Trebuchet MS', sans-serif;
         @apply font-extrabold tracking-tight uppercase;
     }
 }

@@ -44,30 +44,6 @@ export default function SecondaryHeroSection() {
     fetchHeroProducts();
   }, []);
 
-  const getDefaultSlides = () => [
-    {
-      id: "1",
-      title: "Vasos Térmicos Personalizados",
-      subtitle: "Mantén tus bebidas frías o calientes por horas con diseños únicos",
-      image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop",
-      button_text: "Ver Colección"
-    },
-    {
-      id: "2",
-      title: "Soportes para Dispositivos",
-      subtitle: "Organiza tu espacio de trabajo con soportes ergonómicos y modernos",
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop",
-      button_text: "Ver Colección"
-    },
-    {
-      id: "3",
-      title: "Figuras Decorativas Únicas",
-      subtitle: "Decora tu espacio con figuras exclusivas y diseños artísticos",
-      image: "https://images.unsplash.com/photo-1581235720706-9856d6d1e4c5?w=800&auto=format&fit=crop",
-      button_text: "Ver Colección"
-    }
-  ];
-
   const handleWhatsAppClick = () => {
     const mensaje = "¡Hola Black Michi Studio! Me interesa solicitar un diseño personalizado. ¿Me podrían ayudar?";
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
@@ -165,8 +141,8 @@ export default function SecondaryHeroSection() {
                             if (swiper) swiper.slideToLoop(idx);
                           }}
                           className={`rounded-full transition-all duration-300 cursor-pointer ${activeIndex === idx
-                              ? 'w-5 h-2 bg-accent'
-                              : 'w-2 h-2 bg-muted hover:bg-accent/50'
+                            ? 'w-5 h-2 bg-accent'
+                            : 'w-2 h-2 bg-muted hover:bg-accent/50'
                             }`}
                           aria-label={`Ir al slide ${idx + 1}`}
                         />
