@@ -86,7 +86,9 @@ export default function HeroSection() {
 
                                 {/* Imagen de fondo que cubre toda la mitad derecha, difuminada */}
                                 <img
-                                    src={getImageUrl(image_url, 1024, 670, 85)}
+                                    src={getImageUrl(image_url, 629, 412, 85)}
+                                    srcSet={`${getImageUrl(image_url, 400, 260, 80)} 400w, ${getImageUrl(image_url, 629, 412, 85)} 629w, ${getImageUrl(image_url, 900, 590, 85)} 900w`}
+                                    sizes="(max-width: 640px) 400px, (max-width: 1024px) 629px, 900px"
                                     alt=""
                                     aria-hidden="true"
                                     fetchPriority={index === 0 ? "high" : "auto"}
@@ -100,7 +102,9 @@ export default function HeroSection() {
 
                                 {/* Imagen derecha — absolute, cubre todo el alto, pegada al borde derecho */}
                                 <img
-                                    src={getImageUrl(image_url, 600, 560, 90)}
+                                    src={getImageUrl(image_url, 407, 380, 90)}
+                                    srcSet={`${getImageUrl(image_url, 300, 280, 85)} 300w, ${getImageUrl(image_url, 407, 380, 90)} 407w, ${getImageUrl(image_url, 560, 520, 90)} 560w`}
+                                    sizes="(max-width: 640px) 300px, (max-width: 1024px) 407px, 560px"
                                     alt={title}
                                     fetchPriority={index === 0 ? "high" : "auto"}
                                     loading={index === 0 ? "eager" : "lazy"}
