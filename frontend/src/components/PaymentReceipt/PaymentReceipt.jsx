@@ -1,8 +1,8 @@
 // frontend/src/components/PaymentReceipt/PaymentReceipt.jsx
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+// ✅ ELIMINADAS las importaciones estáticas de html2canvas y jsPDF
+// Se cargan dinámicamente solo cuando el usuario hace clic en "Descargar PDF"
 import {
     CheckCircle,
     XCircle,
@@ -52,10 +52,8 @@ const PaymentReceipt = () => {
                 `${import.meta.env.VITE_API_URL}/api/payments/pedido/${pedidoId}/status`
             );
             const data = await response.json();
-
             if (data.success) {
                 setPedido(data.pedido);
-
                 if (data.pedido.estado === 'pagado') {
                     localStorage.removeItem('cart');
                     localStorage.removeItem('pendingOrder');
@@ -74,10 +72,7 @@ const PaymentReceipt = () => {
                 `${import.meta.env.VITE_API_URL}/api/payments/pedido/${id}/status`
             );
             const data = await response.json();
-
-            if (data.success) {
-                setPedido(data.pedido);
-            }
+            if (data.success) setPedido(data.pedido);
         } catch (error) {
             console.error('Error:', error);
         } finally {
@@ -85,12 +80,16 @@ const PaymentReceipt = () => {
         }
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
 
+    // ✅ Carga dinámica: html2canvas y jsPDF solo se descargan cuando se necesitan
     const generatePDF = async () => {
         try {
+            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+                import('html2canvas'),
+                import('jspdf'),
+            ]);
+
             const element = receiptRef.current;
             const canvas = await html2canvas(element, {
                 scale: 2,
@@ -102,6 +101,7 @@ const PaymentReceipt = () => {
                     clonedDoc.querySelectorAll('.print-hidden').forEach(el => el.style.display = 'none');
                 }
             });
+
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF({
                 orientation: 'portrait',
@@ -115,13 +115,9 @@ const PaymentReceipt = () => {
             const imgWidth = pageWidth - 20;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-            // Fondo con color de tu paleta
-            pdf.setFillColor(30, 32, 38); // hsl(240 6% 12%)
+            pdf.setFillColor(30, 32, 38);
             pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-
             pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-
-            // Footer del PDF
             pdf.setFontSize(8);
             pdf.setTextColor(180, 180, 180);
             pdf.text('Black Michi Estudio - Impresiones 3D Personalizadas', pageWidth / 2, pageHeight - 5, { align: 'center' });
@@ -137,9 +133,7 @@ const PaymentReceipt = () => {
     const handleDownloadPDF = async () => {
         setGenerating(true);
         const pdf = await generatePDF();
-        if (pdf) {
-            pdf.save(`Boleta-Black-Michi-${pedido.id}.pdf`);
-        }
+        if (pdf) pdf.save(`Boleta-Black-Michi-${pedido.id}.pdf`);
         setGenerating(false);
     };
 
@@ -194,22 +188,14 @@ www.blackmichiestudio.cl
         }
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('es-CL', {
-            style: 'currency',
-            currency: 'CLP'
-        }).format(amount);
-    };
+    const formatCurrency = (amount) => new Intl.NumberFormat('es-CL', {
+        style: 'currency', currency: 'CLP'
+    }).format(amount);
 
-    const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('es-CL', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+    const formatDate = (date) => new Date(date).toLocaleDateString('es-CL', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
 
     const getStatusConfig = () => {
         switch (pedido?.estado) {
@@ -273,10 +259,7 @@ www.blackmichiestudio.cl
                         Pedido no encontrado
                     </h2>
                     <p className="text-muted mb-8">El pedido que buscas no existe o ha expirado.</p>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="btn-add-cart px-8 py-3"
-                    >
+                    <button onClick={() => navigate('/')} className="btn-add-cart px-8 py-3">
                         Volver a la tienda
                     </button>
                 </div>
@@ -291,33 +274,25 @@ www.blackmichiestudio.cl
             backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.04) 1px, transparent 0)',
             backgroundSize: '32px 32px'
         }}>
-            {/* Elementos decorativos de fondo */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
                 <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
             </div>
 
             <div className="relative max-w-4xl mx-auto">
-                {/* Header con logo */}
                 <div className="text-center mb-8 print:hidden">
                     <div className="inline-flex items-center gap-3 mb-4">
                         <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                             <Sparkles className="w-6 h-6 text-primary-foreground" />
                         </div>
-                        <h1 className="text-3xl font-display font-extrabold text-primary">
-                            Black Michi Estudio
-                        </h1>
+                        <h1 className="text-3xl font-display font-extrabold text-primary">Black Michi Estudio</h1>
                     </div>
                     <p className="text-muted font-light">Impresiones 3D Personalizadas</p>
                 </div>
 
-                {/* Botones de acción */}
                 <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 print:hidden print-hidden">
-                    <button
-                        onClick={handleShareWhatsApp}
-                        disabled={generating}
-                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
-                    >
+                    <button onClick={handleShareWhatsApp} disabled={generating}
+                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100">
                         <div className="flex items-center justify-center gap-3">
                             {generating ? (
                                 <>
@@ -333,31 +308,24 @@ www.blackmichiestudio.cl
                         </div>
                     </button>
 
-                    <button
-                        onClick={handleDownloadPDF}
-                        disabled={generating}
-                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
-                    >
+                    <button onClick={handleDownloadPDF} disabled={generating}
+                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100">
                         <div className="flex items-center justify-center gap-3">
                             <Download className="w-5 h-5 text-primary group-hover:text-primary/80" />
                             <span className="text-foreground group-hover:text-primary">Descargar PDF</span>
                         </div>
                     </button>
 
-                    <button
-                        onClick={handlePrint}
-                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300"
-                    >
+                    <button onClick={handlePrint}
+                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300">
                         <div className="flex items-center justify-center gap-3">
                             <Printer className="w-5 h-5 text-primary group-hover:text-primary/80" />
                             <span className="text-foreground group-hover:text-primary">Imprimir</span>
                         </div>
                     </button>
 
-                    <button
-                        onClick={() => navigate('/')}
-                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300"
-                    >
+                    <button onClick={() => navigate('/')}
+                        className="glass-panel group relative overflow-hidden rounded-[var(--radius)] p-4 hover:scale-[1.02] transition-all duration-300">
                         <div className="flex items-center justify-center gap-3">
                             <Home className="w-5 h-5 text-primary group-hover:text-primary/80" />
                             <span className="text-foreground group-hover:text-primary">Tienda</span>
@@ -365,18 +333,14 @@ www.blackmichiestudio.cl
                     </button>
                 </div>
 
-                {/* Contenedor principal del recibo */}
                 <div ref={receiptRef} className="receipt-container glass-panel rounded-2xl overflow-hidden">
-                    {/* Encabezado con estado */}
                     <div className={`relative p-8 md:p-12 ${statusConfig.bgColor} border-b ${statusConfig.borderColor}`}>
                         <div className="absolute inset-0 bg-foreground/5"></div>
                         <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
                             <div className="text-center md:text-left">
                                 <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
                                     <div className={`p-3 rounded-xl backdrop-blur-sm border ${statusConfig.borderColor} bg-background/80`}>
-                                        <div className={statusConfig.color}>
-                                            {statusConfig.icon}
-                                        </div>
+                                        <div className={statusConfig.color}>{statusConfig.icon}</div>
                                     </div>
                                     <div>
                                         <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-2">
@@ -393,37 +357,27 @@ www.blackmichiestudio.cl
                         </div>
                     </div>
 
-                    {/* Información principal */}
                     <div className="p-8 md:p-12">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                            {/* Información del cliente */}
                             <div className="space-y-6">
                                 <div className="flex items-start gap-3">
-                                    <div className="p-3 bg-secondary/50 rounded-lg">
-                                        <Mail className="w-6 h-6 text-primary" />
-                                    </div>
+                                    <div className="p-3 bg-secondary/50 rounded-lg"><Mail className="w-6 h-6 text-primary" /></div>
                                     <div>
                                         <p className="text-sm text-muted mb-1">Cliente</p>
                                         <p className="text-xl font-semibold text-foreground">{pedido.comprador.nombre}</p>
                                         <p className="text-muted">{pedido.comprador.email}</p>
                                     </div>
                                 </div>
-
                                 <div className="flex items-start gap-3">
-                                    <div className="p-3 bg-secondary/50 rounded-lg">
-                                        <MapPin className="w-6 h-6 text-primary" />
-                                    </div>
+                                    <div className="p-3 bg-secondary/50 rounded-lg"><MapPin className="w-6 h-6 text-primary" /></div>
                                     <div>
                                         <p className="text-sm text-muted mb-1">Dirección de envío</p>
                                         <p className="text-foreground/90">{pedido.direccionEnvio}</p>
                                     </div>
                                 </div>
-
                                 {pedido.comprador.telefono && (
                                     <div className="flex items-start gap-3">
-                                        <div className="p-3 bg-secondary/50 rounded-lg">
-                                            <Phone className="w-6 h-6 text-primary" />
-                                        </div>
+                                        <div className="p-3 bg-secondary/50 rounded-lg"><Phone className="w-6 h-6 text-primary" /></div>
                                         <div>
                                             <p className="text-sm text-muted mb-1">Teléfono</p>
                                             <p className="text-foreground/90">{pedido.comprador.telefono}</p>
@@ -432,36 +386,25 @@ www.blackmichiestudio.cl
                                 )}
                             </div>
 
-                            {/* Información del pedido */}
                             <div className="space-y-6">
                                 <div className="flex items-start gap-3">
-                                    <div className="p-3 bg-secondary/50 rounded-lg">
-                                        <ShoppingBag className="w-6 h-6 text-primary" />
-                                    </div>
+                                    <div className="p-3 bg-secondary/50 rounded-lg"><ShoppingBag className="w-6 h-6 text-primary" /></div>
                                     <div>
                                         <p className="text-sm text-muted mb-1">ID del Pedido</p>
                                         <p className="text-xl font-semibold text-foreground">{pedido.commerceOrder}</p>
                                         <p className="text-muted">{formatDate(pedido.fechaCreacion)}</p>
                                     </div>
                                 </div>
-
                                 <div className="flex items-start gap-3">
-                                    <div className="p-3 bg-secondary/50 rounded-lg">
-                                        <CreditCard className="w-6 h-6 text-primary" />
-                                    </div>
+                                    <div className="p-3 bg-secondary/50 rounded-lg"><CreditCard className="w-6 h-6 text-primary" /></div>
                                     <div>
                                         <p className="text-sm text-muted mb-1">Método de Pago</p>
                                         <p className="text-foreground/90">Flow / Transbank</p>
-                                        {pedido.flowOrder && (
-                                            <p className="text-sm text-muted">Flow: {pedido.flowOrder}</p>
-                                        )}
+                                        {pedido.flowOrder && <p className="text-sm text-muted">Flow: {pedido.flowOrder}</p>}
                                     </div>
                                 </div>
-
                                 <div className="flex items-start gap-3">
-                                    <div className="p-3 bg-secondary/50 rounded-lg">
-                                        <Truck className="w-6 h-6 text-primary" />
-                                    </div>
+                                    <div className="p-3 bg-secondary/50 rounded-lg"><Truck className="w-6 h-6 text-primary" /></div>
                                     <div>
                                         <p className="text-sm text-muted mb-1">Estado de Envío</p>
                                         <p className="text-foreground/90">En preparación</p>
@@ -471,22 +414,14 @@ www.blackmichiestudio.cl
                             </div>
                         </div>
 
-                        {/* Productos */}
                         <div className="mb-12">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                    <Package className="w-6 h-6 text-primary" />
-                                </div>
-                                <h3 className="text-2xl font-display font-extrabold text-foreground">
-                                    Productos Comprados
-                                </h3>
+                                <div className="p-2 bg-primary/10 rounded-lg"><Package className="w-6 h-6 text-primary" /></div>
+                                <h3 className="text-2xl font-display font-extrabold text-foreground">Productos Comprados</h3>
                             </div>
                             <div className="space-y-4">
                                 {pedido.items.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className="group glass-panel rounded-xl p-6 hover:border-primary/40 transition-all duration-300"
-                                    >
+                                    <div key={index} className="group glass-panel rounded-xl p-6 hover:border-primary/40 transition-all duration-300">
                                         <div className="flex items-center justify-between">
                                             <div className="flex-1">
                                                 <h4 className="text-lg font-semibold text-foreground mb-2">{item.titulo}</h4>
@@ -505,12 +440,9 @@ www.blackmichiestudio.cl
                             </div>
                         </div>
 
-                        {/* Resumen de pagos */}
                         <div className="bg-secondary/30 border border-border rounded-2xl p-8">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2 bg-primary/10 rounded-lg">
-                                    <FileText className="w-6 h-6 text-primary" />
-                                </div>
+                                <div className="p-2 bg-primary/10 rounded-lg"><FileText className="w-6 h-6 text-primary" /></div>
                                 <h4 className="text-2xl font-display font-extrabold text-foreground">Resumen del Pago</h4>
                             </div>
                             <div className="space-y-4">
@@ -525,16 +457,13 @@ www.blackmichiestudio.cl
                                 <div className="flex justify-between items-center pt-6">
                                     <span className="text-2xl font-display font-extrabold text-foreground">Total pagado</span>
                                     <div className="text-right">
-                                        <div className="price-text text-4xl">
-                                            {formatCurrency(pedido.total)}
-                                        </div>
+                                        <div className="price-text text-4xl">{formatCurrency(pedido.total)}</div>
                                         <p className="text-sm text-muted mt-1">CLP - Pesos Chilenos</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Notas */}
                         {pedido.notas && (
                             <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl">
                                 <div className="flex items-center gap-3 mb-3">
@@ -546,16 +475,13 @@ www.blackmichiestudio.cl
                         )}
                     </div>
 
-                    {/* Footer elegante */}
                     <div className="border-t border-border bg-secondary/30 p-8">
                         <div className="text-center">
                             <div className="inline-flex items-center gap-3 mb-4">
                                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                                     <Sparkles className="w-5 h-5 text-primary-foreground" />
                                 </div>
-                                <h5 className="text-xl font-display font-extrabold text-primary">
-                                    Black Michi Estudio
-                                </h5>
+                                <h5 className="text-xl font-display font-extrabold text-primary">Black Michi Estudio</h5>
                             </div>
                             <p className="text-muted mb-6 max-w-md mx-auto">
                                 Gracias por confiar en nosotros para tus impresiones 3D personalizadas.
@@ -578,7 +504,6 @@ www.blackmichiestudio.cl
                     </div>
                 </div>
 
-                {/* Mensaje decorativo final */}
                 <div className="mt-8 text-center print:hidden">
                     <p className="text-muted/80 text-sm">
                         ✨ Cada impresión cuenta una historia. Gracias por ser parte de la nuestra.
@@ -586,15 +511,10 @@ www.blackmichiestudio.cl
                 </div>
             </div>
 
-            {/* Estilos para impresión */}
             <style>{`
                 @media print {
-                    body {
-                        background: hsl(var(--background)) !important;
-                    }
-                    .print-hidden {
-                        display: none !important;
-                    }
+                    body { background: hsl(var(--background)) !important; }
+                    .print-hidden { display: none !important; }
                     .receipt-container {
                         box-shadow: none !important;
                         border: 1px solid hsl(var(--border)) !important;
@@ -602,10 +522,7 @@ www.blackmichiestudio.cl
                         margin: 0 !important;
                     }
                 }
-                
-                @page {
-                    margin: 20mm;
-                }
+                @page { margin: 20mm; }
             `}</style>
         </div>
     );
