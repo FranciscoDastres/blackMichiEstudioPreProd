@@ -255,7 +255,7 @@ function PopularProducts() {
                         aria-label={outOfStock ? "Producto agotado" : `Agregar ${product.titulo} al carrito`}
                         className={`group/btn relative w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden flex-shrink-0 ${outOfStock
                           ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-muted"
-                          : "bg-sky-500 text-white border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
+                          : "bg-sky-700 text-white border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
                           }`}
                         onClick={(e) => {
                           e.stopPropagation();
