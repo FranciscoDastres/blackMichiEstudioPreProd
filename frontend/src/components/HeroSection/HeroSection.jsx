@@ -91,7 +91,7 @@ export default function HeroSection() {
                                     aria-hidden="true"
                                     fetchPriority={index === 0 ? "high" : "auto"}
                                     loading={index === 0 ? "eager" : "lazy"}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-65 scale-110"
+                                    className="absolute inset-0 w-full h-full object-cover opacity-90 scale-110"
                                     style={{ objectPosition: 'right center' }}
                                 />
 
