@@ -83,7 +83,9 @@ export default function SecondaryHeroSection() {
 
                   {/* Imagen de fondo difuminada — posicionada a la izquierda */}
                   <img
-                    src={getImageUrl(image, 1024, 670, 85)}
+                    src={getImageUrl(image, 629, 412, 85)}
+                    srcSet={`${getImageUrl(image, 400, 260, 80)} 400w, ${getImageUrl(image, 629, 412, 85)} 629w`}
+                    sizes="(max-width: 640px) 400px, 629px"
                     alt=""
                     aria-hidden="true"
                     fetchPriority={index === 0 ? "high" : "auto"}
@@ -97,7 +99,9 @@ export default function SecondaryHeroSection() {
 
                   {/* Imagen principal — cubre todo el alto, pegada a la izquierda */}
                   <img
-                    src={getImageUrl(image, 600, 560, 90)}
+                    src={getImageUrl(image, 407, 380, 90)}
+                    srcSet={`${getImageUrl(image, 300, 280, 85)} 300w, ${getImageUrl(image, 407, 380, 90)} 407w`}
+                    sizes="(max-width: 640px) 300px, 407px"
                     alt={title}
                     fetchPriority={index === 0 ? "high" : "auto"}
                     loading={index === 0 ? "eager" : "lazy"}
