@@ -1,3 +1,4 @@
+// frontend/src/admin/hooks/useProducts.js
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 
@@ -13,29 +14,21 @@ export default function useProducts() {
         setLoading(true);
         try {
             const { data } = await api.get("/admin/productos");
-            console.log('✅ Productos cargados:', data);
-            if (Array.isArray(data)) {
-                setProducts(data);
-            } else {
-                console.error('❌ Datos no son un array:', data);
-                setProducts([]);
-            }
+            setProducts(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error("❌ Error cargando productos:", err.response?.status, err.response?.data);
+            console.error("❌ Error cargando productos:", err);
             setProducts([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const getProductById = (id) => {
-        return products.find((p) => p.id === Number(id));
-    };
+    const getProductById = (id) => products.find((p) => p.id === Number(id));
 
     const createProduct = async (productData) => {
         try {
             const { data } = await api.post("/admin/productos", productData);
-            setProducts((prev) => [...prev, data]);
+            await fetchProducts(); // recargar lista completa
             return data;
         } catch (err) {
             console.error("Error creando producto:", err);
@@ -43,17 +36,13 @@ export default function useProducts() {
         }
     };
 
-    // ✅ ESTA FUNCIÓN ESTABA MAL (tenías código de backend aquí)
     const updateProduct = async (id, productData) => {
         try {
-            // Enviar los datos al backend
             const { data } = await api.put(`/admin/productos/${id}`, productData);
-
-            // Actualizar el estado local sin recargar
+            // ✅ Actualizar estado local inmediatamente
             setProducts((prev) =>
                 prev.map((p) => (p.id === Number(id) ? { ...p, ...productData } : p))
             );
-
             return data;
         } catch (err) {
             console.error("Error actualizando producto:", err);
@@ -64,22 +53,14 @@ export default function useProducts() {
     const deleteProduct = async (id) => {
         try {
             const response = await api.delete(`/admin/productos/${id}`);
-
-            console.log('✅ Producto eliminado:', response.data);
-
-            // ✅ AGREGAR ESTA LÍNEA: Recargar desde el servidor
-            await fetchProducts();
-
+            // ✅ Eliminar del estado local inmediatamente — sin esperar fetch
+            setProducts((prev) => prev.filter((p) => p.id !== Number(id)));
             return response.data;
-
         } catch (error) {
-            console.error('Error eliminando producto:', error);
+            console.error("Error eliminando producto:", error);
             throw error;
         }
     };
-
-
-
 
     return {
         products,
@@ -89,6 +70,5 @@ export default function useProducts() {
         createProduct,
         updateProduct,
         deleteProduct,
-
     };
 }

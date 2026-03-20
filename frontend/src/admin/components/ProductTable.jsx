@@ -1,33 +1,25 @@
-// ProductTable.jsx
+// frontend/src/admin/components/ProductTable.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Eye } from "lucide-react";
 import useProducts from "../hooks/useProducts";
-import api from '../../services/api';
+import { getImageUrl } from "../../utils/getImageUrl";
 
 export default function ProductTable() {
-    const API_URL = (api.defaults.baseURL || '').replace('/api', '');
     const { products, loading, deleteProduct } = useProducts();
     const navigate = useNavigate();
     const [loadingDelete, setLoadingDelete] = useState(null);
 
-    const handleView = (id) => {
-        window.open(`/producto/${id}`, '_blank');
-    };
-
-    const handleEdit = (id) => {
-        navigate(`/admin/products/edit/${id}`);
-    };
+    const handleView = (id) => window.open(`/producto/${id}`, '_blank');
+    const handleEdit = (id) => navigate(`/admin/products/edit/${id}`);
 
     const handleDelete = async (id, titulo) => {
         if (!confirm(`¿Seguro que deseas eliminar "${titulo}" y todas sus imágenes?\n\nEsta acción no se puede deshacer.`)) {
             return;
         }
-
         setLoadingDelete(id);
         try {
             await deleteProduct(id);
-            alert("✅ Producto eliminado correctamente");
         } catch (error) {
             console.error("Error eliminando producto:", error);
             alert("❌ Error al eliminar el producto. Intenta de nuevo.");
@@ -64,39 +56,26 @@ export default function ProductTable() {
                 <table className="w-full">
                     <thead>
                         <tr className="bg-muted/20 border-b border-border">
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">
-                                Imagen
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">
-                                Producto
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">
-                                Precio
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">
-                                Stock
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">
-                                Categoría
-                            </th>
-                            <th className="px-6 py-4 text-center text-xs font-semibold text-muted uppercase tracking-wider">
-                                Acciones
-                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">Imagen</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">Producto</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">Precio</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">Stock</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted uppercase tracking-wider">Categoría</th>
+                            <th className="px-6 py-4 text-center text-xs font-semibold text-muted uppercase tracking-wider">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                         {products.map((p) => (
                             <tr key={p.id} className="hover:bg-muted/10 transition">
-                                {/* Imagen */}
+                                {/* ✅ Imagen — usa getImageUrl para soportar Cloudinary y rutas relativas */}
                                 <td className="px-6 py-4">
                                     {p.imagen_principal ? (
                                         <img
-                                            src={`${API_URL}${p.imagen_principal}`}
+                                            src={getImageUrl(p.imagen_principal, 64, 64, 70)}
                                             alt={p.titulo}
                                             className="w-16 h-16 object-cover rounded-lg shadow-sm"
                                             onError={(e) => {
                                                 e.target.src = "/placeholder.svg";
-                                                e.target.className = "w-16 h-16 object-cover rounded-lg bg-muted/20";
                                             }}
                                         />
                                     ) : (
@@ -109,13 +88,9 @@ export default function ProductTable() {
                                 {/* Producto */}
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
-                                        <span className="font-semibold text-foreground text-sm">
-                                            {p.titulo}
-                                        </span>
+                                        <span className="font-semibold text-foreground text-sm">{p.titulo}</span>
                                         {p.descripcion && (
-                                            <span className="text-xs text-muted mt-1 line-clamp-2 max-w-xs">
-                                                {p.descripcion}
-                                            </span>
+                                            <span className="text-xs text-muted mt-1 line-clamp-2 max-w-xs">{p.descripcion}</span>
                                         )}
                                         <span className="text-xs text-muted mt-1">ID: {p.id}</span>
                                     </div>
@@ -132,21 +107,14 @@ export default function ProductTable() {
                                                 ${Number(p.precio_anterior).toLocaleString('es-CL')}
                                             </span>
                                         )}
-                                        {p.descuento && (
-                                            <span className="text-xs text-green-600 font-semibold">
-                                                -{p.descuento}%
-                                            </span>
-                                        )}
                                     </div>
                                 </td>
 
                                 {/* Stock */}
                                 <td className="px-6 py-4">
-                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${p.stock > 10
-                                        ? 'bg-green-100 text-green-800'
-                                        : p.stock > 0
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-red-100 text-red-800'
+                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${p.stock > 10 ? 'bg-green-100 text-green-800'
+                                            : p.stock > 0 ? 'bg-yellow-100 text-yellow-800'
+                                                : 'bg-red-100 text-red-800'
                                         }`}>
                                         {p.stock > 0 ? `${p.stock} unidades` : 'Agotado'}
                                     </span>
@@ -154,15 +122,12 @@ export default function ProductTable() {
 
                                 {/* Categoría */}
                                 <td className="px-6 py-4">
-                                    <span className="text-sm text-muted">
-                                        {p.categoria_nombre || "—"}
-                                    </span>
+                                    <span className="text-sm text-muted">{p.categoria_nombre || "—"}</span>
                                 </td>
 
                                 {/* Acciones */}
                                 <td className="px-6 py-4">
                                     <div className="flex justify-center items-center gap-2">
-                                        {/* Ver */}
                                         <button
                                             onClick={() => handleView(p.id)}
                                             className="p-2 text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
@@ -170,8 +135,6 @@ export default function ProductTable() {
                                         >
                                             <Eye className="w-4 h-4" />
                                         </button>
-
-                                        {/* Editar */}
                                         <button
                                             onClick={() => handleEdit(p.id)}
                                             className="p-2 text-muted hover:text-yellow-600 hover:bg-yellow-100 rounded-lg transition-all"
@@ -179,8 +142,6 @@ export default function ProductTable() {
                                         >
                                             <Pencil className="w-4 h-4" />
                                         </button>
-
-                                        {/* Eliminar */}
                                         <button
                                             onClick={() => handleDelete(p.id, p.titulo)}
                                             disabled={loadingDelete === p.id}
@@ -200,8 +161,6 @@ export default function ProductTable() {
                     </tbody>
                 </table>
             </div>
-
-            {/* Footer con total */}
             <div className="bg-muted/20 px-6 py-4 border-t border-border">
                 <p className="text-sm text-muted">
                     Total: <span className="font-semibold text-foreground">{products.length}</span> productos

@@ -6,7 +6,6 @@ import NotFound from "../components/NotFound/NotFound";
 import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
 import PrivateRoute from "./PrivateRoute";
 
-
 const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const ProductList = lazy(() => import("../pages/ProductList"));
 const Login = lazy(() => import("../pages/Login"));
@@ -19,8 +18,12 @@ const AdminLayout = lazy(() => import("../admin/layout/AdminLayout"));
 const AdminDashboard = lazy(() => import("../admin/pages/Dashboard"));
 const AdminOrders = lazy(() => import("../admin/pages/Orders"));
 const AdminUsers = lazy(() => import("../admin/pages/Users"));
-const AdminProducts = lazy(() => import("../admin/pages/Products"));
 const AdminSettings = lazy(() => import("../admin/pages/Settings"));
+
+// ✅ Apunta a la carpeta Products/ correcta
+const AdminProducts = lazy(() => import("../admin/pages/Products/ProductsPage"));
+const AdminProductCreate = lazy(() => import("../admin/pages/Products/ProductCreate"));
+const AdminProductEdit = lazy(() => import("../admin/pages/Products/ProductEdit"));
 
 const UserRoutes = lazy(() => import("../user/user.routes"));
 
@@ -88,7 +91,7 @@ export default function AppRoutes() {
       <Route path="/success" element={<SuccessRouteWrapper />} />
       <Route path="/payment/return" element={<PaymentReceipt />} />
 
-      {/* ADMIN — un solo <Routes>, rutas hijas directas */}
+      {/* ADMIN */}
       <Route
         path="/admin"
         element={
@@ -114,9 +117,20 @@ export default function AppRoutes() {
             <AdminUsers />
           </Suspense>
         } />
+        {/* ✅ Rutas de productos */}
         <Route path="products" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminProducts />
+          </Suspense>
+        } />
+        <Route path="products/create" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminProductCreate />
+          </Suspense>
+        } />
+        <Route path="products/edit/:productId" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminProductEdit />
           </Suspense>
         } />
         <Route path="settings" element={
