@@ -19,6 +19,43 @@
   <link rel="dns-prefetch" href="https://res.cloudinary.com">
 
   <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+
+  <!-- CSS crítico inline: evita flash de fondo blanco mientras carga el bundle -->
+  <style>
+    :root {
+      --background: 240 6% 12%;
+      --foreground: 0 0% 100%;
+      --primary: 195 100% 50%;
+      --secondary: 240 5% 18%;
+      --border: 240 5% 25%;
+      --radius: 0.8rem;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      background-color: hsl(240, 6%, 12%);
+      color: hsl(0, 0%, 100%);
+      font-family: 'Trebuchet MS', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+
+    #root {
+      min-height: 100vh;
+    }
+  </style>
 </head>
 
 <body>
