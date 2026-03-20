@@ -135,7 +135,7 @@ export default function HeroSection() {
                                                         height="500"
                                                         fetchPriority={index === 0 ? "high" : "auto"}
                                                         loading={index === 0 ? "eager" : "lazy"}
-                                                        className="relative w-full max-w-2xl mx-auto rounded-2xl shadow-2xl object-contain max-h-[420px] xl:max-h-[500px]"
+                                                        className="absolute right-0 top-0 h-full w-auto max-w-[55%] object-cover rounded-2xl shadow-2xl"
                                                     />
                                                     <div className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-r from-accent/20 to-transparent rounded-full blur-2xl"></div>
                                                 </div>
