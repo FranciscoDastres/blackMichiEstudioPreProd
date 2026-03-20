@@ -64,7 +64,7 @@ export default function SecondaryHeroSection() {
     <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
       <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
 
-        {/* --- Carousel Principal (2/3) --- */}
+        {/* Carousel Principal (2/3) */}
         <div className="lg:col-span-2 relative rounded-3xl overflow-hidden shadow-2xl border border-border h-[380px]">
           <Swiper
             modules={[Navigation, Autoplay]}
@@ -81,7 +81,6 @@ export default function SecondaryHeroSection() {
               <SwiperSlide key={id}>
                 <div className="relative h-[380px] overflow-hidden bg-background">
 
-                  {/* Imagen de fondo difuminada — posicionada a la izquierda */}
                   <img
                     src={getImageUrl(image, 629, 412, 85)}
                     srcSet={`${getImageUrl(image, 400, 260, 80)} 400w, ${getImageUrl(image, 629, 412, 85)} 629w`}
@@ -94,10 +93,8 @@ export default function SecondaryHeroSection() {
                     style={{ objectPosition: 'left center' }}
                   />
 
-                  {/* Gradiente de derecha a izquierda — protege el texto de la derecha */}
                   <div className="absolute inset-0 bg-gradient-to-l from-background/90 via-background/40 to-transparent z-10" />
 
-                  {/* Imagen principal — cubre todo el alto, pegada a la izquierda */}
                   <img
                     src={getImageUrl(image, 407, 380, 90)}
                     srcSet={`${getImageUrl(image, 300, 280, 85)} 300w, ${getImageUrl(image, 407, 380, 90)} 407w`}
@@ -108,7 +105,6 @@ export default function SecondaryHeroSection() {
                     className="absolute left-[8%] top-0 h-full w-auto object-contain z-20"
                   />
 
-                  {/* Texto — derecha */}
                   <div className="relative z-30 h-full flex items-center justify-end">
                     <div className="w-full px-6 md:px-12 lg:px-20 xl:px-28 flex justify-end">
                       <div className="text-right space-y-4 md:space-y-6 max-w-lg">
@@ -134,9 +130,9 @@ export default function SecondaryHeroSection() {
                     </div>
                   </div>
 
-                  {/* Dots de navegación */}
+                  {/* ✅ TOUCH TARGETS CORREGIDOS */}
                   <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       {slides.map((_, idx) => (
                         <button
                           key={idx}
@@ -144,12 +140,15 @@ export default function SecondaryHeroSection() {
                             const swiper = document.querySelector('.swiper')?.swiper;
                             if (swiper) swiper.slideToLoop(idx);
                           }}
-                          className={`rounded-full transition-all duration-300 cursor-pointer ${activeIndex === idx
+                          className="p-3 flex items-center justify-center"
+                          aria-label={`Ir al slide ${idx + 1}`}
+                        >
+                          <span className={`block rounded-full transition-all duration-300 ${activeIndex === idx
                             ? 'w-5 h-2 bg-accent'
                             : 'w-2 h-2 bg-muted hover:bg-accent/50'
                             }`}
-                          aria-label={`Ir al slide ${idx + 1}`}
-                        />
+                          />
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -160,7 +159,7 @@ export default function SecondaryHeroSection() {
           </Swiper>
         </div>
 
-        {/* --- Sidebar Promocional (1/3) --- */}
+        {/* Sidebar Promocional (1/3) */}
         <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-4 sm:p-6 flex flex-col justify-between h-[380px]">
           <div className="text-center mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-bold text-foreground">
