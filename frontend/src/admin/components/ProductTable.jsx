@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Eye } from "lucide-react";
-import useProducts from "../hooks/useProducts";
+import { useProducts } from "../contexts/ProductsContext";
 import { getImageUrl } from "../../utils/getImageUrl";
 
 export default function ProductTable() {
@@ -14,14 +14,11 @@ export default function ProductTable() {
     const handleEdit = (id) => navigate(`/admin/products/edit/${id}`);
 
     const handleDelete = async (id, titulo) => {
-        if (!confirm(`¿Seguro que deseas eliminar "${titulo}" y todas sus imágenes?\n\nEsta acción no se puede deshacer.`)) {
-            return;
-        }
+        if (!confirm(`¿Seguro que deseas eliminar "${titulo}" y todas sus imágenes?\n\nEsta acción no se puede deshacer.`)) return;
         setLoadingDelete(id);
         try {
             await deleteProduct(id);
-        } catch (error) {
-            console.error("Error eliminando producto:", error);
+        } catch {
             alert("❌ Error al eliminar el producto. Intenta de nuevo.");
         } finally {
             setLoadingDelete(null);
@@ -67,16 +64,13 @@ export default function ProductTable() {
                     <tbody className="divide-y divide-border">
                         {products.map((p) => (
                             <tr key={p.id} className="hover:bg-muted/10 transition">
-                                {/* ✅ Imagen — usa getImageUrl para soportar Cloudinary y rutas relativas */}
                                 <td className="px-6 py-4">
                                     {p.imagen_principal ? (
                                         <img
                                             src={getImageUrl(p.imagen_principal, 64, 64, 70)}
                                             alt={p.titulo}
                                             className="w-16 h-16 object-cover rounded-lg shadow-sm"
-                                            onError={(e) => {
-                                                e.target.src = "/placeholder.svg";
-                                            }}
+                                            onError={(e) => { e.target.src = "/placeholder.svg"; }}
                                         />
                                     ) : (
                                         <div className="w-16 h-16 bg-muted/20 rounded-lg flex items-center justify-center">
@@ -84,8 +78,6 @@ export default function ProductTable() {
                                         </div>
                                     )}
                                 </td>
-
-                                {/* Producto */}
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-foreground text-sm">{p.titulo}</span>
@@ -95,22 +87,16 @@ export default function ProductTable() {
                                         <span className="text-xs text-muted mt-1">ID: {p.id}</span>
                                     </div>
                                 </td>
-
-                                {/* Precio */}
                                 <td className="px-6 py-4">
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-foreground">
-                                            ${Number(p.precio).toLocaleString('es-CL')}
-                                        </span>
-                                        {p.precio_anterior && (
-                                            <span className="text-xs text-muted line-through">
-                                                ${Number(p.precio_anterior).toLocaleString('es-CL')}
-                                            </span>
-                                        )}
-                                    </div>
+                                    <span className="font-bold text-foreground">
+                                        ${Number(p.precio).toLocaleString('es-CL')}
+                                    </span>
+                                    {p.precio_anterior && (
+                                        <div className="text-xs text-muted line-through">
+                                            ${Number(p.precio_anterior).toLocaleString('es-CL')}
+                                        </div>
+                                    )}
                                 </td>
-
-                                {/* Stock */}
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${p.stock > 10 ? 'bg-green-100 text-green-800'
                                             : p.stock > 0 ? 'bg-yellow-100 text-yellow-800'
@@ -119,27 +105,15 @@ export default function ProductTable() {
                                         {p.stock > 0 ? `${p.stock} unidades` : 'Agotado'}
                                     </span>
                                 </td>
-
-                                {/* Categoría */}
                                 <td className="px-6 py-4">
                                     <span className="text-sm text-muted">{p.categoria_nombre || "—"}</span>
                                 </td>
-
-                                {/* Acciones */}
                                 <td className="px-6 py-4">
                                     <div className="flex justify-center items-center gap-2">
-                                        <button
-                                            onClick={() => handleView(p.id)}
-                                            className="p-2 text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
-                                            title="Ver en tienda"
-                                        >
+                                        <button onClick={() => handleView(p.id)} className="p-2 text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title="Ver en tienda">
                                             <Eye className="w-4 h-4" />
                                         </button>
-                                        <button
-                                            onClick={() => handleEdit(p.id)}
-                                            className="p-2 text-muted hover:text-yellow-600 hover:bg-yellow-100 rounded-lg transition-all"
-                                            title="Editar producto"
-                                        >
+                                        <button onClick={() => handleEdit(p.id)} className="p-2 text-muted hover:text-yellow-600 hover:bg-yellow-100 rounded-lg transition-all" title="Editar producto">
                                             <Pencil className="w-4 h-4" />
                                         </button>
                                         <button
