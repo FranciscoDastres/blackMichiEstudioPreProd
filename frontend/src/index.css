@@ -32,20 +32,30 @@
 
 @layer components {
     .btn-add-cart {
-        @apply bg-primary text-primary-foreground font-bold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2;
+        @apply bg-primary text-primary-foreground font-bold px-6 py-3 rounded-full transition-all duration-300 flex items-center justify-center gap-2;
         box-shadow: 0 0 25px rgba(0, 212, 255, 0.4);
     }
 
     .btn-add-cart:hover {
+        transform: scale(1.05);
         box-shadow: 0 0 35px rgba(0, 212, 255, 0.6);
     }
 
+    .btn-add-cart:active {
+        transform: scale(0.95);
+    }
+
     .glass-panel {
-        @apply bg-secondary/50 backdrop-blur-lg border border-white/10 shadow-2xl transition-all hover:border-primary/40;
+        @apply bg-secondary/50 backdrop-blur-lg border border-white/10 shadow-2xl transition-all;
+    }
+
+    .glass-panel:hover {
+        @apply border-primary/40;
     }
 
     .price-text {
-        @apply text-primary font-display font-extrabold text-2xl tracking-tighter;
+        @apply text-primary font-extrabold text-2xl tracking-tighter;
+        font-family: 'Outfit', sans-serif;
     }
 }
 
@@ -63,7 +73,8 @@
         content: '';
         position: fixed;
         inset: 0;
-        background: radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+        background:
+            radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
             radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
         pointer-events: none;
         z-index: -1;
