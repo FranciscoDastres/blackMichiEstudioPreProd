@@ -104,7 +104,7 @@ export default function HeroSection() {
                                     alt={title}
                                     fetchPriority={index === 0 ? "high" : "auto"}
                                     loading={index === 0 ? "eager" : "lazy"}
-                                    className="absolute right-0 top-0 h-full w-auto object-contain z-20"
+                                    className="absolute right-[8%] top-0 h-full w-auto object-contain z-20"
                                 />
 
                                 {/* Gradiente encima de la imagen para mezclar con el fondo */}
