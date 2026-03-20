@@ -8,7 +8,7 @@ const cloudinaryService = require("./cloudinaryService");
 const cache = {
     products: null,
     timestamp: 0,
-    ttl: 5 * 60 * 1000,
+    ttl: 30 * 1000 // 30 segundos,
 };
 
 const invalidateCache = () => {
