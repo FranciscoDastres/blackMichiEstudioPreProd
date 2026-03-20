@@ -1,6 +1,7 @@
 // frontend/src/admin/components/AddProductForm.jsx
 import { useState, useRef } from "react";
 import { useProducts } from "../contexts/ProductsContext";
+import api from "../../services/api";
 import { Package, DollarSign, Hash, Tag, FileText, Image, Upload, X, Check, Loader } from "lucide-react";
 
 export default function AddProductForm() {
@@ -38,12 +39,9 @@ export default function AddProductForm() {
             data.append("categoria", form.categoria);
             imagenes.forEach((img) => data.append("imagenes", img));
 
-            const token = localStorage.getItem("token");
-            await fetch(`${import.meta.env.VITE_API_URL}/api/admin/productos`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
-                body: data,
-            }).then(r => { if (!r.ok) throw new Error(); return r.json(); });
+            await api.post("/admin/productos", data, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
             setForm({ nombre: "", precio: "", stock: "", categoria: "", descripcion: "" });
             setImagenes([]);
