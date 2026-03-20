@@ -43,7 +43,15 @@ function PopularProducts() {
         setLoading(false);
       }
     };
+
     fetchProducts();
+
+    // ✅ Recargar cuando el usuario vuelve a la pestaña
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") fetchProducts();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
   const categoriesTabs = [
