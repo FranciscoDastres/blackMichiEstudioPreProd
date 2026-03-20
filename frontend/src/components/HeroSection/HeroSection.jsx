@@ -91,7 +91,7 @@ export default function HeroSection() {
                                     aria-hidden="true"
                                     fetchPriority={index === 0 ? "high" : "auto"}
                                     loading={index === 0 ? "eager" : "lazy"}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-15 scale-110"
+                                    className="absolute inset-0 w-full h-full object-cover opacity-60 scale-110"
                                     style={{ objectPosition: 'right center' }}
                                 />
 
@@ -144,8 +144,8 @@ export default function HeroSection() {
                                                     if (swiper) swiper.slideToLoop(idx);
                                                 }}
                                                 className={`rounded-full transition-all duration-300 cursor-pointer ${activeIndex === idx
-                                                        ? 'w-5 h-2 bg-accent'
-                                                        : 'w-2 h-2 bg-muted hover:bg-accent/50'
+                                                    ? 'w-5 h-2 bg-accent'
+                                                    : 'w-2 h-2 bg-muted hover:bg-accent/50'
                                                     }`}
                                                 aria-label={`Ir al slide ${idx + 1}`}
                                             />
