@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../services/api';
 
-export function useMyOrders() {
+function useMyOrders() {
     const { token } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,3 +20,6 @@ export function useMyOrders() {
 
     return { orders, loading };
 }
+
+export { useMyOrders };      // named  → import { useMyOrders } from '...'
+export default useMyOrders;  // default → import useMyOrders from '...'
