@@ -37,10 +37,11 @@ export default function Login() {
     try {
       const res = await login(formData.email, formData.password);
       if (res.success) {
-        if (res?.user?.rol === "admin") {
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        if (storedUser?.rol === "admin") {
           navigate("/admin");
         } else {
-          navigate("/");
+          navigate("/cuenta/perfil");
         }
       } else {
         setMessage(res.error || "Credenciales inválidas o error de servidor");
