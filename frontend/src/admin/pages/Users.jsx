@@ -1,4 +1,3 @@
-// Users.jsx
 import AdminTable from "../components/AdminTable";
 import StatusBadge from "../components/StatusBadge";
 import useUsers from "../hooks/useUsers";
@@ -7,7 +6,7 @@ export default function Users() {
     const { users, loading } = useUsers();
 
     if (loading) {
-        return <p className="text-muted">Cargando usuarios...</p>;
+        return <p className="text-white p-4">Cargando usuarios...</p>;
     }
 
     const columns = [
@@ -20,12 +19,22 @@ export default function Users() {
                 <StatusBadge status={value === "admin" ? "admin" : "cliente"} />
             ),
         },
-        { header: "Creado", accessor: "created_at" },
+        {
+            header: "Creado",
+            accessor: "created_at",
+            cell: (value) => new Date(value).toLocaleDateString(),
+        },
     ];
 
     return (
-        <div className="space-y-8 p-4 sm:p-6 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 min-h-screen">
-            <h2 className="text-2xl font-bold text-foreground">Usuarios</h2>
+        <div className="p-6 bg-gray-900 min-h-screen text-white">
+            <h2 className="text-2xl font-bold mb-4">Usuarios</h2>
+
+            {/* DEBUG (puedes borrar después) */}
+            <pre className="mb-4 text-xs bg-black p-2 rounded">
+                {JSON.stringify(users, null, 2)}
+            </pre>
+
             <AdminTable columns={columns} data={users} />
         </div>
     );
