@@ -13,7 +13,6 @@ export default function Profile() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // await api.updateProfile(form)
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
     };
@@ -31,15 +30,13 @@ export default function Profile() {
                             type={field === 'email' ? 'email' : 'text'}
                             value={form[field]}
                             onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                            className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm
-                focus:outline-none focus:ring-2 focus:ring-black"
+                            className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                         />
                     </div>
                 ))}
                 <button
                     type="submit"
-                    className="bg-black text-white px-6 py-2 rounded-lg text-sm
-            hover:bg-gray-800 transition-colors"
+                    className="bg-black text-white px-6 py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors"
                 >
                     Guardar cambios
                 </button>
