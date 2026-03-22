@@ -1,65 +1,75 @@
-import { NavLink, Outlet } from "react-router-dom";
+// src/user/layout/UserLayout.jsx
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import {
+    UserCircleIcon,
+    ShoppingBagIcon,
+    ShieldCheckIcon,
+    ArrowRightOnRectangleIcon,
+} from '@heroicons/react/24/outline';
 
-const linkBase =
-    "relative px-3 py-2 text-sm font-medium transition-colors";
+const navItems = [
+    { to: '/cuenta/perfil', label: 'Mi Perfil', icon: UserCircleIcon },
+    { to: '/cuenta/pedidos', label: 'Mis Pedidos', icon: ShoppingBagIcon },
+    { to: '/cuenta/seguridad', label: 'Seguridad', icon: ShieldCheckIcon },
+];
 
 export default function UserLayout() {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b">
-                <div className="max-w-6xl mx-auto px-4 py-5">
-                    <h1 className="text-xl font-semibold text-gray-900">
-                        Mi cuenta
-                    </h1>
+            <div className="max-w-6xl mx-auto px-4 py-10 flex gap-8">
 
-                    {/* Navigation */}
-                    <nav className="mt-4 flex gap-6 border-b">
-                        <NavLink
-                            to="/user/orders"
-                            className={({ isActive }) =>
-                                `${linkBase} ${isActive
-                                    ? "text-black after:absolute after:left-0 after:-bottom-[1px] after:h-[2px] after:w-full after:bg-black"
-                                    : "text-gray-500 hover:text-black"
-                                }`
-                            }
-                        >
-                            Mis pedidos
-                        </NavLink>
+                {/* Sidebar */}
+                <aside className="w-64 shrink-0">
+                    <div className="bg-white rounded-2xl shadow-sm p-6 mb-4 text-center">
+                        <div className="w-16 h-16 rounded-full bg-gray-200 mx-auto mb-2
+              flex items-center justify-center">
+                            <UserCircleIcon className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <p className="font-semibold text-gray-800">{user?.nombre || 'Usuario'}</p>
+                        <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                    </div>
 
-                        <NavLink
-                            to="/user/account/profile"
-                            className={({ isActive }) =>
-                                `${linkBase} ${isActive
-                                    ? "text-black after:absolute after:left-0 after:-bottom-[1px] after:h-[2px] after:w-full after:bg-black"
-                                    : "text-gray-500 hover:text-black"
-                                }`
-                            }
+                    <nav className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                        {navItems.map(({ to, label, icon: Icon }) => (
+                            <NavLink
+                                key={to}
+                                to={to}
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-5 py-3 text-sm transition-colors
+                  ${isActive
+                                        ? 'bg-black text-white font-medium'
+                                        : 'text-gray-600 hover:bg-gray-50'}`
+                                }
+                            >
+                                <Icon className="w-5 h-5" />
+                                {label}
+                            </NavLink>
+                        ))}
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-5 py-3 text-sm
+                text-red-500 hover:bg-red-50 transition-colors"
                         >
-                            Perfil
-                        </NavLink>
-
-                        <NavLink
-                            to="/user/account/security"
-                            className={({ isActive }) =>
-                                `${linkBase} ${isActive
-                                    ? "text-black after:absolute after:left-0 after:-bottom-[1px] after:h-[2px] after:w-full after:bg-black"
-                                    : "text-gray-500 hover:text-black"
-                                }`
-                            }
-                        >
-                            Seguridad
-                        </NavLink>
+                            <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                            Cerrar sesión
+                        </button>
                     </nav>
-                </div>
-            </header>
+                </aside>
 
-            {/* Content */}
-            <main className="max-w-6xl mx-auto px-4 py-8">
-                <div className="bg-white rounded-xl shadow-sm p-6">
+                {/* Contenido principal */}
+                <main className="flex-1 min-w-0">
                     <Outlet />
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
     );
 }
