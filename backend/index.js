@@ -48,7 +48,7 @@ const featuredRoutes = require('./routes/featuredRoutes');
 const reviewsRoutes = require('./routes/reviews');
 const usersRoutes = require('./routes/users');
 const { requireAuth, requireAdmin } = require('./middleware/auth');
-
+const orderRoutes = require('./routes/order');
 const app = express();
 // 🔥 IMPORTANTE: Render asigna el puerto dinámicamente via PORT env var
 // NO USAR PUERTO FIJO EN RENDER
@@ -278,7 +278,8 @@ try {
   // ✅ AQUÍ, dentro del try
   console.log('⏳ Montando /api/users...');
   app.use('/api/users', requireAuth, requireAdmin, usersRoutes);
-
+  console.log('⏳ Montando /api/orders...');
+  app.use('/api/orders', orderRoutes);
   console.log('✅ TODAS LAS RUTAS MONTADAS CORRECTAMENTE');
 } catch (error) {
   console.error('❌ Error al montar rutas:', error);
