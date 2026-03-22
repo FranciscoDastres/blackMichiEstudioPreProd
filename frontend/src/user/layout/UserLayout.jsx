@@ -1,6 +1,6 @@
 // src/user/layout/UserLayout.jsx
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import {
     UserCircleIcon,
     ShoppingBagIcon,
