@@ -142,7 +142,7 @@ export default function AppRoutes() {
 
       {/* USER */}
       <Route
-        path="/user/*"
+        path="/cuenta/*"
         element={
           <Suspense fallback={<LoadingFallback />}>
             <PrivateRoute requiredRole="cliente">
