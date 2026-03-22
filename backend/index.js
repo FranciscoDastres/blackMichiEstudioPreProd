@@ -46,7 +46,7 @@ const heroImagesRoutes = require("./routes/heroImages");
 const paymentRoutes = require('./routes/payments');
 const featuredRoutes = require('./routes/featuredRoutes');
 const reviewsRoutes = require('./routes/reviews');
-
+const usersRoutes = require('./routes/users');
 const { requireAuth, requireAdmin } = require('./middleware/auth');
 
 const app = express();
@@ -275,11 +275,16 @@ try {
   console.log('⏳ Montando /api/payments...');
   app.use('/api/payments', paymentRoutes);
 
+  // ✅ AQUÍ, dentro del try
+  console.log('⏳ Montando /api/users...');
+  app.use('/api/users', requireAuth, requireAdmin, usersRoutes);
+
   console.log('✅ TODAS LAS RUTAS MONTADAS CORRECTAMENTE');
 } catch (error) {
   console.error('❌ Error al montar rutas:', error);
   console.error('El servidor continuará pero algunas rutas pueden no estar disponibles');
 }
+
 
 // --------------------
 // MIDDLEWARE PARA RUTAS NO ENCONTRADAS
