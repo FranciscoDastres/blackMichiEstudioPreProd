@@ -1,12 +1,8 @@
-// backend/controllers/orderController.js
-// ✅ SOLO HTTP HANDLING - La lógica está en orderService.js
 const orderService = require("../services/orderService");
 
-// ✅ Obtener pedidos
 async function getOrders(req, res) {
   try {
-    const { userId } = req.query;
-    const orders = await orderService.getOrders(userId);
+    const orders = await orderService.getOrders();
     res.json(orders);
   } catch (error) {
     console.error("❌ Error:", error);
@@ -14,63 +10,34 @@ async function getOrders(req, res) {
   }
 }
 
-// ✅ Obtener pedido por ID
-async function getOrderById(req, res) {
+async function getMyOrders(req, res) {
   try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ error: "ID de pedido requerido" });
-    }
-
-    const order = await orderService.getOrderById(id);
-    res.json(order);
+    const usuarioId = req.user.id; // viene del middleware auth
+    const orders = await orderService.getMyOrders(usuarioId);
+    res.json(orders);
   } catch (error) {
     console.error("❌ Error:", error);
-    res.status(error.message?.includes("no encontrado") ? 404 : 500).json({
-      error: error.message || "Error al obtener pedido",
-    });
+    res.status(500).json({ error: "Error al obtener tus pedidos" });
   }
 }
 
-// ✅ Actualizar estado del pedido
+async function getOrderById(req, res) {
+  try {
+    const order = await orderService.getOrderById(req.params.id);
+    res.json(order);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+}
+
 async function updateOrderStatus(req, res) {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!id || !status) {
-      return res.status(400).json({ error: "ID y status requeridos" });
-    }
-
-    const order = await orderService.updateOrderStatus(id, status);
+    const { estado } = req.body;
+    const order = await orderService.updateOrderStatus(req.params.id, estado);
     res.json({ success: true, data: order });
   } catch (error) {
-    console.error("❌ Error:", error);
     res.status(500).json({ error: "Error al actualizar pedido" });
   }
 }
 
-// ✅ Crear pedido
-async function createOrder(req, res) {
-  try {
-    const { userId, items, total, details } = req.body;
-
-    if (!userId || !items || !total) {
-      return res.status(400).json({ error: "Datos incompletos" });
-    }
-
-    const order = await orderService.createOrder(userId, items, total, details);
-    res.status(201).json({ success: true, data: order });
-  } catch (error) {
-    console.error("❌ Error:", error);
-    res.status(500).json({ error: "Error al crear pedido" });
-  }
-}
-
-module.exports = {
-  getOrders,
-  getOrderById,
-  updateOrderStatus,
-  createOrder,
-};
+module.exports = { getOrders, getMyOrders, getOrderById, updateOrderStatus };
