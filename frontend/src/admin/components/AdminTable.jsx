@@ -1,41 +1,44 @@
-// frontend/src/admin/components/AdminTable.jsx
 export default function AdminTable({ columns, data }) {
     return (
-        <div className="relative overflow-x-auto rounded-2xl border border-gray-800 bg-gray-900/60 backdrop-blur shadow-xl">
-            <table className="min-w-full text-sm text-gray-200">
-                <thead className="bg-gray-950/60 border-b border-gray-800">
+        <div className="overflow-x-auto rounded-lg border border-gray-700 bg-gray-800">
+            <table className="min-w-full text-sm text-white">
+                <thead className="bg-gray-700">
                     <tr>
                         {columns.map((col) => (
                             <th
                                 key={col.accessor || col.header}
-                                className="px-5 py-3 text-left font-semibold tracking-wide text-gray-300 uppercase text-xs"
+                                className="px-4 py-2 text-left text-xs font-bold uppercase"
                             >
                                 {col.header}
                             </th>
                         ))}
                     </tr>
                 </thead>
+
                 <tbody>
                     {data.map((row, index) => (
                         <tr
                             key={row.id ?? index}
-                            className="border-t border-gray-800 hover:bg-gray-800/40 transition-colors"
+                            className="border-t border-gray-700 hover:bg-gray-700"
                         >
-                            {columns.map((col) => (
-                                <td
-                                    key={col.accessor || col.header}
-                                    className="px-5 py-4 text-gray-100 whitespace-nowrap"
-                                >
-                                    {col.cell
-                                        ? col.cell(row[col.accessor], row)
-                                        : row[col.accessor] ?? '—'}
-                                </td>
-                            ))}
+                            {columns.map((col) => {
+                                const value = row[col.accessor];
+
+                                return (
+                                    <td
+                                        key={col.accessor || col.header}
+                                        className="px-4 py-2"
+                                    >
+                                        {col.cell
+                                            ? col.cell(value, row)
+                                            : value ?? "—"}
+                                    </td>
+                                );
+                            })}
                         </tr>
                     ))}
                 </tbody>
             </table>
-            <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/5" />
         </div>
     );
 }
