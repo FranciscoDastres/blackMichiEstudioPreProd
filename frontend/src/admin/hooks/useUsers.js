@@ -5,8 +5,6 @@ export default function useUsers() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // MOCK (luego API)
-        console.log('📋 useUsers: Usando datos MOCK (no real)');
         setTimeout(() => {
             setUsers([
                 {
@@ -20,7 +18,7 @@ export default function useUsers() {
                     id: 2,
                     name: "Ana Gómez",
                     email: "ana@example.com",
-                    role: "cliente",
+                    role: "admin",
                     created_at: "2025-01-02",
                 },
             ]);
