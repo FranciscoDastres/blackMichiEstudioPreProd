@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function useAuth() {
+function useAuth() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -21,3 +21,6 @@ export default function useAuth() {
 
     return { user, loading, isLoggedIn: !!localStorage.getItem("token"), logout };
 }
+
+export { useAuth };        // named export  → import { useAuth } from '...'
+export default useAuth;    // default export → import useAuth from '...'
