@@ -1,24 +1,21 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import UserLayout from "./layout/UserLayout";
+// src/user/user.routes.jsx
+import UserLayout from './layout/UserLayout';
+import Profile from './pages/Account/Profile';
+import Security from './pages/Account/Security';
+import OrdersPage from './pages/Orders/OrdersPage';
+import OrderDetail from './pages/Orders/OrderDetail';
+import { Navigate } from 'react-router-dom';
 
-import OrdersPage from "./pages/Orders/OrdersPage";
-import OrderDetail from "./pages/Orders/OrderDetail";
-import OrderReceipt from "./pages/Orders/OrderReceipt";
-import AccountRoutes from "./pages/Account";
+const userRoutes = {
+    path: '/cuenta',
+    element: <UserLayout />,
+    children: [
+        { index: true, element: <Navigate to="perfil" replace /> },
+        { path: 'perfil', element: <Profile /> },
+        { path: 'seguridad', element: <Security /> },
+        { path: 'pedidos', element: <OrdersPage /> },
+        { path: 'pedidos/:id', element: <OrderDetail /> },
+    ],
+};
 
-export default function UserRoutes() {
-    return (
-        <Routes>
-            <Route element={<UserLayout />}>
-                {/* REDIRECCIÓN CLAVE */}
-                <Route index element={<Navigate to="orders" replace />} />
-
-                <Route path="orders" element={<OrdersPage />} />
-                <Route path="orders/:orderId" element={<OrderDetail />} />
-                <Route path="orders/:orderId/receipt" element={<OrderReceipt />} />
-
-                <Route path="account/*" element={<AccountRoutes />} />
-            </Route>
-        </Routes>
-    );
-}
+export default userRoutes;
