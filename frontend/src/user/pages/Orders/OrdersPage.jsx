@@ -1,38 +1,83 @@
-// src/user/pages/Orders/OrdersPage.jsx
 import { useMyOrders } from '../../hooks/useMyOrders';
 import OrderCard from './OrderCard';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Package } from 'lucide-react';
 
 export default function OrdersPage() {
     const { orders, loading } = useMyOrders();
 
     if (loading) return (
-        <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-sky-500" />
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-primary border-t-transparent" />
+            <p className="text-muted text-sm">Cargando pedidos...</p>
         </div>
     );
 
     return (
-        <div className="bg-gray-900/80 border border-gray-800 rounded-2xl shadow-xl p-8">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center">
-                    <ShoppingBag className="w-5 h-5 text-sky-400" />
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="glass-panel rounded-2xl border border-border p-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-display font-extrabold text-foreground">
+                            Mis Pedidos
+                        </h1>
+                        <p className="text-muted text-sm mt-0.5">
+                            {orders.length > 0
+                                ? `${orders.length} pedido${orders.length > 1 ? 's' : ''} en total`
+                                : 'Historial de compras'}
+                        </p>
+                    </div>
                 </div>
-                <h1 className="text-xl font-bold text-white">Mis Pedidos</h1>
+
+                {/* Stats rápidas */}
+                {orders.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-6">
+                        <div className="glass-panel rounded-xl p-3 border border-border text-center">
+                            <p className="text-2xl font-display font-extrabold text-foreground">
+                                {orders.length}
+                            </p>
+                            <p className="text-xs text-muted mt-0.5">Total</p>
+                        </div>
+                        <div className="glass-panel rounded-xl p-3 border border-border text-center">
+                            <p className="text-2xl font-display font-extrabold text-green-400">
+                                {orders.filter(o => (o.status || o.estado) === 'pagado').length}
+                            </p>
+                            <p className="text-xs text-muted mt-0.5">Pagados</p>
+                        </div>
+                        <div className="glass-panel rounded-xl p-3 border border-border text-center">
+                            <p className="text-2xl font-display font-extrabold text-yellow-400">
+                                {orders.filter(o => (o.status || o.estado) === 'pendiente').length}
+                            </p>
+                            <p className="text-xs text-muted mt-0.5">Pendientes</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
+            {/* Lista de pedidos o estado vacío */}
             {orders.length === 0 ? (
-                <div className="text-center py-16">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
-                        <ShoppingBag className="w-8 h-8 text-gray-600" />
+                <div className="glass-panel rounded-2xl border border-border p-16 text-center">
+                    <div className="w-20 h-20 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Package className="w-10 h-10 text-primary/50" />
                     </div>
-                    <p className="text-gray-400 text-lg">Aún no tienes pedidos</p>
-                    <a href="/productos" className="text-sky-400 hover:text-sky-300 text-sm mt-2 block transition-colors">
-                        Ver productos →
+                    <h2 className="text-xl font-display font-bold text-foreground mb-2">
+                        Aún no tienes pedidos
+                    </h2>
+                    <p className="text-muted text-sm mb-6">
+                        Cuando realices una compra aparecerá aquí
+                    </p>
+                    <a
+                        href="/productos"
+                        className="btn-add-cart inline-block !px-6 !py-3 !rounded-xl"
+                    >
+                        Ver productos
                     </a>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {orders.map((order) => (
                         <OrderCard key={order.id} order={order} />
                     ))}
