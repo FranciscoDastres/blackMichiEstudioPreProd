@@ -175,7 +175,7 @@ router.post('/flow/create', async (req, res) => {
                 amount: total,
                 email: email.trim().toLowerCase(),
                 urlConfirmation: `${process.env.BACKEND_URL}/api/payments/flow/confirmation`,
-                urlReturn: `${process.env.FRONTEND_URL}/payment/return`
+                urlReturn: `${process.env.BACKEND_URL}/api/payments/flow/return`
             });
 
             // Guardar token de Flow
@@ -232,7 +232,7 @@ router.post('/flow/create', async (req, res) => {
  */
 router.get('/flow/return', async (req, res) => {
     const token = req.query.token;
-    console.log('🔙 Usuario retornó de Flow (GET) con token:', token);
+    console.log('🔙 Usuario retornó de Flow con token:', token);
 
     try {
         const result = await db.query(
@@ -241,14 +241,48 @@ router.get('/flow/return', async (req, res) => {
         );
 
         const pedidoId = result.rows.length > 0 ? result.rows[0].id : null;
-        const redirectUrl = pedidoId
-            ? `${process.env.FRONTEND_URL}/payment/return?token=${token}&pedidoId=${pedidoId}`
-            : `${process.env.FRONTEND_URL}/payment/return?token=${token}`;
 
-        res.redirect(redirectUrl);
+        if (pedidoId) {
+            return res.redirect(
+                `${process.env.FRONTEND_URL}/payment/return?token=${token}&pedidoId=${pedidoId}`
+            );
+        }
+
+        res.redirect(
+            `${process.env.FRONTEND_URL}/payment/return?token=${token}&error=not_found`
+        );
+
     } catch (error) {
-        console.error('❌ Error buscando pedido:', error);
-        res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}`);
+        console.error('❌ Error en flow/return:', error);
+        res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&error=server`);
+    }
+});
+
+router.post('/flow/return', async (req, res) => {
+    const token = req.body.token || req.query.token;
+    console.log('🔙 Flow POST return con token:', token);
+
+    try {
+        const result = await db.query(
+            'SELECT id FROM pedidos WHERE flow_token = $1',
+            [token]
+        );
+
+        const pedidoId = result.rows.length > 0 ? result.rows[0].id : null;
+
+        if (pedidoId) {
+            return res.redirect(
+                `${process.env.FRONTEND_URL}/payment/return?token=${token}&pedidoId=${pedidoId}`
+            );
+        }
+
+        res.redirect(
+            `${process.env.FRONTEND_URL}/payment/return?token=${token}&error=not_found`
+        );
+
+    } catch (error) {
+        console.error('❌ Error en flow/return POST:', error);
+        res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&error=server`);
     }
 });
 
