@@ -175,7 +175,7 @@ router.post('/flow/create', async (req, res) => {
                 amount: total,
                 email: email.trim().toLowerCase(),
                 urlConfirmation: `${process.env.BACKEND_URL}/api/payments/flow/confirmation`,
-                urlReturn: `${process.env.BACKEND_URL}/api/payments/flow/return`
+                urlReturn: `${process.env.FRONTEND_URL}/payment/return`
             });
 
             // Guardar token de Flow
