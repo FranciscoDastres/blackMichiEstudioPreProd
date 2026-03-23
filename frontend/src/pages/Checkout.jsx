@@ -171,8 +171,9 @@ export default function Checkout() {
     setErrors(prev => ({ ...prev, general: "" }));
 
     try {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/payments/flow/create`,
+        `${API_BASE}/api/payments/flow/create`,
         {
           items: cart,
           total: totalConEnvio,
