@@ -10,7 +10,6 @@ const db = require('../lib/db');
 router.post('/flow/create', async (req, res) => {
     const { items, total, email, nombre, notas, telefono, direccion } = req.body;
 
-    // ✅ VALIDATE ENVIRONMENT VARIABLES
     if (!process.env.BACKEND_URL) {
         console.error('❌ BACKEND_URL environment variable is not set');
         return res.status(500).json({
@@ -20,65 +19,36 @@ router.post('/flow/create', async (req, res) => {
     }
 
     try {
-        // Validaciones básicas
         if (!email || !email.includes('@')) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email inválido.'
-            });
+            return res.status(400).json({ success: false, message: 'Email inválido.' });
         }
-
         if (!nombre || nombre.trim().length < 2) {
-            return res.status(400).json({
-                success: false,
-                message: 'Nombre inválido.'
-            });
+            return res.status(400).json({ success: false, message: 'Nombre inválido.' });
         }
-
         if (!items || items.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'El carrito está vacío.'
-            });
+            return res.status(400).json({ success: false, message: 'El carrito está vacío.' });
         }
-
         if (!total || total <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Total inválido.'
-            });
+            return res.status(400).json({ success: false, message: 'Total inválido.' });
         }
 
-        // Generar commerce_order único
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
         const commerceOrder = `BMS-${timestamp}-${randomSuffix}`;
 
-        // Iniciar transacción
         await db.query('BEGIN');
 
         try {
-            // Buscar usuario existente
             const userResult = await db.query(
                 'SELECT id FROM usuarios WHERE email = $1',
                 [email.trim().toLowerCase()]
             );
             const usuarioId = userResult.rows.length > 0 ? userResult.rows[0].id : null;
 
-            // Crear pedido
             const pedidoResult = await db.query(
                 `INSERT INTO pedidos (
-                    usuario_id,
-                    comprador_nombre,
-                    comprador_email,
-                    comprador_telefono,
-                    direccion_envio,
-                    total,
-                    costo_envio,
-                    notas,
-                    estado,
-                    commerce_order,
-                    metodo_pago
+                    usuario_id, comprador_nombre, comprador_email, comprador_telefono,
+                    direccion_envio, total, costo_envio, notas, estado, commerce_order, metodo_pago
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente', $9, 'flow')
                 RETURNING id`,
                 [
@@ -96,18 +66,14 @@ router.post('/flow/create', async (req, res) => {
 
             const pedidoId = pedidoResult.rows[0].id;
 
-            // ✅ VALIDAR QUE TODOS LOS PRODUCTOS EXISTAN Y TENGAN STOCK
             const productIds = items.map(item => item.id);
-
             const existingProducts = await db.query(
                 'SELECT id, titulo, stock FROM productos WHERE id = ANY($1)',
                 [productIds]
             );
 
-            // Verificar productos faltantes
             const existingIds = existingProducts.rows.map(p => p.id);
             const missingIds = productIds.filter(id => !existingIds.includes(id));
-
             if (missingIds.length > 0) {
                 await db.query('ROLLBACK');
                 return res.status(400).json({
@@ -117,7 +83,6 @@ router.post('/flow/create', async (req, res) => {
                 });
             }
 
-            // ✅ VALIDAR STOCK SUFICIENTE
             const stockInsuficiente = [];
             for (const item of items) {
                 const producto = existingProducts.rows.find(p => p.id === item.id);
@@ -130,7 +95,6 @@ router.post('/flow/create', async (req, res) => {
                     });
                 }
             }
-
             if (stockInsuficiente.length > 0) {
                 await db.query('ROLLBACK');
                 return res.status(400).json({
@@ -140,17 +104,11 @@ router.post('/flow/create', async (req, res) => {
                 });
             }
 
-            // ✅ TODO VALIDADO - Insertar items del pedido
             for (const item of items) {
                 await db.query(
                     `INSERT INTO pedido_items (
-                        pedido_id,
-                        producto_id,
-                        producto_titulo,
-                        producto_imagen,
-                        cantidad,
-                        precio_unitario,
-                        subtotal
+                        pedido_id, producto_id, producto_titulo, producto_imagen,
+                        cantidad, precio_unitario, subtotal
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
                     [
                         pedidoId,
@@ -164,11 +122,9 @@ router.post('/flow/create', async (req, res) => {
                 );
             }
 
-            // Generar subject para Flow
             const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
             const subject = `Pedido #${pedidoId} - ${itemCount} producto${itemCount > 1 ? 's' : ''}`;
 
-            // Crear pago en Flow
             const flowResponse = await flowService.createPayment({
                 commerceOrder,
                 subject,
@@ -178,7 +134,6 @@ router.post('/flow/create', async (req, res) => {
                 urlReturn: `${process.env.BACKEND_URL}/api/payments/flow/return`
             });
 
-            // Guardar token de Flow
             await db.query(
                 'UPDATE pedidos SET flow_token = $1 WHERE id = $2',
                 [flowResponse.token, pedidoId]
@@ -208,17 +163,13 @@ router.post('/flow/create', async (req, res) => {
         });
 
         let message = 'Error al procesar el pago. Por favor intenta nuevamente.';
-        let statusCode = 500;
-
         if (error.message?.includes('Flow')) {
             message = 'Error al conectar con Flow. Verifica tu conexión.';
-        } else if (error.message?.includes('BACKEND_URL')) {
-            message = 'Error de configuración del servidor.';
         } else if (error.message?.includes('database')) {
             message = 'Error de base de datos. Por favor intenta más tarde.';
         }
 
-        res.status(statusCode).json({
+        res.status(500).json({
             success: false,
             message,
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -228,11 +179,11 @@ router.post('/flow/create', async (req, res) => {
 
 /**
  * GET /flow/return
- * Ruta cuando el usuario vuelve desde Flow
+ * Flow redirige al usuario aquí después del pago (GET)
  */
 router.get('/flow/return', async (req, res) => {
     const token = req.query.token;
-    console.log('🔙 Usuario retornó de Flow con token:', token);
+    console.log('🔙 Usuario retornó de Flow (GET) con token:', token);
 
     try {
         const result = await db.query(
@@ -253,14 +204,18 @@ router.get('/flow/return', async (req, res) => {
         );
 
     } catch (error) {
-        console.error('❌ Error en flow/return:', error);
+        console.error('❌ Error en flow/return GET:', error);
         res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&error=server`);
     }
 });
 
+/**
+ * POST /flow/return
+ * Flow redirige al usuario aquí después del pago (POST, por si acaso)
+ */
 router.post('/flow/return', async (req, res) => {
     const token = req.body.token || req.query.token;
-    console.log('🔙 Flow POST return con token:', token);
+    console.log('🔙 Usuario retornó de Flow (POST) con token:', token);
 
     try {
         const result = await db.query(
@@ -287,32 +242,6 @@ router.post('/flow/return', async (req, res) => {
 });
 
 /**
- * POST /flow/return
- * Ruta alternativa por si Flow usa POST
- */
-router.post('/flow/return', async (req, res) => {
-    const token = req.body.token || req.query.token;
-    console.log('🔙 Usuario retornó de Flow (POST) con token:', token);
-
-    try {
-        const result = await db.query(
-            'SELECT id FROM pedidos WHERE flow_token = $1',
-            [token]
-        );
-
-        const pedidoId = result.rows.length > 0 ? result.rows[0].id : null;
-        const redirectUrl = pedidoId
-            ? `${process.env.FRONTEND_URL}/payment/return?token=${token}&pedidoId=${pedidoId}`
-            : `${process.env.FRONTEND_URL}/payment/return?token=${token}`;
-
-        res.redirect(redirectUrl);
-    } catch (error) {
-        console.error('❌ Error buscando pedido:', error);
-        res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}`);
-    }
-});
-
-/**
  * POST /flow/confirmation
  * Webhook de Flow para confirmar el pago
  */
@@ -326,7 +255,6 @@ router.post('/flow/confirmation', async (req, res) => {
             return res.status(400).send('Token required');
         }
 
-        // Registrar webhook
         const webhookResult = await db.query(
             `INSERT INTO flow_webhooks (
                 token, request_body, request_headers, ip_origen
@@ -342,7 +270,6 @@ router.post('/flow/confirmation', async (req, res) => {
 
         const webhookId = webhookResult.rows[0].id;
 
-        // Validar firma solo en producción
         if (process.env.FLOW_ENV === 'production' && !flowService.validateCallback(req.body)) {
             console.error('❌ Firma inválida');
             await db.query(
@@ -352,7 +279,6 @@ router.post('/flow/confirmation', async (req, res) => {
             return res.status(400).send('Invalid signature');
         }
 
-        // Obtener estado del pago desde Flow
         const payment = await flowService.getPaymentStatus(token);
 
         console.log('💳 Estado del pago:', {
@@ -362,17 +288,9 @@ router.post('/flow/confirmation', async (req, res) => {
             amount: payment.amount
         });
 
-        // Mapear estado de Flow a estado interno
-        const statusMap = {
-            1: 'pendiente',
-            2: 'pagado',
-            3: 'rechazado',
-            4: 'cancelado'
-        };
-
+        const statusMap = { 1: 'pendiente', 2: 'pagado', 3: 'rechazado', 4: 'cancelado' };
         const nuevoEstado = statusMap[payment.status] || 'pendiente';
 
-        // Actualizar pedido con datos de Flow
         const updateResult = await db.query(
             `UPDATE pedidos 
             SET 
@@ -405,17 +323,14 @@ router.post('/flow/confirmation', async (req, res) => {
 
         const pedido = updateResult.rows[0];
 
-        // ✅ DESCONTAR STOCK SI EL PAGO FUE EXITOSO
         if (payment.status === 2) {
             console.log('✅ Pago confirmado - Descontando stock del Pedido #' + pedido.id);
 
-            // Obtener items del pedido
             const itemsResult = await db.query(
                 `SELECT producto_id, cantidad FROM pedido_items WHERE pedido_id = $1`,
                 [pedido.id]
             );
 
-            // Descontar stock de cada producto
             for (const item of itemsResult.rows) {
                 try {
                     const updateStock = await db.query(
@@ -427,7 +342,7 @@ router.post('/flow/confirmation', async (req, res) => {
                     );
 
                     if (updateStock.rows.length === 0) {
-                        console.warn(`⚠️ Stock insuficiente para producto ID ${item.producto_id} (puede haber sido vendido antes)`);
+                        console.warn(`⚠️ Stock insuficiente para producto ID ${item.producto_id}`);
                     } else {
                         console.log(`📦 Stock actualizado: "${updateStock.rows[0].titulo}" | Nuevo stock: ${updateStock.rows[0].stock}`);
                     }
@@ -437,7 +352,6 @@ router.post('/flow/confirmation', async (req, res) => {
             }
         }
 
-        // Actualizar webhook como procesado
         await db.query(
             `UPDATE flow_webhooks 
             SET processed = true, pedido_id = $1, flow_order = $2, flow_status = $3
@@ -445,7 +359,6 @@ router.post('/flow/confirmation', async (req, res) => {
             [pedido.id, payment.flowOrder, payment.status, webhookId]
         );
 
-        // Log según estado
         if (payment.status === 2) {
             console.log('✅ Pago confirmado - Pedido #', pedido.id);
         } else if (payment.status === 3) {
@@ -458,7 +371,6 @@ router.post('/flow/confirmation', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error procesando webhook:', error);
-
         try {
             await db.query(
                 'UPDATE flow_webhooks SET processing_error = $1 WHERE token = $2',
@@ -467,7 +379,6 @@ router.post('/flow/confirmation', async (req, res) => {
         } catch (dbError) {
             console.error('❌ Error guardando error en DB:', dbError);
         }
-
         res.sendStatus(500);
     }
 });
@@ -498,10 +409,7 @@ router.get('/pedido/:pedidoId/status', async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'Pedido no encontrado'
-            });
+            return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
         const pedido = result.rows[0];
@@ -529,10 +437,7 @@ router.get('/pedido/:pedidoId/status', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error obteniendo pedido:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error al obtener el pedido'
-        });
+        res.status(500).json({ success: false, error: 'Error al obtener el pedido' });
     }
 });
 
