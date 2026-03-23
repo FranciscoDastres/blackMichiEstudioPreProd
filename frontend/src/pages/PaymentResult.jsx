@@ -44,7 +44,7 @@ export default function PaymentResult() {
     const fetchPedidoStatus = async () => {
         try {
             const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/payments/pedido/${pedidoId}/status`
+                `${import.meta.env.VITE_API_BASE_URL}/api/payments/pedido/${pedidoId}/status`
             );
 
             if (response.data.success) {
