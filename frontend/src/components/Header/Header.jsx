@@ -131,7 +131,7 @@ function Header() {
                         )}
                         {isClient && (
                           <Link
-                            to="/client"
+                            to="/cuenta/perfil"
                             className="block px-4 py-2 text-sm text-foreground hover:bg-muted/20 flex items-center space-x-2"
                             onClick={() => setUserMenuOpen(false)}
                           >
