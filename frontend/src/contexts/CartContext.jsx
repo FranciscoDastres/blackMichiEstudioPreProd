@@ -1,4 +1,3 @@
-//CartContext.jsx
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 
 export const CartContext = createContext(null);
@@ -15,7 +14,6 @@ function safeJsonParse(value, fallback) {
 }
 
 function normalizeProduct(p) {
-  // ✅ SEGURIDAD: Validar que p existe
   if (!p || typeof p !== 'object') {
     console.warn('⚠️ normalizeProduct recibió valor inválido:', p);
     return null;
@@ -37,6 +35,8 @@ export function CartProvider({ children }) {
     return Array.isArray(parsed) ? parsed : [];
   });
 
+  // ✅ FIX: Siempre sincronizar localStorage con el estado actual
+  // — incluso cuando cart queda vacío
   useEffect(() => {
     try {
       if (cart.length > 0) {
@@ -76,7 +76,6 @@ export function CartProvider({ children }) {
     setCart((prev) =>
       prev.map((item) => {
         if (item.id !== productId) return item;
-
         const stock = item.stock ?? Infinity;
         const next = Math.min(Math.max(1, Number(quantity)), stock);
         return { ...item, quantity: next };
@@ -84,25 +83,31 @@ export function CartProvider({ children }) {
     );
   }, []);
 
-  // ✅ LIMPIAR CARRITO Y LOCALSTORAGE INMEDIATAMENTE
+  // ✅ FIX: Limpiar localStorage PRIMERO de forma síncrona,
+  // luego actualizar el estado React
   const clearCart = useCallback(() => {
     console.log('🗑️ clearCart ejecutado');
-    setCart([]);
 
+    // 1. Borrar de localStorage de forma síncrona e inmediata
     try {
       localStorage.removeItem(CART_KEY);
       localStorage.removeItem('pendingOrder');
-
-      // ✅ Disparar eventos
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new Event('cart-cleared'));
-
-      console.log('✅ localStorage limpiado');
+      console.log('✅ localStorage limpiado de forma síncrona');
     } catch (error) {
       console.error('❌ Error limpiando localStorage:', error);
     }
-  }, []);
 
+    // 2. Actualizar estado React (dispara el useEffect pero ya está vacío)
+    setCart([]);
+
+    // 3. Disparar eventos para que otros componentes (Header, etc.) se enteren
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('cart-cleared'));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const cartCount = useMemo(
     () => cart.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0),
