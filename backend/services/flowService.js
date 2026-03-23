@@ -70,9 +70,25 @@ class FlowService {
                 }
             });
 
-            console.log('✅ Flow response SUCCESS:', response.data);
-            return response.data;
+            const data = response.data;
+
+            // ✅ FIX #4: Validar que Flow retornó una respuesta válida con token y url
+            // Flow puede retornar error con HTTP 200 en sandbox (code != 0)
+            if (!data || !data.token || !data.url) {
+                console.error('❌ Flow respuesta inválida o sin token:', data);
+                throw new Error(
+                    `Flow no retornó token/url. Código: ${data?.code}, Mensaje: ${data?.message || 'Sin mensaje'}`
+                );
+            }
+
+            console.log('✅ Flow response SUCCESS:', data);
+            return data;
+
         } catch (error) {
+            // Si el error ya lo lanzamos nosotros arriba, lo re-lanzamos tal cual
+            if (!error.response) {
+                throw error;
+            }
             console.error('❌ Flow ERROR:', {
                 status: error.response?.status,
                 statusText: error.response?.statusText,
@@ -107,7 +123,6 @@ class FlowService {
         try {
             console.log('🔐 Validando callback de Flow:', params);
 
-            // Flow envía estos parámetros en el webhook
             const { s: receivedSignature, ...dataToSign } = params;
 
             if (!receivedSignature) {
@@ -118,7 +133,6 @@ class FlowService {
             console.log('📦 Datos a firmar:', dataToSign);
             console.log('📝 Firma recibida:', receivedSignature);
 
-            // Generar la firma esperada
             const expectedSignature = this.sign(dataToSign);
             console.log('📝 Firma esperada:', expectedSignature);
 
