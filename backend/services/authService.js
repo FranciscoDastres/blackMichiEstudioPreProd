@@ -1,136 +1,126 @@
-// backend/services/authService.js
 const pool = require("../lib/db");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const { createClient } = require("@supabase/supabase-js");
 const { OAuth2Client } = require("google-auth-library");
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY // service_role, solo en backend
+);
+
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// ✅ Generar token JWT
-function generateToken(user) {
-    return jwt.sign(
-        { id: user.id, email: user.email, rol: user.rol },
-        JWT_SECRET,
-        { expiresIn: "7d" }
-    );
-}
-
-// ✅ Registro de usuario
+// ✅ Registro
 async function register(nombre, email, password) {
-    try {
-        // Verificar si existe
-        const exists = await pool.query(
-            "SELECT id FROM usuarios WHERE email = $1",
-            [email]
-        );
-        if (exists.rows.length > 0) {
-            throw new Error("El email ya está registrado");
-        }
+    // 1. Crear usuario en Supabase Auth
+    const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+    });
+    if (error) throw new Error(error.message);
 
-        const hashed = await bcrypt.hash(password, 10);
-        const result = await pool.query(
-            "INSERT INTO usuarios (nombre, email, password, rol) VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, rol",
-            [nombre, email, hashed, "cliente"]
-        );
+    const authId = data.user.id;
 
-        const user = result.rows[0];
-        return {
-            user,
-            token: generateToken(user),
-        };
-    } catch (error) {
-        throw error;
+    // 2. Verificar que no exista el email en tu tabla
+    const exists = await pool.query(
+        "SELECT id FROM usuarios WHERE email = $1", [email]
+    );
+    if (exists.rows.length > 0) {
+        await supabase.auth.admin.deleteUser(authId); // rollback
+        throw new Error("El email ya está registrado");
     }
+
+    // 3. Crear perfil en tu tabla usuarios
+    const result = await pool.query(
+        `INSERT INTO usuarios (auth_id, nombre, email, rol)
+     VALUES ($1, $2, $3, 'cliente')
+     RETURNING id, nombre, email, rol`,
+        [authId, nombre, email]
+    );
+
+    return { user: result.rows[0] };
 }
 
-// ✅ Login tradicional
+// ✅ Login
 async function login(email, password) {
-    try {
-        const result = await pool.query(
-            "SELECT * FROM usuarios WHERE email = $1",
-            [email]
-        );
-        if (result.rows.length === 0) {
-            throw new Error("Usuario no encontrado");
-        }
+    // Supabase verifica la contraseña y devuelve sesión
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
+    if (error) throw new Error("Credenciales incorrectas");
 
-        const user = result.rows[0];
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) {
-            throw new Error("Contraseña incorrecta");
-        }
+    // Traer perfil desde tu tabla
+    const result = await pool.query(
+        "SELECT id, nombre, email, rol FROM usuarios WHERE auth_id = $1",
+        [data.user.id]
+    );
+    if (!result.rows.length) throw new Error("Perfil no encontrado");
 
-        return {
-            user: {
-                id: user.id,
-                nombre: user.nombre,
-                email: user.email,
-                rol: user.rol,
-            },
-            token: generateToken(user),
-        };
-    } catch (error) {
-        throw error;
-    }
+    return {
+        user: result.rows[0],
+        token: data.session.access_token, // JWT de Supabase
+        refresh_token: data.session.refresh_token,
+    };
 }
 
 // ✅ Google Login
 async function googleLogin(token) {
-    try {
-        const ticket = await googleClient.verifyIdToken({
-            idToken: token,
-            audience: GOOGLE_CLIENT_ID,
+    const ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: GOOGLE_CLIENT_ID,
+    });
+    const { email, name } = ticket.getPayload();
+
+    // Buscar o crear en Supabase Auth
+    let authUser;
+    const { data: existing } = await supabase.auth.admin.listUsers();
+    const found = existing.users.find(u => u.email === email);
+
+    if (!found) {
+        const { data, error } = await supabase.auth.admin.createUser({
+            email,
+            email_confirm: true,
         });
+        if (error) throw new Error(error.message);
+        authUser = data.user;
+    } else {
+        authUser = found;
+    }
 
-        const { email, name } = ticket.getPayload();
+    // Buscar o crear perfil
+    let result = await pool.query(
+        "SELECT id, nombre, email, rol FROM usuarios WHERE auth_id = $1",
+        [authUser.id]
+    );
 
-        // Buscar o crear usuario
-        const result = await pool.query(
-            "SELECT * FROM usuarios WHERE email = $1",
-            [email]
+    if (!result.rows.length) {
+        result = await pool.query(
+            `INSERT INTO usuarios (auth_id, nombre, email, rol)
+       VALUES ($1, $2, $3, 'cliente')
+       RETURNING id, nombre, email, rol`,
+            [authUser.id, name, email]
         );
-
-        let user;
-        if (result.rows.length === 0) {
-            // Crear nuevo usuario
-            const newUser = await pool.query(
-                "INSERT INTO usuarios (nombre, email, rol) VALUES ($1, $2, $3) RETURNING id, nombre, email, rol",
-                [name, email, "cliente"]
-            );
-            user = newUser.rows[0];
-        } else {
-            user = result.rows[0];
-        }
-
-        return {
-            user: {
-                id: user.id,
-                nombre: user.nombre,
-                email: user.email,
-                rol: user.rol,
-            },
-            token: generateToken(user),
-        };
-    } catch (error) {
-        throw error;
     }
+
+    // Generar sesión
+    const { data: session } = await supabase.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+    });
+
+    return {
+        user: result.rows[0],
+        token: session?.properties?.access_token || null,
+    };
 }
 
-// ✅ Verificar token
-function verifyToken(token) {
-    try {
-        return jwt.verify(token, JWT_SECRET);
-    } catch (error) {
-        throw new Error("Token inválido");
-    }
+// ✅ Verificar token (reemplaza jwt.verify)
+async function verifyToken(token) {
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data.user) throw new Error("Token inválido");
+    return data.user;
 }
 
-module.exports = {
-    generateToken,
-    register,
-    login,
-    googleLogin,
-    verifyToken,
-};
+module.exports = { register, login, googleLogin, verifyToken };
