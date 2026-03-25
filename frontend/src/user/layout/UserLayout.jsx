@@ -1,8 +1,8 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import useAuth from '../../hooks/useAuth';
-import { User, ShoppingBag, Shield, LogOut } from 'lucide-react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
 import { User, ShoppingBag, Shield, LogOut, Store } from 'lucide-react';
+
+// Es buena práctica definir los objetos estáticos fuera del componente
 const navItems = [
     { to: '/cuenta/perfil', label: 'Mi Perfil', icon: User },
     { to: '/cuenta/pedidos', label: 'Mis Pedidos', icon: ShoppingBag },
@@ -13,9 +13,13 @@ export default function UserLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            await logout(); // Si tu logout es una promesa (común en Firebase/Auth)
+            navigate('/login');
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
     };
 
     return (
@@ -26,24 +30,24 @@ export default function UserLayout() {
                 backgroundSize: '32px 32px'
             }}
         >
-            {/* Botón volver a la tienda */}
-            <Link
-                to="/"
-                className="flex items-center gap-3 px-5 py-3.5 mb-4 text-sm font-medium glass-panel border border-border rounded-2xl text-muted hover:bg-primary/5 hover:text-foreground transition-all duration-200"
-            >
-                <Store className="w-4 h-4" />
-                Volver a la tienda
-            </Link>
-            {/* Fondos decorativos */}
+            {/* Fondos decorativos fijos */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
                 <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
             </div>
 
             <div className="relative z-10 max-w-6xl mx-auto px-4 py-10 flex gap-8">
-
                 {/* Sidebar */}
                 <aside className="w-64 shrink-0">
+
+                    {/* Botón volver a la tienda - Movido dentro del layout lateral para mejor estructura */}
+                    <Link
+                        to="/"
+                        className="flex items-center gap-3 px-5 py-3.5 mb-4 text-sm font-medium glass-panel border border-border rounded-2xl text-muted hover:bg-primary/5 hover:text-foreground transition-all duration-200"
+                    >
+                        <Store className="w-4 h-4" />
+                        Volver a la tienda
+                    </Link>
 
                     {/* Avatar card */}
                     <div className="glass-panel border border-border rounded-2xl p-6 mb-4 text-center">
@@ -60,7 +64,7 @@ export default function UserLayout() {
                     </div>
 
                     {/* Nav */}
-                    <nav className="glass-panel border border-border rounded-2xl overflow-hidden">
+                    <nav className="glass-panel border border-border rounded-2xl overflow-hidden bg-background/50 backdrop-blur-sm">
                         {navItems.map(({ to, label, icon: Icon }) => (
                             <NavLink
                                 key={to}
