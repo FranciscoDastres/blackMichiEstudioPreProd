@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 async function resetAdmin() {
-    const email = 'admin@demo.com';
+    const email = 'admin@blackmichiestudio.com';
     const newPassword = 'admin123';
 
     // Buscar el admin en tu tabla
