@@ -1,18 +1,42 @@
-const bcrypt = require('bcrypt');
+const { createClient } = require("@supabase/supabase-js");
 const db = require('./lib/db');
+require('dotenv').config();
 
-async function resetPassword() {
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+);
+
+async function resetAdmin() {
+    const email = 'admin@demo.com';
     const newPassword = 'admin123';
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+    // Buscar el admin en tu tabla
     const result = await db.query(
-        'UPDATE usuarios SET password = $1 WHERE rol = $2 RETURNING id, email, nombre',
-        [hashedPassword, 'admin']
+        'SELECT auth_id FROM usuarios WHERE rol = $1',
+        ['admin']
     );
 
-    console.log('✅ Admin actualizado:', result.rows[0]);
+    if (!result.rows.length) {
+        console.error('❌ No se encontró usuario admin');
+        process.exit(1);
+    }
+
+    const authId = result.rows[0].auth_id;
+
+    // Actualizar contraseña en Supabase Auth
+    const { error } = await supabase.auth.admin.updateUserById(authId, {
+        password: newPassword
+    });
+
+    if (error) {
+        console.error('❌ Error actualizando contraseña:', error.message);
+        process.exit(1);
+    }
+
+    console.log('✅ Admin actualizado:', email);
     console.log('🔑 Nueva contraseña:', newPassword);
     process.exit(0);
 }
 
-resetPassword();
+resetAdmin();
