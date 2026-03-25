@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import { User, ShoppingBag, Shield, LogOut } from 'lucide-react';
-
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
+import { User, ShoppingBag, Shield, LogOut, Store } from 'lucide-react';
 const navItems = [
     { to: '/cuenta/perfil', label: 'Mi Perfil', icon: User },
     { to: '/cuenta/pedidos', label: 'Mis Pedidos', icon: ShoppingBag },
@@ -25,6 +26,14 @@ export default function UserLayout() {
                 backgroundSize: '32px 32px'
             }}
         >
+            {/* Botón volver a la tienda */}
+            <Link
+                to="/"
+                className="flex items-center gap-3 px-5 py-3.5 mb-4 text-sm font-medium glass-panel border border-border rounded-2xl text-muted hover:bg-primary/5 hover:text-foreground transition-all duration-200"
+            >
+                <Store className="w-4 h-4" />
+                Volver a la tienda
+            </Link>
             {/* Fondos decorativos */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
