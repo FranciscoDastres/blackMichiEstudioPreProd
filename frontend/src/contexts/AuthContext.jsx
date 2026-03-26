@@ -1,14 +1,11 @@
-//AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import api from "../services/api"
+import api from "../services/api";
 
 const AuthContext = createContext(null);
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used inside AuthProvider");
   return context;
 }
 
@@ -16,41 +13,35 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar sesión desde localStorage
+  // Verificar token con el servidor al cargar la app
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        // ✅ Validar estructura del usuario
-        if (parsed && typeof parsed === 'object' && parsed.email) {
-          setUser(parsed);
-        } else {
-          console.warn('⚠️ Datos de usuario inválidos en localStorage');
-          localStorage.removeItem("user");
-          localStorage.removeItem("token");
-        }
+    const initAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return setLoading(false);
+
+      try {
+        const { data } = await api.get("/auth/me");
+        setUser(data.user);
+      } catch {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('❌ Error parsing user from localStorage:', err);
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    initAuth();
   }, []);
 
-  // LOGIN
   const login = async (email, password) => {
     try {
       const { data } = await api.post("/auth/login", { email, password });
-      const { token, refresh_token, user: userData } = data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("refresh_token", refresh_token);
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-
+      localStorage.setItem("token", data.token);
+      if (data.refresh_token) {
+        localStorage.setItem("refresh_token", data.refresh_token);
+      }
+      setUser(data.user);
       return { success: true };
     } catch (error) {
       return {
@@ -60,16 +51,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // REGISTER
   const register = async (nombre, email, password) => {
     try {
       const { data } = await api.post("/auth/register", { nombre, email, password });
-      const { token, user: userData } = data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-
+      localStorage.setItem("token", data.token);
+      setUser(data.user);
       return { success: true };
     } catch (error) {
       return {
@@ -79,27 +65,29 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // LOGOUT
   const logout = async () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
-    setUser(null);
-  };
-
-  const value = {
-    user,
-    loading,
-    isAuthenticated: !!user,
-    isAdmin: user?.rol === "admin",
-    isClient: user?.rol === "cliente",
-    login,
-    register,
-    logout,
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      // si falla el servidor igual limpiamos localmente
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isAuthenticated: !!user,
+      isAdmin: user?.rol === "admin",
+      isClient: user?.rol === "cliente",
+      login,
+      register,
+      logout,
+    }}>
       {children}
     </AuthContext.Provider>
   );
