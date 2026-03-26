@@ -2,15 +2,13 @@
 // ✅ SOLO HTTP HANDLING - La lógica está en authService.js
 const authService = require("../services/authService");
 
-// ✅ Registro
+// ✅ Registro — sin cambios
 exports.register = async (req, res) => {
   try {
     const { nombre, email, password } = req.body;
-
     if (!nombre || !email || !password) {
       return res.status(400).json({ error: "Faltan datos requeridos" });
     }
-
     const result = await authService.register(nombre, email, password);
     res.json(result);
   } catch (err) {
@@ -19,15 +17,13 @@ exports.register = async (req, res) => {
   }
 };
 
-// ✅ Login
+// ✅ Login — sin cambios
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({ error: "Email y contraseña requeridos" });
     }
-
     const result = await authService.login(email, password);
     res.json(result);
   } catch (err) {
@@ -36,19 +32,41 @@ exports.login = async (req, res) => {
   }
 };
 
-// ✅ Google Login
+// ✅ Google Login — sin cambios
 exports.googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
-
     if (!token) {
       return res.status(400).json({ error: "Token de Google requerido" });
     }
-
     const result = await authService.googleLogin(token);
     res.json(result);
   } catch (err) {
     console.error("❌ Error Google Login:", err);
     res.status(400).json({ error: err.message || "Error en Google Login" });
+  }
+};
+
+// ✅ NUEVO — Me: devuelve el usuario del token actual
+// El middleware requireAuth ya validó el token y puso req.user
+// Solo devolvemos lo que ya tenemos, sin llamada extra a la BD
+exports.me = async (req, res) => {
+  try {
+    res.json({ user: req.user });
+  } catch (err) {
+    console.error("❌ Error en /me:", err);
+    res.status(500).json({ error: "Error al obtener usuario" });
+  }
+};
+
+// ✅ NUEVO — Logout: invalida el token en Supabase
+exports.logout = async (req, res) => {
+  try {
+    await authService.logout(req.user.auth_id);
+    res.json({ success: true });
+  } catch (err) {
+    // Aunque falle en Supabase, el frontend igual limpia su localStorage
+    console.error("❌ Error en logout:", err);
+    res.json({ success: true });
   }
 };
