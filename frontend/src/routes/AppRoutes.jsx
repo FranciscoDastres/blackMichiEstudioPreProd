@@ -5,7 +5,6 @@ import Layout from "../components/Layout/Layout";
 import NotFound from "../components/NotFound/NotFound";
 import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
 import PrivateRoute from "./PrivateRoute";
-import TermsAndConditions from "../pages/TermsAndConditions";
 
 const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const ProductList = lazy(() => import("../pages/ProductList"));
@@ -14,6 +13,9 @@ const Register = lazy(() => import("../pages/Register"));
 const Checkout = lazy(() => import("../pages/Checkout"));
 const Success = lazy(() => import("../pages/Success"));
 const Home = lazy(() => import("../pages/Home"));
+const TermsAndConditions = lazy(() => import("../pages/TermsAndConditions"));
+const FAQ = lazy(() => import("../pages/FAQ"));
+const PrivacyPolicy = lazy(() => import("../pages/PrivacyPolicy"));
 
 const AdminLayout = lazy(() => import("../admin/layout/AdminLayout"));
 const AdminDashboard = lazy(() => import("../admin/pages/Dashboard"));
@@ -92,6 +94,23 @@ export default function AppRoutes() {
       <Route path="/success" element={<SuccessRouteWrapper />} />
       <Route path="/payment/return" element={<PaymentReceipt />} />
 
+      {/* POLÍTICAS Y AYUDA */}
+      <Route path="/terminos-y-condiciones" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Layout><TermsAndConditions /></Layout>
+        </Suspense>
+      } />
+      <Route path="/preguntas-frecuentes" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Layout><FAQ /></Layout>
+        </Suspense>
+      } />
+      <Route path="/politica-privacidad" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <Layout><PrivacyPolicy /></Layout>
+        </Suspense>
+      } />
+
       {/* ADMIN */}
       <Route
         path="/admin"
@@ -155,10 +174,6 @@ export default function AppRoutes() {
 
       {/* 404 */}
       <Route path="*" element={<Layout><NotFound /></Layout>} />
-
-
-      {/* Terminos y con diciones */}
-      <Route path="/terminos-y-condiciones" element={<TermsAndConditions />} />
     </Routes>
   );
 }
