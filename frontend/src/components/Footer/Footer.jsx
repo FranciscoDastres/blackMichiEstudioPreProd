@@ -29,9 +29,9 @@ function Footer() {
         <div>
           <h3 className="text-foreground font-semibold mb-4">Ayuda</h3>
           <ul className="space-y-2 text-sm">
-            <li><a href="#" className="hover:text-primary transition-colors">Preguntas Frecuentes</a></li>
-            <li><a href="#" className="hover:text-primary transition-colors">Términos y Condiciones</a></li>
-            <li><a href="#" className="hover:text-primary transition-colors">Política de Privacidad</a></li>
+            <li><Link to="/preguntas-frecuentes" className="hover:text-primary transition-colors">Preguntas Frecuentes</Link></li>
+            <li><Link to="/terminos-y-condiciones" className="hover:text-primary transition-colors">Términos y Condiciones</Link></li>
+            <li><Link to="/politica-privacidad" className="hover:text-primary transition-colors">Política de Privacidad</Link></li>
           </ul>
         </div>
 
