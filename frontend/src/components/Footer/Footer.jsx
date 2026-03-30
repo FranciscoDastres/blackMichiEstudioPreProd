@@ -39,9 +39,7 @@ function Footer() {
         <div>
           <h3 className="text-foreground font-semibold mb-4">Síguenos</h3>
           <div className="flex gap-4">
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">Facebook</a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-pink-400 transition-colors">Instagram</a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">X</a>
+            <a href="https://www.instagram.com/bmichi.7" target="_blank" rel="noopener noreferrer" className="hover:text-pink-400 transition-colors">Instagram</a>
           </div>
         </div>
 
