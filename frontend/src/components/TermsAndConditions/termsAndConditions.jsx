@@ -7,7 +7,7 @@ const sections = [
         id: 1,
         title: "1. Identificación del Vendedor",
         content: [
-            `Blackmichi Estudio es un emprendimiento de venta en línea de productos impresos en 3D, operado por persona natural con giro comercial, con domicilio en Santiago de Chile. Correo de contacto: contacto@blackmichiestudio.com. Sitio web: www.blackmichiestudio.com.`
+            `Blackmichi Estudio es un emprendimiento de venta en línea de productos impresos en 3D, operado por persona natural con giro comercial, con domicilio en Santiago de Chile. Correo de contacto: blackmichiestudiosoporte@gmail.com. Sitio web: www.blackmichiestudio.com.`
         ]
     },
     {
@@ -64,7 +64,7 @@ const sections = [
         ],
         items: [
             "El producto se encuentre en perfectas condiciones, sin uso y en su embalaje original.",
-            "El cliente comunique su intención de retracto por escrito a contacto@blackmichiestudio.com dentro del plazo legal.",
+            "El cliente comunique su intención de retracto por escrito a blackmichiestudiosoporte@gmail.com dentro del plazo legal.",
             "El costo de devolución del producto será de cargo del cliente."
         ],
         contentAfter: [
@@ -77,7 +77,7 @@ const sections = [
         title: "8. Garantía Legal",
         content: [
             `Todos los productos comercializados por Blackmichi Estudio cuentan con la garantía legal establecida en la Ley N.º 19.496. En caso de defectos de fabricación o fallas verificables, el cliente podrá optar por la reparación del producto, la reposición o la devolución del precio pagado, en los plazos establecidos por la ley.`,
-            `Para hacer efectiva la garantía, el cliente debe comunicarse a contacto@blackmichiestudio.com adjuntando fotografías del defecto y el comprobante de compra.`
+            `Para hacer efectiva la garantía, el cliente debe comunicarse a blackmichiestudiosoporte@gmail.com adjuntando fotografías del defecto y el comprobante de compra.`
         ]
     },
     {
@@ -197,10 +197,10 @@ export default function TermsAndConditions() {
                     <p className="text-muted text-sm">
                         ¿Tienes dudas?{" "}
 
-                        href="mailto:contacto@blackmichiestudio.com"
+                        href="mailto:blackmichiestudiosoporte@gmail.com"
                         className="text-primary hover:text-primary/80 transition-colors"
                         <a>
-                            contacto@blackmichiestudio.com
+                            blackmichiestudiosoporte@gmail.com
                         </a>
                     </p>
                 </div>
