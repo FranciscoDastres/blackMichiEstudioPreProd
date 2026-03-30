@@ -11,12 +11,12 @@ const faqs = [
     {
         id: 2,
         question: "¿Hacen envíos a otras regiones o ciudades?",
-        answer: "Actualmente realizamos despachos solo a domicilio en Santiago de Chile. Si requieres información sobre envíos a otras ciudades, te invitamos a contactarnos a contacto@blackmichiestudio.com para evaluar opciones."
+        answer: "Actualmente realizamos despachos solo a domicilio en Santiago de Chile. Si requieres información sobre envíos a otras ciudades, te invitamos a contactarnos a blackmichiestudiosoporte@gmail.com para evaluar opciones."
     },
     {
         id: 3,
         question: "¿Puedo personalizar un producto?",
-        answer: "Sí, ofrecemos productos personalizados. Contáctenos a contacto@blackmichiestudio.com con los detalles de lo que necesitas. Nos comunicaremos contigo para coordinar diseño, presupuesto y tiempo de entrega."
+        answer: "Sí, ofrecemos productos personalizados. Contáctenos a blackmichiestudiosoporte@gmail.com con los detalles de lo que necesitas. Nos comunicaremos contigo para coordinar diseño, presupuesto y tiempo de entrega."
     },
     {
         id: 4,
@@ -41,7 +41,7 @@ const faqs = [
     {
         id: 8,
         question: "¿Qué garantía tienen los productos?",
-        answer: "Todos nuestros productos cuentan con la garantía legal establecida en la Ley 19.496. En caso de defectos de fabricación, puedes optar por reparación, reposición o devolución del dinero. Contacta a contacto@blackmichiestudio.com con fotos del defecto."
+        answer: "Todos nuestros productos cuentan con la garantía legal establecida en la Ley 19.496. En caso de defectos de fabricación, puedes optar por reparación, reposición o devolución del dinero. Contacta a blackmichiestudiosoporte@gmail.com con fotos del defecto."
     },
     {
         id: 9,
@@ -51,7 +51,7 @@ const faqs = [
     {
         id: 10,
         question: "¿Cómo puedo contactar con el equipo?",
-        answer: "Puedes escribir a contacto@blackmichiestudio.com o visitarnos en www.blackmichiestudio.com. Nos encantaría responder tus dudas y ayudarte con lo que necesites."
+        answer: "Puedes escribir a blackmichiestudiosoporte@gmail.com o visitarnos en www.blackmichiestudio.com. Nos encantaría responder tus dudas y ayudarte con lo que necesites."
     }
 ];
 
@@ -125,21 +125,6 @@ export default function FAQ() {
                             onToggle={() => setOpenId(openId === faq.id ? null : faq.id)}
                         />
                     ))}
-                </div>
-
-                <div className="mt-12 glass-panel border border-border/50 rounded-2xl p-8 text-center">
-                    <h2 className="text-lg font-semibold text-foreground mb-3">
-                        ¿No encuentras lo que buscas?
-                    </h2>
-                    <p className="text-muted text-sm mb-4">
-                        Nuestro equipo está disponible para ayudarte con cualquier pregunta adicional.
-                    </p>
-                    <a
-                        href="mailto:contacto@blackmichiestudio.com"
-                        className="inline-block px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-semibold"
-                    >
-                        Contactar soporte
-                    </a>
                 </div>
 
             </div>

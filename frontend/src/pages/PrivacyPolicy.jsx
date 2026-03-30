@@ -6,7 +6,7 @@ const sections = [
         id: 1,
         title: "1. Responsable del Tratamiento",
         content: [
-            `Blackmichi Estudio, persona natural con domicilio en Santiago de Chile y correo contacto@blackmichiestudio.com, es responsable del tratamiento de tus datos personales de conformidad con la Ley N.º 19.628 sobre Protección de la Vida Privada y la Ley N.º 21.096 que adhiere la Convención Americana sobre Derechos Humanos.`
+            `Blackmichi Estudio, persona natural con domicilio en Santiago de Chile y correo blackmichiestudiosoporte@gmail.com, es responsable del tratamiento de tus datos personales de conformidad con la Ley N.º 19.628 sobre Protección de la Vida Privada y la Ley N.º 21.096 que adhiere la Convención Americana sobre Derechos Humanos.`
         ]
     },
     {
@@ -43,7 +43,7 @@ const sections = [
         id: 4,
         title: "4. Consentimiento",
         content: [
-            `Al realizar una compra en nuestro sitio web, proporcionas tu consentimiento inform para el tratamiento de tus datos personales según esta política. Puedes revocar tu consentimiento en cualquier momento contactando a contacto@blackmichiestudio.com.`
+            `Al realizar una compra en nuestro sitio web, proporcionas tu consentimiento inform para el tratamiento de tus datos personales según esta política. Puedes revocar tu consentimiento en cualquier momento contactando a blackmichiestudiosoporte@gmail.com.`
         ]
     },
     {
@@ -99,7 +99,7 @@ const sections = [
             "Recibir tus datos en forma estructurada (portabilidad)"
         ],
         contentAfter: [
-            `Para ejercer estos derechos, contáctanos a contacto@blackmichiestudio.com.`
+            `Para ejercer estos derechos, contáctanos a blackmichiestudiosoporte@gmail.com.`
         ]
     },
     {
@@ -123,7 +123,7 @@ const sections = [
             `Si tienes preguntas sobre nuestra Política de Privacidad o sobre cómo manejamos tus datos personales, puedes contactarnos a:`
         ],
         items: [
-            "Email: contacto@blackmichiestudio.com",
+            "Email: blackmichiestudiosoporte@gmail.com",
             "Sitio web: www.blackmichiestudio.com"
         ]
     }
@@ -223,10 +223,10 @@ export default function PrivacyPolicy() {
                     <p className="text-muted text-sm">
                         ¿Tienes preguntas sobre nuestros datos?{" "}
                         <a
-                            href="mailto:contacto@blackmichiestudio.com"
+                            href="mailto:blackmichiestudiosoporte@gmail.com"
                             className="text-primary hover:text-primary/80 transition-colors"
                         >
-                            contacto@blackmichiestudio.com
+                            blackmichiestudiosoporte@gmail.com
                         </a>
                     </p>
                 </div>

@@ -361,7 +361,7 @@ export default function PaymentResult() {
                 <div className="mt-6 text-center text-sm text-muted">
                     ¿Tienes problemas? {" "}
                     <a
-                        href="mailto:contacto@blackmichiestudio.com"
+                        href="mailto:blackmichiestudiosoporte@gmail.com"
                         className="text-primary hover:text-primary/80 underline"
                     >
                         Contáctanos
