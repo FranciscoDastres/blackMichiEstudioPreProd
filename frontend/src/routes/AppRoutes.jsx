@@ -5,6 +5,7 @@ import Layout from "../components/Layout/Layout";
 import NotFound from "../components/NotFound/NotFound";
 import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
 import PrivateRoute from "./PrivateRoute";
+import TermsAndConditions from "../pages/TermsAndConditions";
 
 const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const ProductList = lazy(() => import("../pages/ProductList"));
@@ -154,6 +155,10 @@ export default function AppRoutes() {
 
       {/* 404 */}
       <Route path="*" element={<Layout><NotFound /></Layout>} />
+
+
+      {/* Terminos y con diciones */}
+      <Route path="/terminos-y-condiciones" element={<TermsAndConditions />} />
     </Routes>
   );
 }
