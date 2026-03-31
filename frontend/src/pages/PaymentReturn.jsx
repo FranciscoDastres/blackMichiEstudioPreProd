@@ -6,7 +6,7 @@ import useCart from "../hooks/useCart";
 export default function PaymentReturn() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { clearCart } = useCart();
+    const { clearCart } = useCart(); // Hook para limpiar el carrito globalmente
     const [status, setStatus] = useState('loading');
     const [pedido, setPedido] = useState(null);
 
@@ -48,10 +48,9 @@ export default function PaymentReturn() {
                         if (pedidoData.estado === 'pagado') {
                             console.log('✅ Pago confirmado, limpiando carrito...');
 
-                            // ✅ Limpiar carrito ANTES de cambiar el status
-                            localStorage.removeItem('cart');
-                            localStorage.removeItem('pendingOrder');
+                            // ✅ FIX: Usamos clearCart() que limpia localStorage, estado React y dispara el evento para el Header
                             clearCart();
+                            localStorage.removeItem('pendingOrder');
 
                             setStatus('success');
                             return;
@@ -82,7 +81,9 @@ export default function PaymentReturn() {
         };
 
         checkPayment();
-    }, [searchParams]);
+    }, [searchParams, clearCart]); // 👈 FIX 1: Se agregó clearCart a las dependencias
+
+    // --- Renders de UI (se mantienen igual que tu original) ---
 
     if (status === 'loading') {
         return (
@@ -178,7 +179,6 @@ export default function PaymentReturn() {
         );
     }
 
-    // Error o cancelado
     return (
         <div className="min-h-screen flex flex-col justify-center items-center bg-background px-4">
             <div className="glass-panel rounded-2xl p-8 shadow text-center max-w-md w-full border border-red-500/30">
