@@ -3,10 +3,6 @@ const router = express.Router();
 const flowService = require('../services/flowService');
 const db = require('../lib/db');
 
-/**
- * POST /flow/create
- * Crea un nuevo pedido y genera el pago en Flow
- */
 router.post('/flow/create', async (req, res) => {
     const { items, total, email, nombre, notas, telefono, direccion } = req.body;
 
@@ -156,19 +152,12 @@ router.post('/flow/create', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error creando pago:', error);
-        console.error('📋 Error details:', {
-            message: error.message,
-            code: error.code,
-            stack: error.stack?.split('\n')[0]
-        });
-
         let message = 'Error al procesar el pago. Por favor intenta nuevamente.';
         if (error.message?.includes('Flow')) {
             message = 'Error al conectar con Flow. Verifica tu conexión.';
         } else if (error.message?.includes('database')) {
             message = 'Error de base de datos. Por favor intenta más tarde.';
         }
-
         res.status(500).json({
             success: false,
             message,
@@ -177,10 +166,6 @@ router.post('/flow/create', async (req, res) => {
     }
 });
 
-/**
- * GET /flow/return
- * Flow redirige al usuario aquí después del pago (GET)
- */
 router.get('/flow/return', async (req, res) => {
     const token = req.query.token;
     console.log('🔙 Usuario retornó de Flow (GET) con token:', token);
@@ -190,7 +175,6 @@ router.get('/flow/return', async (req, res) => {
             'SELECT id FROM pedidos WHERE flow_token = $1',
             [token]
         );
-
         const pedidoId = result.rows.length > 0 ? result.rows[0].id : null;
 
         if (pedidoId) {
@@ -198,21 +182,15 @@ router.get('/flow/return', async (req, res) => {
                 `${process.env.FRONTEND_URL}/payment/return?token=${token}&pedidoId=${pedidoId}`
             );
         }
-
         res.redirect(
             `${process.env.FRONTEND_URL}/payment/return?token=${token}&error=not_found`
         );
-
     } catch (error) {
         console.error('❌ Error en flow/return GET:', error);
         res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&error=server`);
     }
 });
 
-/**
- * POST /flow/return
- * Flow redirige al usuario aquí después del pago (POST, por si acaso)
- */
 router.post('/flow/return', async (req, res) => {
     const token = req.body.token || req.query.token;
     console.log('🔙 Usuario retornó de Flow (POST) con token:', token);
@@ -222,7 +200,6 @@ router.post('/flow/return', async (req, res) => {
             'SELECT id FROM pedidos WHERE flow_token = $1',
             [token]
         );
-
         const pedidoId = result.rows.length > 0 ? result.rows[0].id : null;
 
         if (pedidoId) {
@@ -230,28 +207,22 @@ router.post('/flow/return', async (req, res) => {
                 `${process.env.FRONTEND_URL}/payment/return?token=${token}&pedidoId=${pedidoId}`
             );
         }
-
         res.redirect(
             `${process.env.FRONTEND_URL}/payment/return?token=${token}&error=not_found`
         );
-
     } catch (error) {
         console.error('❌ Error en flow/return POST:', error);
         res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&error=server`);
     }
 });
 
-/**
- * POST /flow/confirmation
- * Webhook de Flow para confirmar el pago
- */
 router.post('/flow/confirmation', async (req, res) => {
     const token = req.body.token;
     console.log('📥 Webhook Flow recibido:', { token, timestamp: new Date().toISOString() });
 
     try {
         if (!token) {
-            console.error('❌ Token no recibido');
+            console.error('❌ Token no recibido en webhook');
             return res.status(400).send('Token required');
         }
 
@@ -271,7 +242,7 @@ router.post('/flow/confirmation', async (req, res) => {
         const webhookId = webhookResult.rows[0].id;
 
         if (process.env.FLOW_ENV === 'production' && !flowService.validateCallback(req.body)) {
-            console.error('❌ Firma inválida');
+            console.error('❌ Firma inválida en webhook');
             await db.query(
                 'UPDATE flow_webhooks SET processing_error = $1 WHERE id = $2',
                 ['Invalid signature', webhookId]
@@ -313,7 +284,7 @@ router.post('/flow/confirmation', async (req, res) => {
         );
 
         if (updateResult.rows.length === 0) {
-            console.error('❌ Pedido no encontrado:', payment.commerceOrder);
+            console.error('❌ Pedido no encontrado para commerceOrder:', payment.commerceOrder);
             await db.query(
                 'UPDATE flow_webhooks SET processing_error = $1, flow_order = $2 WHERE id = $3',
                 ['Order not found', payment.flowOrder, webhookId]
@@ -383,10 +354,6 @@ router.post('/flow/confirmation', async (req, res) => {
     }
 });
 
-/**
- * GET /pedido/:pedidoId/status
- * Obtiene el estado completo de un pedido
- */
 router.get('/pedido/:pedidoId/status', async (req, res) => {
     try {
         const result = await db.query(
