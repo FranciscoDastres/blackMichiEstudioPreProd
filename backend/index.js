@@ -1,21 +1,15 @@
 // index.js — Black Michi Estudio Backend
-// Versión segura: CORS restringido, endpoints limpios, helmet, logging condicional
-
 const express = require("express");
 const cors = require("cors");
-const helmet = require("helmet"); // npm install helmet
+const helmet = require("helmet");
 const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
 
-// ✅ KEEP-ALIVE PARA RENDER
 const keepAlive = require("./lib/keepAlive");
 
 const isProd = process.env.NODE_ENV === "production";
 
-// ─────────────────────────────────────────────
-// VERIFICAR VARIABLES DE ENTORNO CRÍTICAS
-// ─────────────────────────────────────────────
 const requiredEnvVars = ["DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD"];
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
 if (missingVars.length > 0) {
@@ -23,9 +17,6 @@ if (missingVars.length > 0) {
   console.warn("⚠️  Usando DATABASE_URL si está disponible...");
 }
 
-// ─────────────────────────────────────────────
-// CONEXIÓN A BD
-// ─────────────────────────────────────────────
 let pool;
 try {
   pool = require("./lib/db");
@@ -34,9 +25,6 @@ try {
   console.error("❌ Error al cargar la BD:", error.message);
 }
 
-// ─────────────────────────────────────────────
-// IMPORTAR RUTAS Y MIDDLEWARES
-// ─────────────────────────────────────────────
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const clientRoutes = require("./routes/client");
@@ -54,29 +42,37 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ─────────────────────────────────────────────
-// HELMET — elimina X-Powered-By y agrega headers de seguridad
+// HELMET
 // ─────────────────────────────────────────────
 app.use(
   helmet({
-    // Permite cargar imágenes desde Cloudinary y tu propio dominio
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: false, // Desactivado para no romper el frontend en Vercel
+    contentSecurityPolicy: false,
   })
 );
 
 // ─────────────────────────────────────────────
-// CORS — solo tu frontend puede hacer peticiones
+// CORS — restringido excepto webhooks server-to-server
 // ─────────────────────────────────────────────
 const allowedOrigins = [
-  process.env.FRONTEND_URL,           // ej: https://blackmichi-estudio.vercel.app
-  "http://localhost:5173",            // desarrollo local Vite
-  "http://localhost:3000",            // desarrollo local alternativo
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+  "http://localhost:3000",
 ].filter(Boolean);
 
-app.use(
+// Rutas de webhook — son server-to-server, no necesitan CORS
+const webhookPaths = [
+  "/api/payments/flow/confirmation",
+  "/api/payments/flow/return",
+];
+
+app.use((req, res, next) => {
+  if (webhookPaths.includes(req.path)) {
+    return next();
+  }
+
   cors({
     origin: (origin, callback) => {
-      // Permitir requests sin origin (Postman, apps móviles, same-origin)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -87,17 +83,17 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
-  })
-);
+  })(req, res, next);
+});
 
 // ─────────────────────────────────────────────
-// COMPRESIÓN GZIP
+// COMPRESIÓN
 // ─────────────────────────────────────────────
 const compression = require("compression");
 app.use(compression({ level: 6, threshold: 1024 }));
 
 // ─────────────────────────────────────────────
-// CACHE HEADERS — separados para rutas privadas vs públicas
+// CACHE HEADERS
 // ─────────────────────────────────────────────
 app.use((req, res, next) => {
   if (req.path.match(/\.(webp|jpg|jpeg|png|gif|svg)$/i)) {
@@ -110,7 +106,6 @@ app.use((req, res, next) => {
     req.path.startsWith("/api/users") ||
     req.path.startsWith("/api/orders")
   ) {
-    // Rutas privadas: nunca cachear en proxy público
     res.setHeader("Cache-Control", "no-store, no-cache, private");
   } else if (req.path.startsWith("/api/")) {
     res.setHeader("Cache-Control", "public, max-age=300");
@@ -164,18 +159,14 @@ if (fs.existsSync(publicPath)) {
 // ─────────────────────────────────────────────
 // ENDPOINTS BASE
 // ─────────────────────────────────────────────
-
-// Raíz — mínimo, sin información interna
 app.get("/", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Health check — solo estado, sin datos internos
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "healthy" });
 });
 
-// Test de BD — SOLO disponible fuera de producción
 if (!isProd) {
   app.get("/test-db", async (req, res) => {
     if (!pool) {
@@ -207,13 +198,9 @@ try {
   app.use("/api/hero-images", heroImagesRoutes);
   app.use("/api/featured", featuredRoutes);
   app.use("/api/reviews", reviewsRoutes);
-
-  // Rutas protegidas — requieren token válido
   app.use("/api/client", requireAuth, clientRoutes);
   app.use("/api/payments", paymentRoutes);
   app.use("/api/orders", requireAuth, orderRoutes);
-
-  // Rutas admin — requieren token + rol admin
   app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
   app.use("/api/admin/hero-images", requireAuth, requireAdmin, heroImagesRoutes);
   app.use("/api/users", requireAuth, requireAdmin, usersRoutes);
@@ -224,7 +211,7 @@ try {
 }
 
 // ─────────────────────────────────────────────
-// 404 — sin revelar path internos en producción
+// 404
 // ─────────────────────────────────────────────
 app.use("*", (req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
@@ -234,14 +221,12 @@ app.use("*", (req, res) => {
 // ERROR GLOBAL
 // ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
-  // No loguear errores CORS como errores graves
   if (err.message === "Origen no permitido por CORS") {
     return res.status(403).json({ error: "Origen no permitido" });
   }
   console.error("❌ Error global:", err.message);
   res.status(err.status || 500).json({
     error: isProd ? "Error interno del servidor" : err.message,
-    // Stack trace solo en desarrollo
     ...(!isProd && { stack: err.stack }),
   });
 });
