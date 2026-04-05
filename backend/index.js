@@ -243,7 +243,7 @@ if (!isProd) {
 // ─────────────────────────────────────────────
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10,
+  max: 20,
   message: { error: "Demasiados intentos. Espera 15 minutos." },
   standardHeaders: true,
   legacyHeaders: false,
