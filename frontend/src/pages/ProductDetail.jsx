@@ -4,6 +4,7 @@ import { useParams, Link } from "react-router-dom";
 import RelatedProducts from "../components/RelatedProducts/RelatedProducts";
 import api from "../services/api";
 import useCart from "../hooks/useCart";
+import { useAuth } from "../contexts/AuthContext";
 import {
   Star,
   ShoppingBag,
@@ -21,21 +22,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { getImageUrl } from "../utils/getImageUrl";
-function useAuth() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const userData = localStorage.getItem("user");
-      setUser(userData ? JSON.parse(userData) : { id: "unknown" });
-    }
-    setLoading(false);
-  }, []);
-
-  return { user, loading, isLoggedIn: !!localStorage.getItem("token") };
-}
 
 export default function ProductDetail() {
   const { productId } = useParams();
@@ -58,7 +44,7 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
-  const { user, loading: authLoading, isLoggedIn } = useAuth();
+  const { user, loading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
