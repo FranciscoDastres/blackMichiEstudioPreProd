@@ -1,7 +1,7 @@
 "use client";
 //header.jsx
 import { useState, useEffect } from "react";
-import { Menu, X, ShoppingCart, ChevronDown, User, Settings, LogOut, Trash2, Plus, Minus } from "lucide-react";
+import { Menu, X, ShoppingCart, ChevronDown, User, Settings, LogOut, Trash2, Plus, Minus, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import useCart from "../../hooks/useCart";
@@ -18,6 +18,7 @@ function Header() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { cart, cartCount, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const [cartSidebarOpen, setCartSidebarOpen] = useState(false);
@@ -71,6 +72,14 @@ function Header() {
     };
   }, []);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/productos?busqueda=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
+
   const handleCategoryClick = (categoryId, categoryName) => {
     navigate(`/productos?categoria=${categoryId}`);
     setSidebarOpen(false);
@@ -103,6 +112,19 @@ function Header() {
                 <div className="text-sm xl:text-base text-muted">Impresiones 3D Personalizadas</div>
               </div>
             </Link>
+
+            <form onSubmit={handleSearch} className="hidden md:flex items-center border border-border rounded-lg px-3 py-2 bg-background/50 focus-within:border-primary transition-colors">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar productos..."
+                className="bg-transparent text-sm text-foreground placeholder:text-muted outline-none w-48 xl:w-64"
+              />
+              <button type="submit" aria-label="Buscar" className="text-muted hover:text-primary transition-colors ml-2">
+                <Search className="w-4 h-4" />
+              </button>
+            </form>
 
             <div className="flex items-center space-x-4 xl:space-x-8 min-h-[40px]">
               {user ? (
