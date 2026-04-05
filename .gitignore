@@ -9,12 +9,9 @@ dist/
 build/
 .vercel/
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Environment variables — ignorar todos los .env en cualquier carpeta
+**/.env
+**/.env.*
 
 # IDE
 .vscode/
