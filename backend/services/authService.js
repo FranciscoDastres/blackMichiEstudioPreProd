@@ -1,15 +1,10 @@
 // backend/services/authService.js
 const pool = require("../lib/db");
 const { createClient } = require("@supabase/supabase-js");
-const { OAuth2Client } = require("google-auth-library");
-
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY // service_role, solo en backend
 );
-
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // ✅ Registro — sin cambios
 async function register(nombre, email, password) {
@@ -72,11 +67,11 @@ async function login(email, password) {
 
 // ✅ Google Login
 async function googleLogin(token) {
-    const ticket = await googleClient.verifyIdToken({
-        idToken: token,
-        audience: GOOGLE_CLIENT_ID,
+    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${token}` },
     });
-    const { email, name } = ticket.getPayload();
+    if (!userInfoRes.ok) throw new Error("Token de Google inválido");
+    const { email, name } = await userInfoRes.json();
 
     // Buscar usuario por email directamente en Supabase
     const { data: userByEmail, error: lookupError } = await supabase.auth.admin.getUserByEmail(email);
