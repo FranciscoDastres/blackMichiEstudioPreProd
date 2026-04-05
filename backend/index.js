@@ -36,7 +36,6 @@ const heroImagesRoutes = require("./routes/heroImages");
 const paymentRoutes = require("./routes/payments");
 const featuredRoutes = require("./routes/featuredRoutes");
 const reviewsRoutes = require("./routes/reviews");
-const usersRoutes = require("./routes/users");
 const orderRoutes = require("./routes/order");
 const { requireAuth, requireAdmin } = require("./middleware/auth");
 
@@ -282,7 +281,6 @@ try {
   app.use("/api/orders", requireAuth, orderRoutes);
   app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
   app.use("/api/admin/hero-images", requireAuth, requireAdmin, heroImagesRoutes);
-  app.use("/api/users", requireAuth, requireAdmin, usersRoutes);
 
   console.log("✅ Todas las rutas montadas correctamente");
 } catch (error) {
