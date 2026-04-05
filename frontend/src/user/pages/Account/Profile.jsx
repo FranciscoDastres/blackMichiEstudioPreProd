@@ -1,27 +1,42 @@
 // src/user/pages/Account/Profile.jsx
 import { useState } from 'react';
-import { useAuth } from '../../../hooks/useAuth';
-import { User, Mail, Phone, Save } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { User, Mail, Phone, MapPin, Save } from 'lucide-react';
+import api from '../../../services/api';
 
 const fieldConfig = {
-    nombre: { label: 'Nombre', icon: User, type: 'text' },
-    email: { label: 'Email', icon: Mail, type: 'email' },
-    telefono: { label: 'Teléfono', icon: Phone, type: 'text' },
+    nombre:            { label: 'Nombre',             icon: User,   type: 'text'  },
+    email:             { label: 'Email',               icon: Mail,   type: 'email', disabled: true },
+    telefono:          { label: 'Teléfono',            icon: Phone,  type: 'text'  },
+    direccion_defecto: { label: 'Dirección por defecto', icon: MapPin, type: 'text' },
 };
 
 export default function Profile() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [form, setForm] = useState({
-        nombre: user?.nombre || '',
-        email: user?.email || '',
-        telefono: user?.telefono || '',
+        nombre:            user?.nombre            || '',
+        email:             user?.email             || '',
+        telefono:          user?.telefono          || '',
+        direccion_defecto: user?.direccion_defecto || '',
     });
     const [saved, setSaved] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setError('');
+        try {
+            const { data } = await api.put('/client/perfil', {
+                nombre:            form.nombre,
+                telefono:          form.telefono,
+                direccion_defecto: form.direccion_defecto,
+            });
+            updateUser({ nombre: data.nombre, telefono: data.telefono, direccion_defecto: data.direccion_defecto });
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch {
+            setError('No se pudo guardar. Intenta nuevamente.');
+        }
     };
 
     return (
@@ -46,6 +61,7 @@ export default function Profile() {
                             <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                             <input
                                 type={type}
+                                disabled={fieldConfig[field].disabled}
                                 value={form[field]}
                                 onChange={(e) => setForm({ ...form, [field]: e.target.value })}
                                 className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition-all"
@@ -63,9 +79,10 @@ export default function Profile() {
                         Guardar cambios
                     </button>
                     {saved && (
-                        <p className="text-emerald-400 text-sm mt-3 flex items-center gap-1">
-                            ✓ Cambios guardados correctamente
-                        </p>
+                        <p className="text-emerald-400 text-sm mt-3">✓ Cambios guardados correctamente</p>
+                    )}
+                    {error && (
+                        <p className="text-red-400 text-sm mt-3">{error}</p>
                     )}
                 </div>
             </form>
