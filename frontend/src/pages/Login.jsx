@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useGoogleLogin } from "@react-oauth/google";
 import {
   Eye,
   EyeOff,
@@ -20,7 +21,28 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
+
+  const handleGoogleSuccess = async (tokenResponse) => {
+    setSubmitting(true);
+    setMessage("");
+    const res = await loginWithGoogle(tokenResponse.access_token);
+    if (res.success) {
+      if (res.user?.rol === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/cuenta/perfil");
+      }
+    } else {
+      setMessage(res.error || "Error al iniciar sesión con Google");
+    }
+    setSubmitting(false);
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: () => setMessage("No se pudo conectar con Google"),
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -225,7 +247,7 @@ export default function Login() {
           {/* Botón de Google */}
           <button
             type="button"
-            onClick={() => setMessage("Login con Google estará disponible pronto")}
+            onClick={() => googleLogin()}
             disabled={submitting}
             className="glass-panel w-full flex items-center justify-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary/50 hover:scale-[1.02] transition-all duration-300 group"
             aria-label="Iniciar sesión con Google"
