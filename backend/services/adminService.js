@@ -1,5 +1,6 @@
 // backend/services/adminService.js
 const pool = require("../lib/db");
+const emailService = require("./emailService");
 
 // ✅ Obtener todos los productos (para admin)
 async function getAllProducts() {
@@ -32,12 +33,48 @@ async function getAllOrders() {
 }
 
 // ✅ Actualizar estado del pedido
-async function updateOrderStatus(id, estado) {
+async function updateOrderStatus(id, estado, numero_seguimiento = null) {
     try {
-        await pool.query(
-            `UPDATE pedidos SET estado = $1, updated_at = NOW() WHERE id = $2`,
-            [estado, id]
+        // Obtener estado actual antes de actualizar (para decidir si reponer stock)
+        const estadoAnterior = await pool.query(
+            `SELECT estado FROM pedidos WHERE id = $1`, [id]
         );
+
+        await pool.query(
+            `UPDATE pedidos
+             SET estado = $1,
+                 numero_seguimiento = COALESCE($2, numero_seguimiento),
+                 fecha_envio = CASE WHEN $1 = 'enviado' THEN NOW() ELSE fecha_envio END,
+                 fecha_entrega = CASE WHEN $1 = 'entregado' THEN NOW() ELSE fecha_entrega END,
+                 updated_at = NOW()
+             WHERE id = $3`,
+            [estado, numero_seguimiento, id]
+        );
+
+        // Reponer stock solo si el pedido ya fue pagado (stock fue decrementado al confirmar pago)
+        if (estado === 'cancelado' && estadoAnterior.rows.length > 0) {
+            const estadosPagados = ['pagado', 'confirmado', 'en_proceso', 'enviado', 'entregado'];
+            if (estadosPagados.includes(estadoAnterior.rows[0].estado)) {
+                const items = await pool.query(
+                    `SELECT producto_id, cantidad FROM pedido_items WHERE pedido_id = $1`, [id]
+                );
+                for (const item of items.rows) {
+                    await pool.query(
+                        `UPDATE productos SET stock = stock + $1 WHERE id = $2`,
+                        [item.cantidad, item.producto_id]
+                    );
+                }
+            }
+        }
+
+        // Email al comprador cuando se marca como enviado
+        if (estado === 'enviado') {
+            const result = await pool.query(`SELECT * FROM pedidos WHERE id = $1`, [id]);
+            if (result.rows.length > 0) {
+                emailService.emailPedidoEnviado(result.rows[0]);
+            }
+        }
+
         return { success: true };
     } catch (error) {
         throw error;

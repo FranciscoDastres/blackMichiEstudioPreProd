@@ -28,13 +28,13 @@ async function getAllOrders(req, res) {
 async function updateOrderStatus(req, res) {
   try {
     const { id } = req.params;
-    const { estado } = req.body;
+    const { estado, numero_seguimiento } = req.body;
 
     if (!id || !estado) {
       return res.status(400).json({ error: "ID y estado requeridos" });
     }
 
-    await adminService.updateOrderStatus(id, estado);
+    await adminService.updateOrderStatus(id, estado, numero_seguimiento || null);
     res.json({ ok: true });
   } catch (error) {
     console.error("❌ Error:", error);
