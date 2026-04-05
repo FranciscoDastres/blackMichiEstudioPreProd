@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/perfil', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, nombre, email, rol, telefono, direccion, created_at FROM usuarios WHERE id=$1',
+      'SELECT id, nombre, email, rol, telefono, direccion_defecto, created_at FROM usuarios WHERE id=$1',
       [req.user.id]
     );
 
@@ -25,12 +25,12 @@ router.get('/perfil', requireAuth, async (req, res) => {
 
 // Actualizar perfil del usuario
 router.put('/perfil', requireAuth, async (req, res) => {
-  const { nombre, telefono, direccion } = req.body;
+  const { nombre, telefono, direccion_defecto } = req.body;
 
   try {
     const result = await pool.query(
-      'UPDATE usuarios SET nombre=$1, telefono=$2, direccion=$3, updated_at=CURRENT_TIMESTAMP WHERE id=$4 RETURNING id, nombre, email, rol, telefono, direccion',
-      [nombre, telefono, direccion, req.user.id]
+      'UPDATE usuarios SET nombre=$1, telefono=$2, direccion_defecto=$3, updated_at=CURRENT_TIMESTAMP WHERE id=$4 RETURNING id, nombre, email, rol, telefono, direccion_defecto',
+      [nombre, telefono, direccion_defecto, req.user.id]
     );
 
     res.json(result.rows[0]);
@@ -112,8 +112,11 @@ router.get('/pedidos/:id', requireAuth, async (req, res) => {
 });
 
 // Crear nuevo pedido
+// NOTA: Este endpoint no es el flujo principal de compra.
+// El checkout real pasa por POST /api/payments/flow/create que genera el pago en Flow.
+// Este endpoint podría usarse para pedidos sin pago online (ej: pago contra entrega) en el futuro.
 router.post('/pedidos', requireAuth, async (req, res) => {
-  const { items, direccion_envio, telefono_contacto, notas } = req.body;
+  const { items, direccion_envio, comprador_telefono, notas } = req.body;
 
   try {
     let total = 0;
@@ -128,8 +131,8 @@ router.post('/pedidos', requireAuth, async (req, res) => {
     }
 
     const pedidoRes = await pool.query(
-      'INSERT INTO pedidos (usuario_id, total, direccion_envio, telefono_contacto, notas) VALUES ($1,$2,$3,$4,$5) RETURNING *',
-      [req.user.id, total, direccion_envio, telefono_contacto, notas]
+      'INSERT INTO pedidos (usuario_id, total, direccion_envio, comprador_telefono, notas) VALUES ($1,$2,$3,$4,$5) RETURNING *',
+      [req.user.id, total, direccion_envio, comprador_telefono, notas]
     );
 
     const pedidoId = pedidoRes.rows[0].id;
