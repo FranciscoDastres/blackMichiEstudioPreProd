@@ -70,3 +70,21 @@ exports.logout = async (req, res) => {
     res.json({ success: true });
   }
 };
+
+// ✅ NUEVO — Cambiar contraseña
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Contraseña actual y nueva son requeridas' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    }
+    await authService.changePassword(req.user.auth_id, req.user.email, currentPassword, newPassword);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error cambiando contraseña:', err);
+    res.status(400).json({ error: err.message || 'Error al cambiar contraseña' });
+  }
+};

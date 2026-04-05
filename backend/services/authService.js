@@ -27,7 +27,7 @@ async function register(nombre, email, password) {
         [email]
     );
     if (exists.rows.length > 0) {
-        await supabase.auth.admin.deleteUser(authId); // rollback
+        await supabase.auth.admin.deleteUser(authId);
         throw new Error("El email ya está registrado");
     }
 
@@ -38,7 +38,15 @@ async function register(nombre, email, password) {
         [authId, nombre, email]
     );
 
-    return { user: result.rows[0] };
+    // Login automático para obtener el token de sesión
+    const { data: session, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    if (loginError) throw new Error(loginError.message);
+
+    return {
+        user: result.rows[0],
+        token: session.session.access_token,
+        refresh_token: session.session.refresh_token,
+    };
 }
 
 // ✅ Login — sin cambios
@@ -124,4 +132,20 @@ async function logout(authId) {
     if (error) throw new Error(error.message);
 }
 
-module.exports = { register, login, googleLogin, verifyToken, logout };
+// ✅ Cambiar contraseña — verifica la actual antes de cambiar
+async function changePassword(authId, email, currentPassword, newPassword) {
+    // Verificar contraseña actual intentando un login
+    const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+    });
+    if (loginError) throw new Error('La contraseña actual es incorrecta');
+
+    // Actualizar contraseña en Supabase
+    const { error: updateError } = await supabase.auth.admin.updateUserById(authId, {
+        password: newPassword,
+    });
+    if (updateError) throw new Error(updateError.message);
+}
+
+module.exports = { register, login, googleLogin, verifyToken, logout, changePassword };

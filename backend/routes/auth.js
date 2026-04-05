@@ -12,5 +12,6 @@ router.post('/google-login', authController.googleLogin);
 // Rutas nuevas — requieren token válido
 router.get('/me', requireAuth, authController.me);
 router.post('/logout', requireAuth, authController.logout);
+router.post('/change-password', requireAuth, authController.changePassword);
 
 module.exports = router;
