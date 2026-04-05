@@ -7,7 +7,7 @@ export default function useUsers() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        api.get('/users')
+        api.get('/admin/usuarios')
             .then(res => setUsers(res.data))
             .catch(err => {
                 console.error('Error al cargar usuarios:', err);
