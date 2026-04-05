@@ -1,27 +1,8 @@
-# Dependencias locales
 node_modules
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Archivos de entorno (sensibles)
-
-
-# Configuración local o repositorio
+npm-debug.log
+dist
+.env
+.env.*
+*.log
 .git
 .gitignore
-.vscode
-.idea
-
-# Archivos no necesarios para la imagen
-README.md
-Dockerfile
-.dockerignore
-test-db.js
-
-# Mac y sistema
-.DS_Store
-Thumbs.db

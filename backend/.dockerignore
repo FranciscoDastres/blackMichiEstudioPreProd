@@ -1,11 +1,8 @@
 node_modules
 npm-debug.log
 .env
-.env.local
-.env.example
+.env.*
+uploads
+*.log
 .git
 .gitignore
-README.md
-Dockerfile
-.dockerignore
-test-db.js 
