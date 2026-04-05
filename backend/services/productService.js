@@ -215,23 +215,40 @@ async function updateProduct(id, titulo, precio, stock, categoria, descripcion, 
 }
 
 // ===============================
-// ✅ Eliminar producto (+ imágenes de Cloudinary)
+// ✅ Eliminar producto (+ imágenes de Cloudinary + categoría vacía)
 // ===============================
 async function deleteProduct(id) {
     try {
-        // Obtener URLs antes de borrar
+        // Obtener datos del producto antes de borrar
         const productResult = await pool.query(
-            "SELECT imagen_principal, imagenes_adicionales FROM productos WHERE id=$1",
+            "SELECT imagen_principal, imagenes_adicionales, categoria_id FROM productos WHERE id=$1",
             [id]
         );
 
-        if (productResult.rows.length) {
-            const { imagen_principal, imagenes_adicionales } = productResult.rows[0];
-            const allUrls = [imagen_principal, ...(imagenes_adicionales || [])];
-            await deleteCloudinaryImages(allUrls);
+        if (!productResult.rows.length) {
+            throw new Error("Producto no encontrado");
         }
 
+        const { imagen_principal, imagenes_adicionales, categoria_id } = productResult.rows[0];
+
+        // Borrar imágenes de Cloudinary
+        const allUrls = [imagen_principal, ...(imagenes_adicionales || [])];
+        await deleteCloudinaryImages(allUrls);
+
+        // Borrar producto
         await pool.query("DELETE FROM productos WHERE id=$1", [id]);
+
+        // Si tenía categoría, verificar si quedó vacía y eliminarla
+        if (categoria_id) {
+            const remaining = await pool.query(
+                "SELECT COUNT(*) FROM productos WHERE categoria_id=$1",
+                [categoria_id]
+            );
+            if (parseInt(remaining.rows[0].count) === 0) {
+                await pool.query("DELETE FROM categorias WHERE id=$1", [categoria_id]);
+                console.log(`🗑️ Categoría ID ${categoria_id} eliminada por quedar sin productos`);
+            }
+        }
 
         invalidateCache();
         return { success: true };
