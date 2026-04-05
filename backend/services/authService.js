@@ -1,12 +1,21 @@
 // backend/services/authService.js
 const pool = require("../lib/db");
 const { createClient } = require("@supabase/supabase-js");
+
+// Cliente admin (service role) — para operaciones de administración
 const supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY // service_role, solo en backend
+    process.env.SUPABASE_SERVICE_KEY
 );
 
-// ✅ Registro — sin cambios
+// Cliente anon — NECESARIO para verifyOtp y operaciones de sesión de usuario
+// La service role key no crea sesiones de usuario correctamente en verifyOtp
+const supabaseAnon = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+);
+
+// ✅ Registro
 async function register(nombre, email, password) {
     const { data, error } = await supabase.auth.admin.createUser({
         email,
@@ -33,7 +42,6 @@ async function register(nombre, email, password) {
         [authId, nombre, email]
     );
 
-    // Login automático para obtener el token de sesión
     const { data: session, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
     if (loginError) throw new Error(loginError.message);
 
@@ -44,7 +52,7 @@ async function register(nombre, email, password) {
     };
 }
 
-// ✅ Login — sin cambios
+// ✅ Login
 async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -67,56 +75,75 @@ async function login(email, password) {
 
 // ✅ Google Login
 async function googleLogin(token) {
+    // Verificar access_token con el endpoint de userinfo de Google
     const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
         headers: { Authorization: `Bearer ${token}` },
     });
-    if (!userInfoRes.ok) throw new Error("Token de Google inválido");
+    if (!userInfoRes.ok) throw new Error("Token de Google inválido o expirado");
     const { email, name } = await userInfoRes.json();
 
-    // Buscar usuario por email directamente en Supabase
+    if (!email) throw new Error("No se pudo obtener el email de Google");
+
+    // Buscar o crear usuario en Supabase Auth
     const { data: userByEmail, error: lookupError } = await supabase.auth.admin.getUserByEmail(email);
 
     let authUser;
     if (lookupError || !userByEmail?.user) {
-        // Usuario nuevo — crear en Supabase
         const { data, error } = await supabase.auth.admin.createUser({
             email,
             email_confirm: true,
         });
-        if (error) throw new Error(error.message);
+        if (error) throw new Error("Error creando usuario: " + error.message);
         authUser = data.user;
     } else {
         authUser = userByEmail.user;
     }
 
-    // Buscar o crear en nuestra tabla local
+    // Buscar o crear perfil en la tabla local
     let result = await pool.query(
         "SELECT id, nombre, email, rol FROM usuarios WHERE auth_id = $1",
         [authUser.id]
     );
 
     if (!result.rows.length) {
-        result = await pool.query(
-            `INSERT INTO usuarios (auth_id, nombre, email, rol)
-             VALUES ($1, $2, $3, 'cliente')
-             RETURNING id, nombre, email, rol`,
-            [authUser.id, name, email]
+        // También verificar por email por si el auth_id no coincide
+        const byEmail = await pool.query(
+            "SELECT id, nombre, email, rol FROM usuarios WHERE email = $1",
+            [email]
         );
+        if (byEmail.rows.length > 0) {
+            // Actualizar el auth_id si el usuario existe por email pero con otro auth_id
+            await pool.query(
+                "UPDATE usuarios SET auth_id = $1 WHERE email = $2",
+                [authUser.id, email]
+            );
+            result = byEmail;
+        } else {
+            result = await pool.query(
+                `INSERT INTO usuarios (auth_id, nombre, email, rol)
+                 VALUES ($1, $2, $3, 'cliente')
+                 RETURNING id, nombre, email, rol`,
+                [authUser.id, name || email.split("@")[0], email]
+            );
+        }
     }
 
-    // Generar magic link y verificar OTP para obtener sesión real
+    // Generar magic link OTP usando el cliente admin
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email,
     });
-    if (linkError) throw new Error(linkError.message);
+    if (linkError) throw new Error("Error generando sesión: " + linkError.message);
 
-    const { data: sessionData, error: otpError } = await supabase.auth.verifyOtp({
+    // Verificar OTP con el cliente ANON (NO con service role)
+    // La service role key no retorna sesiones de usuario en verifyOtp
+    const { data: sessionData, error: otpError } = await supabaseAnon.auth.verifyOtp({
         email,
         token: linkData.properties.email_otp,
         type: "magiclink",
     });
-    if (otpError) throw new Error(otpError.message);
+    if (otpError) throw new Error("Error verificando sesión: " + otpError.message);
+    if (!sessionData?.session) throw new Error("No se pudo crear la sesión. Intenta de nuevo.");
 
     return {
         user: result.rows[0],
@@ -125,30 +152,27 @@ async function googleLogin(token) {
     };
 }
 
-// ✅ Verificar token — sin cambios
+// ✅ Verificar token
 async function verifyToken(token) {
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data.user) throw new Error("Token inválido");
     return data.user;
 }
 
-// ✅ NUEVO — Logout: invalida todos los tokens del usuario en Supabase
-// Usar auth_id (el UUID de Supabase) para revocar la sesión
+// ✅ Logout
 async function logout(authId) {
     const { error } = await supabase.auth.admin.signOut(authId, "global");
     if (error) throw new Error(error.message);
 }
 
-// ✅ Cambiar contraseña — verifica la actual antes de cambiar
+// ✅ Cambiar contraseña
 async function changePassword(authId, email, currentPassword, newPassword) {
-    // Verificar contraseña actual intentando un login
     const { error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password: currentPassword,
     });
     if (loginError) throw new Error('La contraseña actual es incorrecta');
 
-    // Actualizar contraseña en Supabase
     const { error: updateError } = await supabase.auth.admin.updateUserById(authId, {
         password: newPassword,
     });
