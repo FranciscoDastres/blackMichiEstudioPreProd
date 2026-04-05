@@ -115,7 +115,7 @@ async function getStats() {
 async function getAllUsers() {
     try {
         const result = await pool.query(`
-      SELECT id, nombre, email, rol, created_at
+      SELECT id, nombre, email, rol, telefono, activo, created_at
       FROM usuarios
       ORDER BY created_at DESC
     `);
