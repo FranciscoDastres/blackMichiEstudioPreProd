@@ -23,10 +23,12 @@ async function getMyOrders(req, res) {
 
 async function getOrderById(req, res) {
   try {
-    const order = await orderService.getOrderById(req.params.id);
+    const esAdmin = req.user?.rol === 'admin';
+    const order = await orderService.getOrderById(req.params.id, req.user?.id, esAdmin);
     res.json(order);
   } catch (error) {
-    res.status(404).json({ error: error.message });
+    const status = error.message === "No autorizado" ? 403 : 404;
+    res.status(status).json({ error: error.message });
   }
 }
 
