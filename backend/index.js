@@ -42,6 +42,10 @@ const { requireAuth, requireAdmin } = require("./middleware/auth");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Render (y la mayoría de hosts cloud) usan un proxy inverso.
+// Sin esto, express-rate-limit lanza ERR_ERL_UNEXPECTED_X_FORWARDED_FOR en cada request.
+app.set("trust proxy", 1);
+
 // ─────────────────────────────────────────────
 // HELMET + CSP
 // ─────────────────────────────────────────────
