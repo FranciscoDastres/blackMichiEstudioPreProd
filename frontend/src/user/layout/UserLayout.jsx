@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import { User, ShoppingBag, Shield, LogOut, Store } from 'lucide-react';
+import { User, ShoppingBag, Shield, LogOut, Store, MessageSquare } from 'lucide-react';
 
 // Es buena práctica definir los objetos estáticos fuera del componente
 const navItems = [
     { to: '/cuenta/perfil', label: 'Mi Perfil', icon: User },
     { to: '/cuenta/pedidos', label: 'Mis Pedidos', icon: ShoppingBag },
+    { to: '/cuenta/resenas', label: 'Mis Reseñas', icon: MessageSquare },
     { to: '/cuenta/seguridad', label: 'Seguridad', icon: Shield },
 ];
 
