@@ -2,11 +2,13 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
 
 const keepAlive = require("./lib/keepAlive");
+const cleanupJobs = require("./lib/cleanupJobs");
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -191,14 +193,45 @@ if (!isProd) {
 // ─────────────────────────────────────────────
 // RUTAS API
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// RATE LIMITING
+// ─────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10,
+  message: { error: "Demasiados intentos. Espera 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const paymentLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutos
+  max: 5,
+  message: { error: "Demasiados intentos de pago. Espera 10 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Config pública de la tienda (nombre, costo envío, moneda)
+app.get("/api/config", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT clave, valor FROM configuracion");
+    const config = Object.fromEntries(result.rows.map(r => [r.clave, r.valor]));
+    res.json(config);
+  } catch {
+    res.json({ costo_envio: "3500", moneda: "CLP" });
+  }
+});
+
 try {
-  app.use("/api/auth", authRoutes);
+  app.use("/api/auth", authLimiter, authRoutes);
   app.use("/api/productos", productosRoutes);
   app.use("/api/categorias", categoriasRoutes);
   app.use("/api/hero-images", heroImagesRoutes);
   app.use("/api/featured", featuredRoutes);
   app.use("/api/reviews", reviewsRoutes);
   app.use("/api/client", requireAuth, clientRoutes);
+  app.use("/api/payments/flow/create", paymentLimiter);
   app.use("/api/payments", paymentRoutes);
   app.use("/api/orders", requireAuth, orderRoutes);
   app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
@@ -243,6 +276,7 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   if (isProd || process.env.RENDER) {
     keepAlive.start();
   }
+  cleanupJobs.start();
 }).on("error", (err) => {
   console.error("❌ Error al iniciar el servidor:", err);
   process.exit(1);
