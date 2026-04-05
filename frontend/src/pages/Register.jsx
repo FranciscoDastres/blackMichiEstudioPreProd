@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useGoogleLogin } from "@react-oauth/google";
 import {
   Eye,
   EyeOff,
@@ -27,7 +28,24 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
+
+  const handleGoogleSuccess = async (tokenResponse) => {
+    setSubmitting(true);
+    setMessage("");
+    const res = await loginWithGoogle(tokenResponse.access_token);
+    if (res.success) {
+      navigate("/cuenta/perfil");
+    } else {
+      setMessage(res.error || "Error al registrarse con Google");
+    }
+    setSubmitting(false);
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: () => setMessage("No se pudo conectar con Google"),
+  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -307,7 +325,7 @@ export default function Register() {
           {/* Botón de Google */}
           <button
             type="button"
-            onClick={() => setMessage("Registro con Google estará disponible pronto")}
+            onClick={() => googleLogin()}
             disabled={submitting}
             className="glass-panel w-full flex items-center justify-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary/50 hover:scale-[1.02] transition-all duration-300 group mb-6"
             aria-label="Registrarse con Google"
