@@ -62,6 +62,9 @@ export default function ProductDetail() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    return () => {
+      document.title = 'Black Michi Estudio';
+    };
   }, [productId]);
 
   useEffect(() => {
@@ -77,6 +80,12 @@ export default function ProductDetail() {
         setProduct(productData);
         setSelectedImgIndex(0);
         setQuantity(1);
+
+        document.title = `${productData.titulo} — Black Michi Estudio`;
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) {
+          metaDesc.setAttribute('content', productData.descripcion || `${productData.titulo} — Impresión 3D personalizada`);
+        }
 
         // ✅ Fetch reseñas de forma segura
         try {
@@ -134,8 +143,9 @@ export default function ProductDetail() {
       alert("¡Gracias por tu reseña!");
     } catch (error) {
       console.error("❌ Error al enviar reseña:", error);
+      const serverMsg = error.response?.data?.error;
       setSubmitError(
-        error.message || "Hubo un problema al enviar tu reseña. Por favor, inténtalo de nuevo."
+        serverMsg || "Hubo un problema al enviar tu reseña. Por favor, inténtalo de nuevo."
       );
     } finally {
       setIsSubmitting(false);
