@@ -70,7 +70,7 @@ async function login(email, password) {
     };
 }
 
-// ✅ Google Login — sin cambios
+// ✅ Google Login
 async function googleLogin(token) {
     const ticket = await googleClient.verifyIdToken({
         idToken: token,
@@ -78,11 +78,12 @@ async function googleLogin(token) {
     });
     const { email, name } = ticket.getPayload();
 
-    let authUser;
-    const { data: existing } = await supabase.auth.admin.listUsers();
-    const found = existing.users.find((u) => u.email === email);
+    // Buscar usuario por email directamente en Supabase
+    const { data: userByEmail, error: lookupError } = await supabase.auth.admin.getUserByEmail(email);
 
-    if (!found) {
+    let authUser;
+    if (lookupError || !userByEmail?.user) {
+        // Usuario nuevo — crear en Supabase
         const { data, error } = await supabase.auth.admin.createUser({
             email,
             email_confirm: true,
@@ -90,9 +91,10 @@ async function googleLogin(token) {
         if (error) throw new Error(error.message);
         authUser = data.user;
     } else {
-        authUser = found;
+        authUser = userByEmail.user;
     }
 
+    // Buscar o crear en nuestra tabla local
     let result = await pool.query(
         "SELECT id, nombre, email, rol FROM usuarios WHERE auth_id = $1",
         [authUser.id]
@@ -101,20 +103,30 @@ async function googleLogin(token) {
     if (!result.rows.length) {
         result = await pool.query(
             `INSERT INTO usuarios (auth_id, nombre, email, rol)
-       VALUES ($1, $2, $3, 'cliente')
-       RETURNING id, nombre, email, rol`,
+             VALUES ($1, $2, $3, 'cliente')
+             RETURNING id, nombre, email, rol`,
             [authUser.id, name, email]
         );
     }
 
-    const { data: session } = await supabase.auth.admin.generateLink({
+    // Generar magic link y verificar OTP para obtener sesión real
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email,
     });
+    if (linkError) throw new Error(linkError.message);
+
+    const { data: sessionData, error: otpError } = await supabase.auth.verifyOtp({
+        email,
+        token: linkData.properties.email_otp,
+        type: "magiclink",
+    });
+    if (otpError) throw new Error(otpError.message);
 
     return {
         user: result.rows[0],
-        token: session?.properties?.access_token || null,
+        token: sessionData.session.access_token,
+        refresh_token: sessionData.session.refresh_token,
     };
 }
 
