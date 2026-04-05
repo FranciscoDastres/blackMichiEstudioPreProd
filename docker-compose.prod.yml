@@ -1,0 +1,64 @@
+version: "3.9"
+
+# ─── PRODUCCIÓN ──────────────────────────────────────────────────────────────
+# Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Diferencias clave vs dev:
+#   - Sin servicio "db" local → usa Supabase (DATABASE_URL en .env)
+#   - NODE_ENV=production
+#   - Nginx expone 80 y 443 con certificados Let's Encrypt
+#   - Logging con limits para no llenar el disco
+#   - Build args para inyectar VITE_API_URL al frontend
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:?VITE_API_URL is required}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=
+      - DB_PORT=
+      - DB_NAME=
+      - DB_USER=
+      - DB_PASSWORD=
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+    depends_on: {}          # sin "db" local en producción
+
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Certbot para renovación automática de certificados
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'"
+    restart: unless-stopped
+    networks:
+      - app-net
