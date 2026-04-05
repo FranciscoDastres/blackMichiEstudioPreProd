@@ -44,12 +44,29 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ─────────────────────────────────────────────
-// HELMET
+// HELMET + CSP
 // ─────────────────────────────────────────────
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+const supabaseUrl = process.env.SUPABASE_URL || "";
+
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: isProd
+      ? {
+          directives: {
+            defaultSrc:     ["'self'"],
+            scriptSrc:      ["'self'"],
+            styleSrc:       ["'self'", "'unsafe-inline'"],
+            imgSrc:         ["'self'", "data:", "https://res.cloudinary.com"],
+            fontSrc:        ["'self'"],
+            connectSrc:     ["'self'", supabaseUrl, "https://*.supabase.co"].filter(Boolean),
+            frameSrc:       ["'none'"],
+            objectSrc:      ["'none'"],
+            upgradeInsecureRequests: [],
+          },
+        }
+      : false,
   })
 );
 
@@ -130,6 +147,35 @@ if (!isProd) {
 // ─────────────────────────────────────────────
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// ─────────────────────────────────────────────
+// SANITIZACIÓN BÁSICA DE INPUTS
+// Recorre strings del body y elimina tags HTML peligrosos
+// React escapa por defecto, pero bloqueamos en la fuente
+// ─────────────────────────────────────────────
+const DANGEROUS_TAGS = /<\s*(script|iframe|object|embed|link|base|form|meta)[^>]*>/gi;
+
+function sanitizeValue(value) {
+  if (typeof value === "string") {
+    return value.replace(DANGEROUS_TAGS, "");
+  }
+  if (Array.isArray(value)) {
+    return value.map(sanitizeValue);
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, sanitizeValue(v)])
+    );
+  }
+  return value;
+}
+
+app.use((req, _res, next) => {
+  if (req.body && typeof req.body === "object") {
+    req.body = sanitizeValue(req.body);
+  }
+  next();
+});
 
 // ─────────────────────────────────────────────
 // ARCHIVOS ESTÁTICOS
