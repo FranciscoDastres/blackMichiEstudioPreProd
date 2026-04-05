@@ -183,4 +183,25 @@ router.put('/pedidos/:id/cancelar', requireAuth, async (req, res) => {
   }
 });
 
+// ===== RESEÑAS DEL CLIENTE =====
+
+// Obtener las reseñas del usuario autenticado
+router.get('/mis-resenas', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT v.id, v.calificacion, v.comentario, v.created_at,
+              v.producto_id, p.titulo as producto_titulo, p.imagen_principal as producto_imagen
+       FROM valoraciones v
+       JOIN productos p ON v.producto_id = p.id
+       WHERE v.usuario_id = $1
+       ORDER BY v.created_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener reseñas' });
+  }
+});
+
 module.exports = router;
