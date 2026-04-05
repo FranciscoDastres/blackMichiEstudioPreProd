@@ -65,6 +65,23 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithGoogle = async (googleToken) => {
+    try {
+      const { data } = await api.post("/auth/google-login", { token: googleToken });
+      localStorage.setItem("token", data.token);
+      if (data.refresh_token) {
+        localStorage.setItem("refresh_token", data.refresh_token);
+      }
+      setUser(data.user);
+      return { success: true, user: data.user };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || "Error con Google",
+      };
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -90,6 +107,7 @@ export function AuthProvider({ children }) {
       isClient: user?.rol === "cliente",
       login,
       register,
+      loginWithGoogle,
       logout,
       updateUser,
     }}>
