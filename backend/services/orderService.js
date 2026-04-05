@@ -31,9 +31,9 @@ async function getMyOrders(usuarioId) {
     return result.rows;
 }
 
-async function getOrderById(id) {
+async function getOrderById(id, usuarioId = null, esAdmin = false) {
     const result = await pool.query(
-        `SELECT p.*, 
+        `SELECT p.*,
                 json_agg(pi.*) as items
          FROM pedidos p
          LEFT JOIN pedido_items pi ON pi.pedido_id = p.id
@@ -42,7 +42,11 @@ async function getOrderById(id) {
         [id]
     );
     if (!result.rows.length) throw new Error("Pedido no encontrado");
-    return result.rows[0];
+    const pedido = result.rows[0];
+    if (!esAdmin && usuarioId && pedido.usuario_id !== usuarioId) {
+        throw new Error("No autorizado");
+    }
+    return pedido;
 }
 
 async function updateOrderStatus(id, status) {
