@@ -1,6 +1,7 @@
 // frontend/src/components/PaymentReceipt/PaymentReceipt.jsx
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import useCart from '../../hooks/useCart';
 // ✅ ELIMINADAS las importaciones estáticas de html2canvas y jsPDF
 // Se cargan dinámicamente solo cuando el usuario hace clic en "Descargar PDF"
 import {
@@ -25,6 +26,7 @@ import {
 const PaymentReceipt = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { clearCart } = useCart();
     const [pedido, setPedido] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
@@ -55,8 +57,9 @@ const PaymentReceipt = () => {
             if (data.success) {
                 setPedido(data.pedido);
                 if (data.pedido.estado === 'pagado') {
-                    localStorage.removeItem('cart');
-                    localStorage.removeItem('pendingOrder');
+                    // Usar clearCart() del contexto para limpiar tanto localStorage
+                    // como el estado React (badge del header, sidebar, etc.)
+                    clearCart();
                 }
             }
         } catch (error) {
