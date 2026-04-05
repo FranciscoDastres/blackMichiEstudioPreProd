@@ -1,11 +1,13 @@
-import { useState } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import api from "../services/api";
 import useCart from "../hooks/useCart";
+import { useAuth } from "../contexts/AuthContext";
 import { ShoppingBag, Lock, Truck, CreditCard, User, Mail, Phone, MapPin, FileText, Package, Home } from "lucide-react";
 
 export default function Checkout() {
   const { cart, cartTotal, clearCart } = useCart();
+  const { user } = useAuth();
   const [notas, setNotas] = useState("");
   const [email, setEmail] = useState("");
   const [nombre, setNombre] = useState("");
@@ -25,8 +27,35 @@ export default function Checkout() {
     maximumFractionDigits: 0,
   });
 
-  const COSTO_ENVIO = 3500;
-  const totalConEnvio = cartTotal + COSTO_ENVIO;
+  const [costoEnvio, setCostoEnvio] = useState(3500);
+  const totalConEnvio = cartTotal + costoEnvio;
+
+  useEffect(() => {
+    api.get("/config").then(res => {
+      const costo = res.data?.costo_envio;
+      if (costo) setCostoEnvio(Number(costo));
+    }).catch(() => {});
+  }, []);
+
+  // Pre-rellenar formulario con datos del perfil si el usuario está logueado
+  useEffect(() => {
+    if (!user) return;
+    if (user.nombre) setNombre(user.nombre);
+    if (user.email) setEmail(user.email);
+    if (user.telefono) setTelefono(user.telefono);
+    if (user.direccion_defecto) setDireccion(user.direccion_defecto);
+    // Si no tenemos telefono/direccion_defecto en el token, los buscamos del perfil
+    if (!user.telefono || !user.direccion_defecto) {
+      api.get('/client/perfil').then(res => {
+        if (res.data.telefono && !telefono.trim().replace('+56 ', '')) {
+          setTelefono(res.data.telefono);
+        }
+        if (res.data.direccion_defecto && !direccion) {
+          setDireccion(res.data.direccion_defecto);
+        }
+      }).catch(() => {});
+    }
+  }, [user]);
 
   const validateNombre = (value) => {
     const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$/;
@@ -171,19 +200,15 @@ export default function Checkout() {
     setErrors(prev => ({ ...prev, general: "" }));
 
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-      const response = await axios.post(
-        `${API_BASE}/api/payments/flow/create`,
-        {
-          items: cart,
-          total: totalConEnvio,
-          email: email.trim(),
-          nombre: nombre.trim(),
-          telefono: telefono.trim(),
-          direccion: direccion.trim(),
-          notas: notas.trim(),
-        }
-      );
+      const response = await api.post("/payments/flow/create", {
+        items: cart,
+        total: totalConEnvio,
+        email: email.trim(),
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
+        direccion: direccion.trim(),
+        notas: notas.trim(),
+      });
 
       if (response.data.success && response.data.paymentUrl) {
         const pendingOrder = {
@@ -439,7 +464,7 @@ export default function Checkout() {
                         <Truck className="w-4 h-4" />
                         Envío
                       </span>
-                      <span>{CLP.format(COSTO_ENVIO)}</span>
+                      <span>{CLP.format(costoEnvio)}</span>
                     </div>
                   </div>
 
