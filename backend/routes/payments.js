@@ -3,6 +3,7 @@ const router = express.Router();
 const flowService = require('../services/flowService');
 const db = require('../lib/db');
 const emailService = require('../services/emailService');
+const { invalidateCache } = require('../services/productService');
 
 router.post('/flow/create', async (req, res) => {
     const { items, email, nombre, notas, telefono, direccion } = req.body;
@@ -333,6 +334,9 @@ router.post('/flow/confirmation', async (req, res) => {
                     console.error(`❌ Error descontando stock producto ${item.producto_id}:`, stockError);
                 }
             }
+
+            // Invalidar cache de productos para que el siguiente GET devuelva stock actualizado
+            invalidateCache();
         }
 
         await db.query(
