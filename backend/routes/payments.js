@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const flowService = require('../services/flowService');
 const db = require('../lib/db');
+const emailService = require('../services/emailService');
 
 router.post('/flow/create', async (req, res) => {
-    const { items, total, email, nombre, notas, telefono, direccion } = req.body;
+    const { items, email, nombre, notas, telefono, direccion } = req.body;
 
     if (!process.env.BACKEND_URL) {
         console.error('❌ BACKEND_URL environment variable is not set');
@@ -24,10 +25,6 @@ router.post('/flow/create', async (req, res) => {
         if (!items || items.length === 0) {
             return res.status(400).json({ success: false, message: 'El carrito está vacío.' });
         }
-        if (!total || total <= 0) {
-            return res.status(400).json({ success: false, message: 'Total inválido.' });
-        }
-
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
         const commerceOrder = `BMS-${timestamp}-${randomSuffix}`;
@@ -35,6 +32,36 @@ router.post('/flow/create', async (req, res) => {
         await db.query('BEGIN');
 
         try {
+            // ── Recalcular total desde precios reales en DB ──────────────────
+            const productIds = items.map(item => item.id);
+            const productosDB = await db.query(
+                'SELECT id, precio, stock, activo FROM productos WHERE id = ANY($1)',
+                [productIds]
+            );
+
+            const preciosMap = Object.fromEntries(productosDB.rows.map(p => [p.id, p]));
+            let totalCalculado = 0;
+
+            for (const item of items) {
+                const prod = preciosMap[item.id];
+                if (!prod) {
+                    await db.query('ROLLBACK');
+                    return res.status(400).json({ success: false, message: `Producto ${item.id} no encontrado.` });
+                }
+                if (!prod.activo) {
+                    await db.query('ROLLBACK');
+                    return res.status(400).json({ success: false, message: `El producto ya no está disponible.` });
+                }
+                totalCalculado += Number(prod.precio) * item.quantity;
+            }
+
+            // Leer costo de envío desde configuracion
+            const configResult = await db.query(
+                `SELECT valor FROM configuracion WHERE clave = 'costo_envio'`
+            );
+            const costoEnvio = configResult.rows.length > 0 ? Number(configResult.rows[0].valor) : 3500;
+            totalCalculado += costoEnvio;
+
             const userResult = await db.query(
                 'SELECT id FROM usuarios WHERE email = $1',
                 [email.trim().toLowerCase()]
@@ -53,8 +80,8 @@ router.post('/flow/create', async (req, res) => {
                     email.trim().toLowerCase(),
                     telefono?.trim() || null,
                     direccion?.trim() || 'Por coordinar',
-                    total,
-                    3500,
+                    totalCalculado,
+                    costoEnvio,
                     notas?.trim() || null,
                     commerceOrder
                 ]
@@ -62,31 +89,15 @@ router.post('/flow/create', async (req, res) => {
 
             const pedidoId = pedidoResult.rows[0].id;
 
-            const productIds = items.map(item => item.id);
-            const existingProducts = await db.query(
-                'SELECT id, titulo, stock FROM productos WHERE id = ANY($1)',
-                [productIds]
-            );
-
-            const existingIds = existingProducts.rows.map(p => p.id);
-            const missingIds = productIds.filter(id => !existingIds.includes(id));
-            if (missingIds.length > 0) {
-                await db.query('ROLLBACK');
-                return res.status(400).json({
-                    success: false,
-                    message: `Algunos productos ya no están disponibles: ${missingIds.join(', ')}`,
-                    productos_no_disponibles: missingIds
-                });
-            }
-
+            // Validar stock usando preciosMap ya cargado arriba
             const stockInsuficiente = [];
             for (const item of items) {
-                const producto = existingProducts.rows.find(p => p.id === item.id);
-                if (producto && producto.stock < item.quantity) {
+                const prod = preciosMap[item.id];
+                if (prod && prod.stock < item.quantity) {
                     stockInsuficiente.push({
                         id: item.id,
-                        nombre: item.nombre || item.titulo || producto.titulo,
-                        disponible: producto.stock,
+                        nombre: item.nombre || item.titulo,
+                        disponible: prod.stock,
                         solicitado: item.quantity
                     });
                 }
@@ -112,8 +123,8 @@ router.post('/flow/create', async (req, res) => {
                         item.nombre || item.titulo,
                         item.imagen || item.imagen_principal,
                         item.quantity,
-                        item.precio,
-                        item.precio * item.quantity
+                        preciosMap[item.id].precio,
+                        preciosMap[item.id].precio * item.quantity
                     ]
                 );
             }
@@ -124,7 +135,7 @@ router.post('/flow/create', async (req, res) => {
             const flowResponse = await flowService.createPayment({
                 commerceOrder,
                 subject,
-                amount: total,
+                amount: totalCalculado,
                 email: email.trim().toLowerCase(),
                 urlConfirmation: `${process.env.BACKEND_URL}/api/payments/flow/confirmation`,
                 urlReturn: `${process.env.BACKEND_URL}/api/payments/flow/return`
@@ -142,7 +153,8 @@ router.post('/flow/create', async (req, res) => {
                 paymentUrl: `${flowResponse.url}?token=${flowResponse.token}`,
                 flowOrder: flowResponse.flowOrder,
                 pedidoId,
-                commerceOrder
+                commerceOrder,
+                total: totalCalculado
             });
 
         } catch (error) {
@@ -330,8 +342,21 @@ router.post('/flow/confirmation', async (req, res) => {
             [pedido.id, payment.flowOrder, payment.status, webhookId]
         );
 
+        // Pagos rechazados/cancelados: el stock nunca fue decrementado (solo se decrementa
+        // en status 2), así que no hay nada que reponer.
+
+        // Emails
         if (payment.status === 2) {
             console.log('✅ Pago confirmado - Pedido #', pedido.id);
+            const itemsResult = await db.query(
+                `SELECT producto_titulo, cantidad, precio_unitario FROM pedido_items WHERE pedido_id = $1`,
+                [pedido.id]
+            );
+            const pedidoCompleto = await db.query(
+                `SELECT * FROM pedidos WHERE id = $1`, [pedido.id]
+            );
+            emailService.emailConfirmacionPago(pedidoCompleto.rows[0], itemsResult.rows);
+            emailService.emailNuevoPedidoAdmin(pedidoCompleto.rows[0], itemsResult.rows);
         } else if (payment.status === 3) {
             console.log('❌ Pago rechazado - Pedido #', pedido.id);
         } else if (payment.status === 4) {
