@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useMyOrders } from '../../hooks/useMyOrders';
-import { ArrowLeft, Package, MapPin, FileText, CreditCard } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, FileText, CreditCard, Truck } from 'lucide-react';
 
 const statusConfig = {
     pendiente: { label: 'Pendiente', cls: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' },
@@ -124,9 +124,9 @@ export default function OrderDetail() {
                                 key={item.id || index}
                                 className="flex items-center gap-4 py-3 border-b border-border last:border-0"
                             >
-                                {item.imagen && (
+                                {(item.producto_imagen || item.imagen) && (
                                     <img
-                                        src={item.imagen}
+                                        src={item.producto_imagen || item.imagen}
                                         alt={item.titulo || item.producto_titulo}
                                         className="w-14 h-14 object-cover rounded-xl flex-shrink-0"
                                         onError={e => { e.target.style.display = 'none'; }}
@@ -162,6 +162,24 @@ export default function OrderDetail() {
                             <span className="price-text">{CLP.format(order.total)}</span>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Número de seguimiento */}
+            {order.numero_seguimiento && (
+                <div className="glass-panel rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Truck className="w-4 h-4 text-indigo-400" />
+                        <p className="text-xs font-bold text-foreground">Número de seguimiento</p>
+                    </div>
+                    <p className="text-sm font-mono font-semibold text-indigo-400">{order.numero_seguimiento}</p>
+                    {order.fecha_envio && (
+                        <p className="text-xs text-muted mt-1">
+                            Enviado el {new Date(order.fecha_envio).toLocaleDateString('es-CL', {
+                                year: 'numeric', month: 'long', day: 'numeric'
+                            })}
+                        </p>
+                    )}
                 </div>
             )}
 
