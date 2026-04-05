@@ -2,12 +2,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import useCart from "../hooks/useCart";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, SlidersHorizontal } from "lucide-react";
 import LazyImage from "../components/LazyImage/LazyImage";
 import { getImageUrl } from "../utils/getImageUrl";
 
 function ProductList() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [allProducts, setAllProducts] = useState([]);
@@ -20,11 +20,10 @@ function ProductList() {
 
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState(searchParams.get("orden") || "newest");
 
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPriceLimit] = useState(100000);
-  const [selectedRating, setSelectedRating] = useState(0);
+  const [minPrice, setMinPrice] = useState(Number(searchParams.get("precioMin")) || 0);
+  const [selectedRating, setSelectedRating] = useState(Number(searchParams.get("rating")) || 0);
 
   const { addToCart, isStockExceeded } = useCart();
 
@@ -82,6 +81,34 @@ function ProductList() {
       setCurrentPage(1);
     }
   }, [categoriaParam, categories]);
+
+  const updateFilter = (key, value) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (!value || value === '0' || value === 'newest') {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+      return next;
+    });
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams();
+      if (prev.get('busqueda')) next.set('busqueda', prev.get('busqueda'));
+      if (prev.get('categoria')) next.set('categoria', prev.get('categoria'));
+      return next;
+    });
+    setSortBy('newest');
+    setMinPrice(0);
+    setSelectedRating(0);
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = sortBy !== 'newest' || minPrice > 0 || selectedRating > 0;
 
   const filteredProducts = useMemo(() => {
     return allProducts
@@ -163,6 +190,90 @@ function ProductList() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
+
+        {/* Barra de filtros */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          {/* Chips activos */}
+          {busquedaParam && (
+            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm">
+              <span>Búsqueda: "{busquedaParam}"</span>
+              <button
+                aria-label="Quitar búsqueda"
+                onClick={() => setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('busqueda'); return n; })}
+                className="hover:text-primary/60"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+          {selectedCategoryName && (
+            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm">
+              <span>{selectedCategoryName}</span>
+              <button
+                aria-label="Quitar categoría"
+                onClick={() => setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('categoria'); return n; })}
+                className="hover:text-primary/60"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Controles de filtrado */}
+          <div className="ml-auto flex flex-wrap items-center gap-3">
+            {/* Precio mínimo */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted whitespace-nowrap">Desde $</label>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                value={minPrice || ''}
+                onChange={e => {
+                  const v = Number(e.target.value) || 0;
+                  setMinPrice(v);
+                  updateFilter('precioMin', v || '0');
+                }}
+                placeholder="0"
+                className="w-24 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground focus:outline-none focus:border-primary"
+              />
+            </div>
+
+            {/* Ordenar */}
+            <select
+              value={sortBy}
+              onChange={e => { setSortBy(e.target.value); updateFilter('orden', e.target.value); }}
+              className="text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground focus:outline-none focus:border-primary"
+            >
+              <option value="newest">Más recientes</option>
+              <option value="price-low">Precio: menor a mayor</option>
+              <option value="price-high">Precio: mayor a menor</option>
+              <option value="name">Nombre A–Z</option>
+            </select>
+
+            {/* Limpiar filtros */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                Limpiar
+              </button>
+            )}
+
+            <span className="text-sm text-muted">{filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+
+        {currentProducts.length === 0 && (
+          <div className="text-center py-16 text-muted">
+            <p className="text-lg mb-2">No se encontraron productos</p>
+            <button onClick={clearFilters} className="text-primary hover:underline text-sm">
+              Limpiar filtros
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {currentProducts.map((product) => {
