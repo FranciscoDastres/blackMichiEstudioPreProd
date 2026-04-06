@@ -44,8 +44,8 @@ async function updateOrderStatus(id, estado, numero_seguimiento = null) {
             `UPDATE pedidos
              SET estado = $1,
                  numero_seguimiento = COALESCE($2, numero_seguimiento),
-                 fecha_envio = CASE WHEN $1 = 'enviado' THEN NOW() ELSE fecha_envio END,
-                 fecha_entrega = CASE WHEN $1 = 'entregado' THEN NOW() ELSE fecha_entrega END,
+                 fecha_envio = CASE WHEN $1::text = 'enviado' THEN NOW() ELSE fecha_envio END,
+                 fecha_entrega = CASE WHEN $1::text = 'entregado' THEN NOW() ELSE fecha_entrega END,
                  updated_at = NOW()
              WHERE id = $3`,
             [estado, numero_seguimiento, id]
