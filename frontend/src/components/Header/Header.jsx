@@ -1,11 +1,12 @@
 "use client";
 //header.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, ShoppingCart, ChevronDown, User, Settings, LogOut, Trash2, Plus, Minus, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import useCart from "../../hooks/useCart";
 import { useAuth } from "../../contexts/AuthContext";
+import { getImageUrl } from "../../utils/getImageUrl";
 
 function capitalize(word) {
   if (!word) return '';
@@ -19,6 +20,9 @@ function Header() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef(null);
 
   const { cart, cartCount, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
   const [cartSidebarOpen, setCartSidebarOpen] = useState(false);
@@ -72,11 +76,45 @@ function Header() {
     };
   }, []);
 
+  // Live search: fetch & filter productos
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get('/productos');
+        const all = Array.isArray(res.data) ? res.data : (res.data?.productos || []);
+        const q = searchQuery.trim().toLowerCase();
+        const filtered = all
+          .filter(p => p.titulo?.toLowerCase().includes(q))
+          .slice(0, 6);
+        setSearchResults(filtered);
+        setSearchOpen(filtered.length > 0);
+      } catch { /* silencioso */ }
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/productos?busqueda=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setSearchOpen(false);
     }
   };
 
@@ -113,18 +151,54 @@ function Header() {
               </div>
             </Link>
 
-            <form onSubmit={handleSearch} className="hidden md:flex items-center border border-border rounded-lg px-3 py-2 bg-background/50 focus-within:border-primary transition-colors">
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Buscar productos..."
-                className="bg-transparent text-sm text-foreground placeholder:text-muted outline-none w-48 xl:w-64"
-              />
-              <button type="submit" aria-label="Buscar" className="text-muted hover:text-primary transition-colors ml-2">
-                <Search className="w-4 h-4" />
-              </button>
-            </form>
+            <div ref={searchRef} className="hidden md:block relative flex-1 max-w-xl mx-6">
+              <form onSubmit={handleSearch} className="flex items-center border border-border rounded-xl px-4 py-2.5 bg-secondary/20 focus-within:border-primary focus-within:bg-background transition-all">
+                <Search className="w-4 h-4 text-muted shrink-0 mr-3" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onFocus={() => searchResults.length > 0 && setSearchOpen(true)}
+                  placeholder="Buscar productos..."
+                  className="bg-transparent text-sm text-foreground placeholder:text-muted outline-none w-full"
+                />
+              </form>
+
+              {/* Dropdown resultados */}
+              {searchOpen && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-background border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+                  {searchResults.map(prod => {
+                    const CLP = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+                    return (
+                      <Link
+                        key={prod.id}
+                        to={`/producto/${prod.id}`}
+                        onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition-colors border-b border-border/50 last:border-0"
+                      >
+                        <img
+                          src={getImageUrl(prod.imagen_principal)}
+                          alt={prod.titulo}
+                          className="w-10 h-10 rounded-lg object-cover bg-secondary/50 shrink-0"
+                          onError={e => { e.target.src = '/placeholder.svg'; }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{prod.titulo}</p>
+                          <p className="text-xs text-primary font-semibold">{CLP.format(prod.precio)}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={handleSearch}
+                    className="w-full px-4 py-2.5 text-xs text-muted hover:text-primary text-center hover:bg-secondary/20 transition-colors"
+                  >
+                    Ver todos los resultados para "{searchQuery}"
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center space-x-4 xl:space-x-8 min-h-[40px]">
               {user ? (
