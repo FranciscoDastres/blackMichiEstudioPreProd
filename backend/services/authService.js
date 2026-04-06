@@ -1,6 +1,10 @@
 // backend/services/authService.js
 const pool = require("../lib/db");
 const { createClient } = require("@supabase/supabase-js");
+const { OAuth2Client } = require("google-auth-library");
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Cliente admin (service role) — para operaciones de administración
 const supabase = createClient(
@@ -74,13 +78,13 @@ async function login(email, password) {
 }
 
 // ✅ Google Login
-async function googleLogin(token) {
-    // Verificar access_token con el endpoint de userinfo de Google
-    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-        headers: { Authorization: `Bearer ${token}` },
+async function googleLogin(idToken) {
+    // Verificar ID token con google-auth-library (el frontend usa GoogleLogin component)
+    const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: GOOGLE_CLIENT_ID,
     });
-    if (!userInfoRes.ok) throw new Error("Token de Google inválido o expirado");
-    const { email, name } = await userInfoRes.json();
+    const { email, name } = ticket.getPayload();
 
     if (!email) throw new Error("No se pudo obtener el email de Google");
 

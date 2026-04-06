@@ -2,14 +2,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { useGoogleLogin } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
 import {
   Eye,
   EyeOff,
   Mail,
   Lock,
   LogIn,
-  Chrome,
   ArrowLeft,
   Sparkles
 } from "lucide-react";
@@ -23,10 +22,10 @@ export default function Login() {
   const navigate = useNavigate();
   const { login, loginWithGoogle } = useAuth();
 
-  const handleGoogleSuccess = async (tokenResponse) => {
+  const handleGoogleSuccess = async (credentialResponse) => {
     setSubmitting(true);
     setMessage("");
-    const res = await loginWithGoogle(tokenResponse.access_token);
+    const res = await loginWithGoogle(credentialResponse.credential);
     if (res.success) {
       if (res.user?.rol === "admin") {
         navigate("/admin");
@@ -38,11 +37,6 @@ export default function Login() {
     }
     setSubmitting(false);
   };
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: handleGoogleSuccess,
-    onError: () => setMessage("No se pudo conectar con Google"),
-  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -245,16 +239,18 @@ export default function Login() {
           </div>
 
           {/* Botón de Google */}
-          <button
-            type="button"
-            onClick={() => googleLogin()}
-            disabled={submitting}
-            className="glass-panel w-full flex items-center justify-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary/50 hover:scale-[1.02] transition-all duration-300 group"
-            aria-label="Iniciar sesión con Google"
-          >
-            <Chrome className="w-5 h-5 text-muted group-hover:text-foreground transition-colors" />
-            <span className="text-foreground">Continuar con Google</span>
-          </button>
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setMessage("No se pudo conectar con Google")}
+              text="continue_with"
+              theme="filled_black"
+              size="large"
+              shape="rectangular"
+              locale="es_419"
+              width="368"
+            />
+          </div>
 
           {/* Enlace a registro */}
           <div className="mt-8 pt-6 border-t border-border/50">
