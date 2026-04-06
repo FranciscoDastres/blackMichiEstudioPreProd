@@ -28,7 +28,7 @@ function OrderStatusSelect({ orderId, estadoActual, onUpdate }) {
 
     return (
         <select
-            defaultValue={estadoActual}
+            value={estadoActual}
             onChange={(e) => {
                 const nuevoEstado = e.target.value;
                 if (nuevoEstado !== estadoActual) {
