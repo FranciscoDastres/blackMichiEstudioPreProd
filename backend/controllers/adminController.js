@@ -37,8 +37,8 @@ async function updateOrderStatus(req, res) {
     await adminService.updateOrderStatus(id, estado, numero_seguimiento || null);
     res.json({ ok: true });
   } catch (error) {
-    console.error("❌ Error:", error);
-    res.status(500).json({ error: "Error actualizando pedido" });
+    console.error("❌ Error actualizando pedido:", error);
+    res.status(500).json({ error: error.message || "Error actualizando pedido" });
   }
 }
 
