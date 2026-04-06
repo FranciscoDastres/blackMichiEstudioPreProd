@@ -105,9 +105,10 @@ export default function SecondaryHeroSection() {
                     className="hidden sm:block absolute left-[8%] top-0 h-full w-auto object-contain z-20"
                   />
 
+                  {/* Texto centrado verticalmente — sin el botón */}
                   <div className="relative z-30 h-full flex items-center justify-end">
                     <div className="w-full px-6 md:px-12 lg:px-20 xl:px-28 flex justify-end">
-                      <div className="text-right space-y-4 md:space-y-6 max-w-lg">
+                      <div className="text-right space-y-3 md:space-y-4 max-w-lg">
                         <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
                           <span className="bg-gradient-to-l from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
                             {title}
@@ -116,17 +117,19 @@ export default function SecondaryHeroSection() {
                         <p className="text-base sm:text-lg md:text-xl text-muted-foreground font-light">
                           {subtitle}
                         </p>
-                        <div className="pt-2 flex justify-end">
-                          <button
-                            onClick={() => navigate("/productos")}
-                            className="group inline-flex items-center gap-2 px-6 py-3 bg-sky-700 text-white font-semibold rounded-full border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-0.5 transition-all duration-300"
-                          >
-                            <span className="text-sm">{button_text}</span>
-                            <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                          </button>
-                        </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Botón fijo en la parte baja del slide — posición constante */}
+                  <div className="absolute bottom-10 right-0 z-30 w-full px-6 md:px-12 lg:px-20 xl:px-28 flex justify-end">
+                    <button
+                      onClick={() => navigate("/productos")}
+                      className="group inline-flex items-center gap-2 px-6 py-3 bg-sky-700 text-white font-semibold rounded-full border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      <span className="text-sm">{button_text}</span>
+                      <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                    </button>
                   </div>
 
                   {/* ✅ TOUCH TARGETS CORREGIDOS */}
@@ -159,7 +162,7 @@ export default function SecondaryHeroSection() {
         </div>
 
         {/* Sidebar Promocional (1/3) */}
-        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-6 flex flex-col gap-4 h-auto lg:h-[380px]">
+        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-9 flex flex-col gap-4 h-auto lg:h-[380px]">
 
           {/* Encabezado */}
           <div className="text-center">
