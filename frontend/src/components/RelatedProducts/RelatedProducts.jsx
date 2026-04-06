@@ -15,7 +15,7 @@ const formatTitle = (text) => {
     .join(" ");
 };
 
-function RelatedProducts({ category = "vasos3d" }) {
+function RelatedProducts({ categoriaId, currentProductId }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -29,16 +29,19 @@ function RelatedProducts({ category = "vasos3d" }) {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!category) {
+      if (!categoriaId) {
         setProducts([]);
         setLoading(false);
         return;
       }
       try {
         setLoading(true);
-        const response = await api.get(`/productos/categoria/${category}`);
-        const data = Array.isArray(response.data) ? response.data : [];
-        setProducts(data.slice(0, 20));
+        const response = await api.get('/productos');
+        const all = Array.isArray(response.data) ? response.data : [];
+        const related = all
+          .filter(p => p.categoria_id === categoriaId && p.id !== currentProductId)
+          .slice(0, 20);
+        setProducts(related);
       } catch {
         setProducts([]);
       } finally {
@@ -46,7 +49,7 @@ function RelatedProducts({ category = "vasos3d" }) {
       }
     };
     fetchProducts();
-  }, [category]);
+  }, [categoriaId, currentProductId]);
 
   if (loading || !products.length) return null;
 
