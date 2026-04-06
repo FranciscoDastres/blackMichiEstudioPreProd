@@ -159,47 +159,47 @@ export default function SecondaryHeroSection() {
         </div>
 
         {/* Sidebar Promocional (1/3) */}
-        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-5 sm:p-6 flex flex-col justify-between h-auto lg:h-[380px]">
+        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-6 flex flex-col h-auto lg:h-[380px]">
 
           {/* Encabezado */}
-          <div className="text-center">
-            <h3 className="text-lg sm:text-xl font-bold text-foreground">
-              ¿Quieres algo único?
+          <div className="text-center mb-4">
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
+              ¿Quieres algo<br className="hidden lg:block" /> único?
             </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-2">
               Diseñamos productos personalizados solo para ti.
             </p>
           </div>
 
-          {/* Lista de beneficios — oculta en mobile para no saturar */}
-          <div className="hidden sm:block space-y-2 text-muted-foreground text-xs sm:text-sm my-4">
-            <p className="px-2 text-center">¿Tienes una idea en mente? ¡Hagámosla realidad!</p>
-            <ul className="space-y-2 text-left mt-3">
-              <li className="flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+          {/* Lista de beneficios */}
+          <div className="hidden sm:flex flex-col gap-2.5 text-sm text-muted-foreground flex-1 justify-center">
+            <p className="text-center text-sm mb-1">¿Tienes una idea en mente? ¡Hagámosla realidad!</p>
+            <ul className="space-y-2.5">
+              <li className="flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                 <span>Diseño 100% personalizado</span>
               </li>
-              <li className="flex items-start gap-2">
-                <Headphones className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+              <li className="flex items-center gap-2.5">
+                <Headphones className="w-4 h-4 text-accent flex-shrink-0" />
                 <span>Asesoría directa con el equipo</span>
               </li>
-              <li className="flex items-start gap-2">
-                <Palette className="w-4 h-4 text-sky-500 mt-0.5 flex-shrink-0" />
+              <li className="flex items-center gap-2.5">
+                <Palette className="w-4 h-4 text-sky-500 flex-shrink-0" />
                 <span>Materiales premium y acabados únicos</span>
               </li>
             </ul>
           </div>
 
           {/* Pie */}
-          <div className="flex flex-col items-center gap-3 mt-4 sm:mt-0">
-            <p className="text-[10px] text-center text-muted-foreground hidden sm:block">
+          <div className="flex flex-col items-center gap-2 mt-4">
+            <p className="text-xs text-center text-muted-foreground hidden sm:block">
               Horario de 9:00 a 18:00 hrs. Respuesta en menos de 24 hrs.
             </p>
             <button
               onClick={handleWhatsAppClick}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-800 text-black font-bold rounded-full hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:shadow-green-800/40 hover:shadow-xl hover:bg-green-700 text-sm"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-600 text-black font-bold rounded-full hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:bg-green-500 hover:shadow-green-500/40 hover:shadow-xl text-sm"
             >
-              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <MessageCircle className="w-5 h-5" />
               Consultar por WhatsApp
             </button>
           </div>
