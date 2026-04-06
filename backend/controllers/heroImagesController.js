@@ -42,12 +42,15 @@ async function uploadHeroImage(req, res) {
   try {
     const { section, title, subtitle, buttonText, categoria } = req.body;
 
-    if (!section || !title || !req.file) {
-      return res.status(400).json({ error: "Se requieren section, título e imagen" });
+    if (!section || !title) {
+      return res.status(400).json({ error: "Se requieren section y título" });
     }
 
+    // Si no viene imagen, solo actualizar los campos de texto
+    const buffer = req.file ? req.file.buffer : null;
+
     const result = await heroImagesService.uploadHeroImage(
-      req.file.buffer,
+      buffer,
       section,
       title,
       subtitle,
