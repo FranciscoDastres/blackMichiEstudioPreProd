@@ -4,8 +4,11 @@ import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { useAuth } from "../contexts/AuthContext";
 import { ShoppingBag, Lock, Truck, CreditCard, User, Mail, Phone, MapPin, FileText, Package, Home } from "lucide-react";
+import useSEO from "../hooks/useSEO";
 
 export default function Checkout() {
+  useSEO({ title: "Checkout" });
+
   const { cart, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const [notas, setNotas] = useState("");
