@@ -78,9 +78,13 @@ app.use(
 // ─────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL_PREVIEW,
   "http://localhost:5173",
   "http://localhost:3000",
 ].filter(Boolean);
+
+// Patrón para URLs de preview de Vercel (black-michi-estudio-pre-prod-*.vercel.app)
+const VERCEL_PREVIEW_PATTERN = /^https:\/\/black-michi-estudio-pre-prod-[a-z0-9]+(\.vercel\.app)$/;
 
 // Rutas de webhook — son server-to-server, no necesitan CORS
 const webhookPaths = [
@@ -95,7 +99,7 @@ app.use((req, res, next) => {
 
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || VERCEL_PREVIEW_PATTERN.test(origin)) {
         callback(null, true);
       } else {
         console.warn(`🚫 CORS bloqueado para origen: ${origin}`);
