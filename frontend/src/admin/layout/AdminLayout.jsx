@@ -1,10 +1,13 @@
 // frontend/src/admin/layout/AdminLayout.jsx
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "./components/AdminSidebar";
 import AdminHeader from "./components/AdminHeader";
 import { ProductsProvider } from "../contexts/ProductsContext";
 
 export default function AdminLayout() {
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
     return (
         <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
 
@@ -16,16 +19,15 @@ export default function AdminLayout() {
                 }}
             />
 
-            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-sky-500/5 via-transparent to-transparent rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-500/5 via-transparent to-transparent rounded-full blur-3xl"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-sky-500/5 via-transparent to-transparent rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-500/5 via-transparent to-transparent rounded-full blur-3xl" />
 
-            {/* ✅ ProductsProvider envuelve todo el admin — un solo fetch compartido */}
             <ProductsProvider>
                 <div className="relative z-10 flex min-h-screen">
-                    <AdminSidebar />
-                    <div className="flex-1 flex flex-col">
-                        <AdminHeader />
-                        <main className="flex-1 p-4 sm:p-6">
+                    <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                    <div className="flex-1 flex flex-col min-w-0">
+                        <AdminHeader onToggleSidebar={() => setSidebarOpen(o => !o)} />
+                        <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
                             <Outlet />
                         </main>
                     </div>
