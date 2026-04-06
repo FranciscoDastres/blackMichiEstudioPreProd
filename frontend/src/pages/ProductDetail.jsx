@@ -163,7 +163,7 @@ export default function ProductDetail() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="glass-panel rounded-2xl p-8 text-center max-w-md">
           <div className="text-6xl mb-4 text-rose-400">❌</div>
-          <div className="text-xl font-display font-extrabold text-foreground mb-4">Error: {error}</div>
+          <div className="text-xl font-bold text-foreground mb-4">Error: {error}</div>
           <button
             onClick={() => window.location.reload()}
             className="btn-add-cart"
@@ -180,7 +180,7 @@ export default function ProductDetail() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="glass-panel rounded-2xl p-8 text-center max-w-md">
           <div className="text-6xl mb-4 text-muted">🔍</div>
-          <h2 className="text-2xl font-display font-extrabold text-foreground mb-4">Producto no encontrado</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-4">Producto no encontrado</h2>
           <Link
             to="/"
             className="btn-add-cart"
@@ -332,7 +332,7 @@ export default function ProductDetail() {
               <div className="space-y-5">
 
                 {/* Título */}
-                <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground leading-tight">
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
                   {product.titulo || "Producto"}
                 </h1>
 
@@ -465,7 +465,7 @@ export default function ProductDetail() {
             <nav className="flex space-x-1 px-6" role="tablist">
               <button
                 onClick={() => setActiveTab("description")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "description"
+                className={`py-4 px-6 font-semibold text-sm border-b-2 transition-all ${activeTab === "description"
                   ? "text-primary border-primary"
                   : "text-muted border-transparent hover:text-foreground"
                   }`}
@@ -475,7 +475,7 @@ export default function ProductDetail() {
               </button>
               <button
                 onClick={() => setActiveTab("specs")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "specs"
+                className={`py-4 px-6 font-semibold text-sm border-b-2 transition-all ${activeTab === "specs"
                   ? "text-primary border-primary"
                   : "text-muted border-transparent hover:text-foreground"
                   }`}
@@ -485,7 +485,7 @@ export default function ProductDetail() {
               </button>
               <button
                 onClick={() => setActiveTab("reviews")}
-                className={`py-4 px-6 font-display font-bold text-sm border-b-2 transition-all ${activeTab === "reviews"
+                className={`py-4 px-6 font-semibold text-sm border-b-2 transition-all ${activeTab === "reviews"
                   ? "text-primary border-primary"
                   : "text-muted border-transparent hover:text-foreground"
                   }`}
@@ -500,7 +500,7 @@ export default function ProductDetail() {
           <div className="p-6 md:p-8">
             {activeTab === "description" && (
               <div className="space-y-6">
-                <h3 className="text-xl font-display font-extrabold text-foreground">Descripción del Producto</h3>
+                <h3 className="text-xl font-bold text-foreground">Descripción del Producto</h3>
                 <div className="prose prose-invert max-w-none text-muted leading-relaxed">
                   {product.descripcion_larga || product.descripcion ||
                     "Producto personalizado impreso en 3D, ideal para regalos únicos y decoraciones especiales."}
@@ -528,7 +528,7 @@ export default function ProductDetail() {
 
             {activeTab === "specs" && (
               <div className="space-y-6">
-                <h3 className="text-xl font-display font-extrabold text-foreground">Especificaciones Técnicas</h3>
+                <h3 className="text-xl font-bold text-foreground">Especificaciones Técnicas</h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-secondary/30 rounded-xl">
@@ -552,7 +552,7 @@ export default function ProductDetail() {
               <div className="space-y-8">
                 {/* Encabezado */}
                 <div>
-                  <h3 className="text-xl font-display font-extrabold text-foreground mb-4">Reseñas de clientes</h3>
+                  <h3 className="text-xl font-bold text-foreground mb-4">Reseñas de clientes</h3>
 
                   {loadingReviews ? (
                     <p className="text-muted">Cargando reseñas...</p>
@@ -694,10 +694,10 @@ export default function ProductDetail() {
         </div>
 
         {/* Productos relacionados */}
-        {product.categoria_nombre && (
+        {product.categoria_id && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-display font-extrabold text-foreground">Productos relacionados</h2>
+              <h2 className="text-2xl font-bold text-foreground">Productos relacionados</h2>
               <Link
                 to={`/categoria/${product.categoria_nombre}`}
                 className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
@@ -706,7 +706,7 @@ export default function ProductDetail() {
               </Link>
             </div>
             <div className="min-h-[400px]">
-              <RelatedProducts category={product.categoria_nombre} />
+              <RelatedProducts categoriaId={product.categoria_id} currentProductId={product.id} />
             </div>
           </div>
         )}
