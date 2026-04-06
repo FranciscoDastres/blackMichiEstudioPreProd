@@ -40,15 +40,22 @@ async function updateOrderStatus(id, estado, numero_seguimiento = null) {
             `SELECT estado FROM pedidos WHERE id = $1`, [id]
         );
 
+        const ahora = new Date();
         await pool.query(
             `UPDATE pedidos
              SET estado = $1,
                  numero_seguimiento = COALESCE($2, numero_seguimiento),
-                 fecha_envio = CASE WHEN $1::text = 'enviado' THEN NOW() ELSE fecha_envio END,
-                 fecha_entrega = CASE WHEN $1::text = 'entregado' THEN NOW() ELSE fecha_entrega END,
+                 fecha_envio    = COALESCE($4, fecha_envio),
+                 fecha_entrega  = COALESCE($5, fecha_entrega),
                  updated_at = NOW()
              WHERE id = $3`,
-            [estado, numero_seguimiento, id]
+            [
+                estado,
+                numero_seguimiento,
+                id,
+                estado === 'enviado'    ? ahora : null,
+                estado === 'entregado'  ? ahora : null,
+            ]
         );
 
         // Reponer stock solo si el pedido ya fue pagado (stock fue decrementado al confirmar pago)
