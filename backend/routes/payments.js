@@ -181,7 +181,7 @@ router.post('/flow/create', async (req, res) => {
 
 router.get('/flow/return', async (req, res) => {
     const token = req.query.token;
-    console.log('🔙 Usuario retornó de Flow (GET) con token:', token);
+    console.log('🔙 Usuario retornó de Flow (GET)');
 
     try {
         const result = await db.query(
@@ -206,7 +206,7 @@ router.get('/flow/return', async (req, res) => {
 
 router.post('/flow/return', async (req, res) => {
     const token = req.body.token || req.query.token;
-    console.log('🔙 Usuario retornó de Flow (POST) con token:', token);
+    console.log('🔙 Usuario retornó de Flow (POST)');
 
     try {
         const result = await db.query(
@@ -231,12 +231,18 @@ router.post('/flow/return', async (req, res) => {
 
 router.post('/flow/confirmation', async (req, res) => {
     const token = req.body.token;
-    console.log('📥 Webhook Flow recibido:', { token, timestamp: new Date().toISOString() });
+    console.log('📥 Webhook Flow recibido:', { timestamp: new Date().toISOString() });
 
     try {
-        if (!token) {
-            console.error('❌ Token no recibido en webhook');
+        if (!token || typeof token !== 'string' || token.length < 8) {
+            console.error('❌ Token inválido en webhook');
             return res.status(400).send('Token required');
+        }
+
+        // Validar firma siempre (no solo en producción)
+        if (!flowService.validateCallback(req.body)) {
+            console.error('❌ Firma inválida en webhook Flow');
+            return res.status(400).send('Invalid signature');
         }
 
         const webhookResult = await db.query(
@@ -253,15 +259,6 @@ router.post('/flow/confirmation', async (req, res) => {
         );
 
         const webhookId = webhookResult.rows[0].id;
-
-        if (process.env.FLOW_ENV === 'production' && !flowService.validateCallback(req.body)) {
-            console.error('❌ Firma inválida en webhook');
-            await db.query(
-                'UPDATE flow_webhooks SET processing_error = $1 WHERE id = $2',
-                ['Invalid signature', webhookId]
-            );
-            return res.status(400).send('Invalid signature');
-        }
 
         const payment = await flowService.getPaymentStatus(token);
 
