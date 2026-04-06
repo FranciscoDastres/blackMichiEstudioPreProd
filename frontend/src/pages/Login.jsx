@@ -245,7 +245,7 @@ export default function Login() {
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setMessage("No se pudo conectar con Google")}
+              onError={() => setMessage("No se pudo conectar con Google IA HIJA DE PUTA")}
               text="continue_with"
               theme="filled_black"
               size="large"
