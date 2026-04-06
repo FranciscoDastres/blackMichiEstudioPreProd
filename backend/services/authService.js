@@ -3,7 +3,7 @@ const pool = require("../lib/db");
 const { createClient } = require("@supabase/supabase-js");
 const { OAuth2Client } = require("google-auth-library");
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "804779725952-j57ni35oqucbc7cpsrf70dnghiqmueq8.apps.googleusercontent.com";
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Cliente admin (service role) — para operaciones de administración

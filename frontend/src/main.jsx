@@ -12,7 +12,7 @@ import "./index.css";
 initHoverImageLoading();
 initIntersectionObserver();
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "804779725952-j57ni35oqucbc7cpsrf70dnghiqmueq8.apps.googleusercontent.com";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
