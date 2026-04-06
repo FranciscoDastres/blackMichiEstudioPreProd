@@ -102,7 +102,7 @@ export default function SecondaryHeroSection() {
                     alt={title}
                     fetchPriority={index === 0 ? "high" : "auto"}
                     loading={index === 0 ? "eager" : "lazy"}
-                    className="absolute left-[8%] top-0 h-full w-auto object-contain z-20"
+                    className="hidden sm:block absolute left-[8%] top-0 h-full w-auto object-contain z-20"
                   />
 
                   <div className="relative z-30 h-full flex items-center justify-end">
@@ -119,11 +119,10 @@ export default function SecondaryHeroSection() {
                         <div className="pt-2 flex justify-end">
                           <button
                             onClick={() => navigate("/productos")}
-                            className="group relative inline-flex items-center gap-3 px-7 py-3.5 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground font-semibold rounded-full overflow-hidden transition-all duration-300 border border-sky-400/40 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-0.5"
+                            className="group inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-full transition-all duration-300 hover:bg-primary/90 hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
                           >
-                            <span className="relative z-10 text-sm">{button_text}</span>
-                            <ChevronRight className="relative z-10 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <span className="text-sm">{button_text}</span>
+                            <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                           </button>
                         </div>
                       </div>
@@ -160,46 +159,45 @@ export default function SecondaryHeroSection() {
         </div>
 
         {/* Sidebar Promocional (1/3) */}
-        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-4 sm:p-6 flex flex-col justify-between h-[380px]">
-          <div className="text-center mb-4 sm:mb-6">
-            <h3 className="text-lg sm:text-xl font-bold text-foreground">
-              ¿Quieres algo único?
-            </h3>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Diseñamos productos personalizados solo para ti.
-            </p>
-          </div>
+        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-5 sm:p-6 flex flex-col justify-between h-auto lg:h-[380px]">
 
-          <div className="space-y-3 sm:space-y-4 text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
-            <p className="px-2 text-center">¿Tienes una idea en mente? ¡Hagámosla realidad!</p>
-            <ul className="space-y-2 text-left">
-              <li className="flex items-start gap-2">
-                <Sparkles className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <span>Diseño 100% personalizado</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Headphones className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>Asesoría directa con el equipo</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Palette className="w-4 h-4 text-sky-500 mt-0.5 flex-shrink-0" />
-                <span>Materiales premium y acabados únicos</span>
-              </li>
-            </ul>
-          </div>
+          {/* Mobile: layout horizontal compacto */}
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-4 sm:gap-6 lg:gap-0 h-full">
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-foreground">
+                ¿Quieres algo único?
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1 mb-3 sm:mb-0 lg:mb-4">
+                Diseñamos productos personalizados solo para ti.
+              </p>
+              <ul className="hidden sm:flex flex-col gap-2 text-xs text-muted-foreground lg:mt-4">
+                <li className="flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <span>Diseño 100% personalizado</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Headphones className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                  <span>Asesoría directa con el equipo</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Palette className="w-4 h-4 text-sky-500 mt-0.5 flex-shrink-0" />
+                  <span>Materiales premium y acabados únicos</span>
+                </li>
+              </ul>
+            </div>
 
-          <p className="text-[10px] sm:text-xs text-center text-muted-foreground mb-3">
-            Horario de 9:00 a 18:00 hrs. Respuesta en menos de 24 hrs.
-          </p>
-
-          <div className="flex justify-center mt-auto">
-            <button
-              onClick={handleWhatsAppClick}
-              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-transparent text-[#25D366] font-bold rounded-full hover:shadow-xl hover:shadow-[#25D366]/30 hover:-translate-y-0.5 transition-all duration-300 border-2 border-[#25D366]/50 hover:border-[#25D366] inline-flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-fit max-w-xs"
-            >
-              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-              Consultar por WhatsApp
-            </button>
+            <div className="flex flex-col justify-end gap-2 shrink-0">
+              <p className="hidden sm:block text-[10px] text-center text-muted-foreground">
+                Horario 9:00–18:00 · Respuesta en menos de 24 hrs.
+              </p>
+              <button
+                onClick={handleWhatsAppClick}
+                className="px-5 py-3 bg-[#25D366] text-white font-bold rounded-full hover:-translate-y-0.5 transition-all duration-300 shadow-lg hover:shadow-[#25D366]/40 hover:shadow-xl inline-flex items-center justify-center gap-2 text-sm w-full sm:w-fit"
+              >
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                Consultar por WhatsApp
+              </button>
+            </div>
           </div>
         </div>
 
