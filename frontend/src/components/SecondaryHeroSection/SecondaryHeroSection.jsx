@@ -162,7 +162,7 @@ export default function SecondaryHeroSection() {
         </div>
 
         {/* Sidebar Promocional (1/3) */}
-        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-9 flex flex-col gap-4 h-auto lg:h-[380px]">
+        <div className="relative rounded-3xl border border-white/30 shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background px-9 pt-9 pb-9 flex flex-col gap-4 h-auto lg:h-[380px]">
 
           {/* Encabezado */}
           <div className="text-center">
