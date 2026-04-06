@@ -98,6 +98,8 @@ export default function ProductDetail() {
     fetchProductAndReviews();
   }, [productId]);
 
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+
   const handleReviewSubmit = async () => {
     if (rating === 0 || !reviewText.trim()) {
       setSubmitError("Por favor, completa todos los campos.");
@@ -107,32 +109,36 @@ export default function ProductDetail() {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    // Optimistic update: mostrar la reseña inmediatamente
+    const optimisticReview = {
+      id: `temp-${Date.now()}`,
+      calificacion: rating,
+      comentario: reviewText.trim(),
+      usuario_nombre: user?.nombre || "Tú",
+      created_at: new Date().toISOString(),
+    };
+    setReviews(prev => [optimisticReview, ...prev]);
+
     try {
-      // ✅ Enviar reseña
       await api.post("/reviews", {
         producto_id: productId,
-        usuario_id: user?.id || "unknown",
         calificacion: rating,
         comentario: reviewText.trim(),
       });
 
-      // ✅ Recargar reseñas
-      try {
-        const updatedReviews = await api.get(`/reviews?producto_id=${productId}`);
-        setReviews(Array.isArray(updatedReviews.data) ? updatedReviews.data : []);
-      } catch (err) {
-        console.error("Error recargando reseñas:", err);
-      }
+      // Recargar desde servidor para tener datos reales
+      const updatedReviews = await api.get(`/reviews?producto_id=${productId}`);
+      if (Array.isArray(updatedReviews.data)) setReviews(updatedReviews.data);
 
       setReviewText("");
       setRating(0);
-      alert("¡Gracias por tu reseña!");
+      setReviewSuccess(true);
+      setTimeout(() => setReviewSuccess(false), 4000);
     } catch (error) {
-      console.error("❌ Error al enviar reseña:", error);
+      // Revertir optimistic update si falla
+      setReviews(prev => prev.filter(r => r.id !== optimisticReview.id));
       const serverMsg = error.response?.data?.error;
-      setSubmitError(
-        serverMsg || "Hubo un problema al enviar tu reseña. Por favor, inténtalo de nuevo."
-      );
+      setSubmitError(serverMsg || "Hubo un problema al enviar tu reseña.");
     } finally {
       setIsSubmitting(false);
     }
@@ -323,114 +329,90 @@ export default function ProductDetail() {
               </div>
 
               {/* Detalles del producto */}
-              <div className="space-y-6">
-                {/* Categoría */}
-                {product.categoria_nombre && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-                    <Package className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-primary">{product.categoria_nombre}</span>
-                  </div>
-                )}
+              <div className="space-y-5">
 
                 {/* Título */}
                 <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground leading-tight">
                   {product.titulo || "Producto"}
                 </h1>
 
-                {/* Calificación */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-5 h-5 fill-current ${star <= Math.round(avgRating) ? 'text-yellow-400' : 'text-muted/30'}`}
-                        />
-                      ))}
-                    </div>
-                    {reviews.length > 0 ? (
-                      <span className="text-sm text-muted">
-                        {avgRating.toFixed(1)} ({reviews.length} reseña{reviews.length !== 1 ? 's' : ''})
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted">Sin reseñas</span>
-                    )}
+                {/* Categoría */}
+                {product.categoria_nombre && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted">Categoría:</span>
+                    <span className="font-semibold text-primary">{product.categoria_nombre}</span>
                   </div>
-                  <div className="w-px h-4 bg-border"></div>
-                  <span className={`text-sm font-medium ${stock > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {stock > 0 ? "✓ En stock" : "✗ Agotado"}
+                )}
+
+                {/* Calificación + stock */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-4 h-4 fill-current ${star <= Math.round(avgRating) ? 'text-yellow-400' : 'text-muted/30'}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("reviews")}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Reseña ({reviews.length})
+                  </button>
+                  <span className="w-px h-4 bg-border inline-block" />
+                  <span className={`text-sm font-semibold ${stock > 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                    {stock > 0 ? `En stock: ${stock} unidades` : "Agotado"}
                   </span>
                 </div>
 
-                {/* Descripción */}
+                {/* Precio */}
+                <div className="flex items-center gap-4 py-4 border-y border-border">
+                  <span className="text-4xl font-bold text-primary">
+                    {CLP.format(product.precio || 0)}
+                  </span>
+                  {product.precio_anterior && (
+                    <span className="text-xl line-through text-muted">
+                      {CLP.format(product.precio_anterior)}
+                    </span>
+                  )}
+                  {product.descuento && (
+                    <span className="px-2 py-0.5 text-sm font-bold bg-emerald-500/10 text-emerald-400 rounded-full">
+                      {product.descuento}% OFF
+                    </span>
+                  )}
+                </div>
+
+                {/* Descripción corta */}
                 {product.descripcion && (
-                  <p className="text-muted leading-relaxed">
+                  <p className="text-muted leading-relaxed text-sm">
                     {product.descripcion}
                   </p>
                 )}
 
-                {/* Precios */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="price-text text-4xl">{CLP.format(product.precio || 0)}</span>
-                    {product.precio_anterior && (
-                      <span className="line-through text-muted">{CLP.format(product.precio_anterior)}</span>
-                    )}
-                  </div>
-                  {product.descuento && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full">
-                      <span className="text-sm font-bold text-emerald-400">
-                        {product.descuento}% OFF
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Beneficios */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg">
-                    <Truck className="w-5 h-5 text-primary" />
-                    <span className="text-sm text-foreground">Envío en 3-5 días</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-secondary/30 rounded-lg">
-                    <Shield className="w-5 h-5 text-primary" />
-                    <span className="text-sm text-foreground">Garantía 30 días</span>
-                  </div>
-                </div>
-
-                {/* Cantidad y botón */}
-                <div className="space-y-4 pt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-muted mb-2">Cantidad</label>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center border border-border rounded-xl bg-secondary/30 h-12">
-                        <button
-                          aria-label="Restar cantidad"
-                          className="h-full w-12 flex items-center justify-center text-foreground rounded-l-xl hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          onClick={() => setQuantity((q) => Math.max(q - 1, 1))}
-                          disabled={quantity === 1}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-12 text-center text-base font-semibold text-foreground">{quantity}</span>
-                        <button
-                          aria-label="Sumar cantidad"
-                          className="h-full w-12 flex items-center justify-center text-foreground rounded-r-xl hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          onClick={() => setQuantity((q) => Math.min(q + 1, maxQty))}
-                          disabled={quantity === maxQty}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="text-sm text-muted">
-                        <span className="text-emerald-400">{stock} disponibles</span>
-                      </div>
-                    </div>
+                {/* Cantidad + botón */}
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="flex items-center border border-border rounded-lg overflow-hidden bg-secondary/20">
+                    <button
+                      aria-label="Restar cantidad"
+                      onClick={() => setQuantity((q) => Math.max(q - 1, 1))}
+                      disabled={quantity === 1}
+                      className="w-10 h-12 flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-40"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-10 text-center font-bold text-foreground">{quantity}</span>
+                    <button
+                      aria-label="Sumar cantidad"
+                      onClick={() => setQuantity((q) => Math.min(q + 1, maxQty))}
+                      disabled={quantity === maxQty}
+                      className="w-10 h-12 flex items-center justify-center hover:bg-secondary transition-colors disabled:opacity-40"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
                   </div>
 
                   <button
-                    className={`btn-add-cart w-full !px-6 !py-4 !text-lg group relative overflow-hidden ${isStockExceeded(product) ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
                     onClick={() => {
                       if (!isStockExceeded(product)) {
                         for (let i = 0; i < quantity; i++) {
@@ -442,31 +424,33 @@ export default function ProductDetail() {
                             stock: product.stock,
                           });
                         }
-                        const btn = document.activeElement;
-                        btn?.classList.add('bg-emerald-500');
-                        setTimeout(() => {
-                          btn?.classList.remove('bg-emerald-500');
-                        }, 300);
                       }
                     }}
                     disabled={isStockExceeded(product)}
+                    className="flex-1 h-12 bg-primary text-primary-foreground rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isStockExceeded(product) ? (
-                      "Sin stock disponible"
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        Agregar al carrito
-                      </>
-                    )}
+                    <ShoppingBag className="w-5 h-5" />
+                    {isStockExceeded(product) ? "Sin stock" : "Agregar al carrito"}
                   </button>
                 </div>
 
-                {/* Info */}
-                <div className="pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 text-sm text-muted mb-2">
-                    <Check className="w-4 h-4" />
-                    <span>Impuesto incluido · Envío calculado al checkout</span>
+                {/* Trust badges */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                  <div className="flex items-center gap-2 text-sm text-muted">
+                    <Truck className="w-4 h-4 text-primary shrink-0" />
+                    <span>Envío en 3-5 días</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted">
+                    <Shield className="w-4 h-4 text-primary shrink-0" />
+                    <span>Garantía 30 días</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted">
+                    <Check className="w-4 h-4 text-primary shrink-0" />
+                    <span>Impuesto incluido</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted">
+                    <Package className="w-4 h-4 text-primary shrink-0" />
+                    <span>Fabricación a pedido</span>
                   </div>
                 </div>
               </div>
@@ -668,7 +652,12 @@ export default function ProductDetail() {
                         )}
                       </div>
 
-                      {/* Error */}
+                      {/* Feedback */}
+                      {reviewSuccess && (
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-sm">
+                          ¡Gracias por tu reseña! Ya aparece en la lista.
+                        </div>
+                      )}
                       {submitError && (
                         <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-sm">
                           {submitError}
