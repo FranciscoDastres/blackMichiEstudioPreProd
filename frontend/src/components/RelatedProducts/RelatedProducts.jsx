@@ -57,9 +57,6 @@ function RelatedProducts({ categoriaId, currentProductId }) {
     <section className="w-full max-w-6xl mx-auto mt-16 mb-20 px-4 sm:px-6">
       <div className="mb-8 text-center">
         <h2 className="text-3xl sm:text-4xl font-bold mb-2">
-          <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
-            Productos Relacionados
-          </span>
         </h2>
         <p className="text-lg text-muted-foreground">Descubre más productos que podrían interesarte</p>
       </div>
@@ -154,8 +151,8 @@ function RelatedProducts({ categoriaId, currentProductId }) {
                   <button
                     aria-label={outOfStock ? "Producto agotado" : `Agregar ${product.titulo} al carrito`}
                     className={`group/btn relative w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden ${outOfStock
-                        ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-muted"
-                        : "bg-sky-700 text-white border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
+                      ? "bg-muted/30 text-muted-foreground cursor-not-allowed border border-muted"
+                      : "bg-sky-700 text-white border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-1"
                       }`}
                     onClick={(e) => { e.stopPropagation(); if (!outOfStock) addToCart(product); }}
                     disabled={outOfStock}
