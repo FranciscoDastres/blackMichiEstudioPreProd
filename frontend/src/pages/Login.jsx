@@ -18,7 +18,7 @@ export default function Login() {
     setMessage("");
     const res = await loginWithGoogle(credentialResponse.credential);
     if (res.success) {
-      navigate(res.user?.rol === "admin" ? "/admin" : "/cuenta/perfil");
+      navigate("/");
     } else {
       setMessage(res.error || "Error al iniciar sesión con Google");
     }
@@ -38,8 +38,7 @@ export default function Login() {
     try {
       const res = await login(formData.email, formData.password);
       if (res.success) {
-        const stored = JSON.parse(localStorage.getItem("user") || "{}");
-        navigate(stored?.rol === "admin" ? "/admin" : "/cuenta/perfil");
+        navigate("/");
       } else {
         setMessage(res.error || "Credenciales inválidas");
       }
