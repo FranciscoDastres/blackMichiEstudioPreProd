@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, HelpCircle, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import useSEO from "../hooks/useSEO";
 
 const faqs = [
     {
@@ -78,6 +79,8 @@ function FAQItem({ faq, isOpen, onToggle }) {
 }
 
 export default function FAQ() {
+    useSEO({ title: "Preguntas Frecuentes" });
+
     const navigate = useNavigate();
     const [openId, setOpenId] = useState(null);
 
