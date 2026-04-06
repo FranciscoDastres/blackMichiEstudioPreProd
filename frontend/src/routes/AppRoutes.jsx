@@ -10,6 +10,8 @@ const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const ProductList = lazy(() => import("../pages/ProductList"));
 const Login = lazy(() => import("../pages/Login"));
 const Register = lazy(() => import("../pages/Register"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword"));
 const Checkout = lazy(() => import("../pages/Checkout"));
 const Success = lazy(() => import("../pages/Success"));
 const Home = lazy(() => import("../pages/Home"));
@@ -88,6 +90,16 @@ export default function AppRoutes() {
       <Route path="/register" element={
         <Suspense fallback={<LoadingFallback />}>
           <Register />
+        </Suspense>
+      } />
+      <Route path="/forgot-password" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <ForgotPassword />
+        </Suspense>
+      } />
+      <Route path="/reset-password" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <ResetPassword />
         </Suspense>
       } />
 

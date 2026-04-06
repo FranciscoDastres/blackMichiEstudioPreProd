@@ -185,4 +185,31 @@ async function changePassword(authId, email, currentPassword, newPassword) {
     if (updateError) throw new Error(updateError.message);
 }
 
-module.exports = { register, login, googleLogin, verifyToken, logout, changePassword };
+// ✅ Solicitar reset de contraseña
+async function forgotPassword(email) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${frontendUrl}/reset-password`,
+    });
+    // No revelamos si el email existe o no (seguridad)
+    if (error) console.warn('⚠️ forgotPassword error (puede que el email no exista):', error.message);
+}
+
+// ✅ Cambiar contraseña con token de recovery (desde el link del email)
+async function resetPassword(token, newPassword) {
+    if (!newPassword || newPassword.length < 6) {
+        throw new Error('La contraseña debe tener al menos 6 caracteres');
+    }
+
+    // Verificar el token y obtener el usuario
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) throw new Error('El enlace es inválido o ya expiró');
+
+    // Actualizar contraseña via admin API
+    const { error: updateError } = await supabase.auth.admin.updateUserById(data.user.id, {
+        password: newPassword,
+    });
+    if (updateError) throw new Error(updateError.message);
+}
+
+module.exports = { register, login, googleLogin, verifyToken, logout, changePassword, forgotPassword, resetPassword };
