@@ -41,9 +41,13 @@ api.interceptors.response.use(
   },
   error => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const url = error.config?.url || '';
+      // No redirigir si es la verificación inicial de sesión
+      if (!url.includes('/auth/me') && !url.includes('/auth/login')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     console.error('❌ API Error:', {
       status: error.response?.status,
