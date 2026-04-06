@@ -2,8 +2,13 @@ import HeroSection from "../components/HeroSection/HeroSection";
 import CategoryCards from "../components/CategoryCards/CategoryCards";
 import PopularProducts from "../components/PopularProducts/PopularProducts";
 import SecondaryHeroSection from "../components/SecondaryHeroSection/SecondaryHeroSection";
+import useSEO from "../hooks/useSEO";
 
 function Home() {
+  useSEO({
+    title: "Figuras 3D Personalizadas",
+    description: "Black Michi Estudio — Figuras impresas en 3D, coleccionables únicos y decoraciones personalizadas. Envíos a todo Chile.",
+  });
   return (
     <div className="min-h-screen bg-background">
       <section className="relative w-full flex flex-col items-center justify-center bg-background bg-grid py-10 overflow-hidden">
