@@ -73,6 +73,34 @@ exports.logout = async (req, res) => {
   }
 };
 
+// ✅ Solicitar reset de contraseña
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'El email es requerido' });
+    await authService.forgotPassword(email);
+    res.json({ success: true, message: 'Si el email existe, recibirás un enlace para restablecer tu contraseña' });
+  } catch (err) {
+    console.error('❌ Error forgotPassword:', err);
+    res.json({ success: true });
+  }
+};
+
+// ✅ Restablecer contraseña con token del email
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token y nueva contraseña son requeridos' });
+    }
+    await authService.resetPassword(token, newPassword);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Error resetPassword:', err);
+    res.status(400).json({ error: err.message || 'Error al restablecer la contraseña' });
+  }
+};
+
 // ✅ NUEVO — Cambiar contraseña
 exports.changePassword = async (req, res) => {
   try {
