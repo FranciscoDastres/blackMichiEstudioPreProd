@@ -143,7 +143,7 @@ export default function HeroSection() {
                                             <div className="pt-2">
                                                 <button
                                                     onClick={() => navigate("/productos")}
-                                                    className="group inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-full transition-all duration-300 hover:bg-primary/90 hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
+                                                    className="group inline-flex items-center gap-2 px-6 py-3 bg-sky-700 text-white font-semibold rounded-full border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-0.5 transition-all duration-300"
                                                 >
                                                     <span className="text-sm">{button_text}</span>
                                                     <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
