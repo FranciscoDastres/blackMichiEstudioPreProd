@@ -94,10 +94,41 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
             throw new Error("Sección inválida. Debe ser section1-section6");
         }
 
-        if (!title || !buffer) {
-            throw new Error("Se requieren título e imagen");
+        if (!title) {
+            throw new Error("El título es requerido");
         }
 
+        // Sin imagen nueva → solo actualizar texto (el registro debe existir)
+        if (!buffer) {
+            const existing = await pool.query(
+                `SELECT image_url FROM hero_images WHERE section = $1`,
+                [section]
+            );
+
+            if (!existing.rows.length) {
+                throw new Error("No existe imagen para esta sección. Debés subir una imagen primero.");
+            }
+
+            await pool.query(
+                `UPDATE hero_images
+                 SET title = $1, subtitle = $2, button_text = $3, categoria = $4, updated_at = NOW()
+                 WHERE section = $5`,
+                [title, subtitle, buttonText, categoria, section]
+            );
+
+            console.log(`📝 Texto actualizado para ${section} (sin nueva imagen)`);
+
+            return {
+                image_url: existing.rows[0].image_url,
+                title,
+                subtitle,
+                button_text: buttonText,
+                categoria,
+                section,
+            };
+        }
+
+        // Con imagen nueva → subir a Cloudinary y actualizar todo
         console.log(`📤 Subiendo hero image: ${section}`);
 
         const uploadResult = await cloudinaryService.uploadHeroImage(buffer, section);
@@ -112,15 +143,15 @@ async function uploadHeroImage(buffer, section, title, subtitle, buttonText, cat
 
         await pool.query(
             `INSERT INTO hero_images (section, image_url, title, subtitle, button_text, categoria, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
-       ON CONFLICT (section) 
-       DO UPDATE SET 
-          image_url = $2, 
-          title = $3, 
-          subtitle = $4, 
-          button_text = $5, 
-          categoria = $6, 
-          updated_at = NOW()`,
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (section)
+             DO UPDATE SET
+                image_url = $2,
+                title = $3,
+                subtitle = $4,
+                button_text = $5,
+                categoria = $6,
+                updated_at = NOW()`,
             [section, uploadResult.url, title, subtitle, buttonText, categoria]
         );
 
