@@ -22,9 +22,12 @@ export function AuthProvider({ children }) {
       try {
         const { data } = await api.get("/auth/me");
         setUser(data.user);
-      } catch {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refresh_token");
+      } catch (error) {
+        // Solo limpiar el token si el servidor lo rechaza (401), no por errores de red
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("refresh_token");
+        }
         setUser(null);
       } finally {
         setLoading(false);
