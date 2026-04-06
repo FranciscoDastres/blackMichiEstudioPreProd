@@ -3,7 +3,8 @@ const pool = require("../lib/db");
 const { createClient } = require("@supabase/supabase-js");
 const { OAuth2Client } = require("google-auth-library");
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "804779725952-j57ni35oqucbc7cpsrf70dnghiqmueq8.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+if (!GOOGLE_CLIENT_ID) throw new Error("Falta GOOGLE_CLIENT_ID en variables de entorno");
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Cliente admin (service role) — para operaciones de administración
@@ -89,10 +90,11 @@ async function googleLogin(idToken) {
     if (!email) throw new Error("No se pudo obtener el email de Google");
 
     // Buscar o crear usuario en Supabase Auth
-    const { data: userByEmail, error: lookupError } = await supabase.auth.admin.getUserByEmail(email);
+    const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1, page: 1, filter: `email=${email}` });
+    const existingUser = listData?.users?.find(u => u.email === email);
 
     let authUser;
-    if (lookupError || !userByEmail?.user) {
+    if (!existingUser) {
         const { data, error } = await supabase.auth.admin.createUser({
             email,
             email_confirm: true,
@@ -100,7 +102,7 @@ async function googleLogin(idToken) {
         if (error) throw new Error("Error creando usuario: " + error.message);
         authUser = data.user;
     } else {
-        authUser = userByEmail.user;
+        authUser = existingUser;
     }
 
     // Buscar o crear perfil en la tabla local
