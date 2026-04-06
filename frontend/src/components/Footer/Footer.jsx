@@ -20,7 +20,6 @@ function Footer() {
           <ul className="space-y-2 text-sm">
             <li><Link to="/" className="hover:text-primary transition-colors">Inicio</Link></li>
             <li><Link to="/productos" className="hover:text-primary transition-colors">Productos</Link></li>
-            <li><Link to="/ofertas" className="hover:text-primary transition-colors">Ofertas</Link></li>
             <li><Link to="/contacto" className="hover:text-primary transition-colors">Contacto</Link></li>
           </ul>
         </nav>
