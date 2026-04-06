@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import useCart from "../hooks/useCart";
+import useSEO from "../hooks/useSEO";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, X } from "lucide-react";
 import LazyImage from "../components/LazyImage/LazyImage";
 import { getImageUrl } from "../utils/getImageUrl";
@@ -16,6 +17,11 @@ const StarIcon = ({ filled }) => (
 );
 
 function ProductList() {
+  useSEO({
+    title: "Productos",
+    description: "Explora toda la colección de figuras impresas en 3D de Black Michi Estudio. Cultura pop, anime, ciencia ficción y más.",
+  });
+
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 

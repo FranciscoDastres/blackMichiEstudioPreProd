@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, FileText, ShieldCheck, Truck, RotateCcw } from "lucide-react";
+import useSEO from "../hooks/useSEO";
 
 const sections = [
     {
@@ -110,6 +111,8 @@ const highlights = [
 ];
 
 export default function TermsAndConditions() {
+    useSEO({ title: "Términos y Condiciones" });
+
     const navigate = useNavigate();
 
     return (

@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import { Eye, EyeOff } from "lucide-react";
+import useSEO from "../hooks/useSEO";
 
 export default function Register() {
+  useSEO({ title: "Crear Cuenta" });
+
   const [formData, setFormData] = useState({ nombre: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");

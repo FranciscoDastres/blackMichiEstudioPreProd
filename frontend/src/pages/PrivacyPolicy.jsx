@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Lock, Shield, Eye, UserCheck } from "lucide-react";
+import useSEO from "../hooks/useSEO";
 
 const sections = [
     {
@@ -137,6 +138,8 @@ const highlights = [
 ];
 
 export default function PrivacyPolicy() {
+    useSEO({ title: "Política de Privacidad" });
+
     const navigate = useNavigate();
 
     return (
