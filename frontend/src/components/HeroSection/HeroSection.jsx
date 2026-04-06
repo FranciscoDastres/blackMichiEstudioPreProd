@@ -126,7 +126,7 @@ export default function HeroSection() {
                                     alt={title}
                                     fetchPriority={index === 0 ? "high" : "auto"}
                                     loading={index === 0 ? "eager" : "lazy"}
-                                    className="absolute right-[8%] top-0 h-full w-auto object-contain z-20"
+                                    className="hidden sm:block absolute right-[8%] top-0 h-full w-auto object-contain z-20"
                                 />
 
                                 <div className="relative z-30 h-full flex items-center">
@@ -143,11 +143,10 @@ export default function HeroSection() {
                                             <div className="pt-2">
                                                 <button
                                                     onClick={() => navigate("/productos")}
-                                                    className="group relative inline-flex items-center gap-3 px-7 py-3.5 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground font-semibold rounded-full overflow-hidden transition-all duration-300 border border-sky-400/40 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-0.5"
+                                                    className="group inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-full transition-all duration-300 hover:bg-primary/90 hover:-translate-y-0.5 shadow-lg hover:shadow-xl"
                                                 >
-                                                    <span className="relative z-10 text-sm">{button_text}</span>
-                                                    <ChevronRight className="relative z-10 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                                                    <div className="absolute inset-0 bg-gradient-to-r from-sky-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                    <span className="text-sm">{button_text}</span>
+                                                    <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                                                 </button>
                                             </div>
                                         </div>
