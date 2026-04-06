@@ -18,7 +18,6 @@ function Header() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -35,13 +34,11 @@ function Header() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        setError(null);
         const response = await api.get("/categorias");
         const data = Array.isArray(response.data) ? response.data : [];
         setCategories(data);
       } catch (err) {
         console.error("❌ Error cargando categorías:", err);
-        setError("Error al cargar categorías");
         setCategories([
           { id: 1, nombre: "Vasos 3D", descripcion: "Vasos personalizados en 3D" },
           { id: 2, nombre: "Placas Navi", descripcion: "Placas decorativas Navi" },
@@ -109,8 +106,7 @@ function Header() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
+  const doSearch = () => {
     if (searchQuery.trim()) {
       navigate(`/productos?busqueda=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
@@ -118,7 +114,12 @@ function Header() {
     }
   };
 
-  const handleCategoryClick = (categoryId, categoryName) => {
+  const handleSearch = (e) => {
+    e.preventDefault();
+    doSearch();
+  };
+
+  const handleCategoryClick = (categoryId) => {
     navigate(`/productos?categoria=${categoryId}`);
     setSidebarOpen(false);
   };
@@ -130,6 +131,141 @@ function Header() {
 
   return (
     <div className="sticky top-0 z-50 bg-background bg-grid shadow-lg border-b border-border w-full">
+
+      {/* HEADER MOBILE */}
+      <header className="md:hidden border-b border-border w-full">
+        <div className="flex items-center justify-between px-4 py-3 gap-3">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
+            <img
+              src="/logoBlackMichiEstudio.webp"
+              alt="Black Michi Studio"
+              width="36"
+              height="36"
+              className="h-9 w-9"
+              loading="eager"
+            />
+            <span className="font-bold text-base text-foreground leading-tight">Black Michi Studio</span>
+          </Link>
+
+          {/* Íconos derecha */}
+          <div className="flex items-center gap-1">
+            {/* Botón búsqueda */}
+            <button
+              aria-label="Buscar"
+              onClick={() => setMobileMenuOpen(o => !o)}
+              className="p-2 hover:text-primary transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+            </button>
+
+            {/* Categorías */}
+            <button
+              aria-label="Categorías"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 hover:text-primary transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Carrito */}
+            <button
+              aria-label="Abrir carrito"
+              className="p-2 hover:text-primary transition-colors relative"
+              onClick={() => setCartSidebarOpen(true)}
+            >
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold leading-none">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            {/* Usuario */}
+            {user ? (
+              <div className="relative user-menu">
+                <button
+                  aria-label="Menú usuario"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="p-2 hover:text-primary transition-colors"
+                >
+                  <User className="w-5 h-5" />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-1 w-44 bg-background rounded-xl shadow-lg border border-border py-1 z-50">
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted/20">
+                        <Settings className="w-4 h-4" /><span>Panel Admin</span>
+                      </Link>
+                    )}
+                    {isClient && (
+                      <Link to="/cuenta/perfil" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted/20">
+                        <User className="w-4 h-4" /><span>Mi Panel</span>
+                      </Link>
+                    )}
+                    <button onClick={() => { logout(); setUserMenuOpen(false); navigate('/'); }} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted/20">
+                      <LogOut className="w-4 h-4" /><span>Cerrar sesión</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login" className="p-2 hover:text-primary transition-colors">
+                <User className="w-5 h-5" />
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Barra de búsqueda expandible */}
+        {mobileMenuOpen && (
+          <div ref={searchRef} className="px-4 pb-3 border-t border-border/50 pt-3">
+            <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }} className="flex items-center border border-border rounded-xl px-3 py-2.5 bg-secondary/20 focus-within:border-primary transition-all">
+              <Search className="w-4 h-4 text-muted shrink-0 mr-2" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar productos..."
+                autoFocus
+                className="bg-transparent text-sm text-foreground placeholder:text-muted outline-none w-full"
+              />
+            </form>
+            {/* Resultados live */}
+            {searchOpen && searchResults.length > 0 && (
+              <div className="mt-1.5 bg-background border border-border rounded-xl shadow-xl overflow-hidden">
+                {searchResults.map(prod => (
+                  <Link
+                    key={prod.id}
+                    to={`/producto/${prod.id}`}
+                    onClick={() => { setSearchOpen(false); setSearchQuery(''); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition-colors border-b border-border/50 last:border-0"
+                  >
+                    <img
+                      src={getImageUrl(prod.imagen_principal)}
+                      alt={prod.titulo}
+                      className="w-9 h-9 rounded-lg object-cover bg-secondary/50 shrink-0"
+                      onError={e => { e.target.src = '/placeholder.svg'; }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{prod.titulo}</p>
+                      <p className="text-xs text-primary font-semibold">{CLP.format(prod.precio)}</p>
+                    </div>
+                  </Link>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => { doSearch(); setMobileMenuOpen(false); }}
+                  className="w-full px-4 py-2.5 text-xs text-muted hover:text-primary text-center hover:bg-secondary/20 transition-colors"
+                >
+                  Ver todos los resultados para "{searchQuery}"
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
 
       {/* HEADER DESKTOP */}
       <header className="border-b border-border w-full hidden md:block">
@@ -335,7 +471,7 @@ function Header() {
                         {categories.map((cat) => (
                           <li key={cat.id}>
                             <button
-                              onClick={() => handleCategoryClick(cat.id, cat.nombre)}
+                              onClick={() => handleCategoryClick(cat.id)}
                               className="w-full text-left text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition capitalize"
                             >
                               {capitalize(cat.nombre)}
