@@ -23,9 +23,12 @@ export default function Login() {
   const { login, loginWithGoogle } = useAuth();
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    console.log("✅ Google callback recibido:", credentialResponse);
+    console.log("🔑 Credential:", credentialResponse?.credential ? "EXISTE" : "UNDEFINED");
     setSubmitting(true);
     setMessage("");
     const res = await loginWithGoogle(credentialResponse.credential);
+    console.log("📦 Respuesta del backend:", res);
     if (res.success) {
       if (res.user?.rol === "admin") {
         navigate("/admin");

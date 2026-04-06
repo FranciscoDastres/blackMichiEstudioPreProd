@@ -32,17 +32,19 @@ exports.login = async (req, res) => {
   }
 };
 
-// ✅ Google Login — sin cambios
+// ✅ Google Login
 exports.googleLogin = async (req, res) => {
   try {
     const { token } = req.body;
+    console.log("🔵 Google Login request recibido, token:", token ? `${token.substring(0, 20)}...` : "FALTA");
     if (!token) {
       return res.status(400).json({ error: "Token de Google requerido" });
     }
     const result = await authService.googleLogin(token);
+    console.log("🟢 Google Login exitoso para:", result?.user?.email);
     res.json(result);
   } catch (err) {
-    console.error("❌ Error Google Login:", err);
+    console.error("❌ Error Google Login:", err.message);
     res.status(400).json({ error: err.message || "Error en Google Login" });
   }
 };
