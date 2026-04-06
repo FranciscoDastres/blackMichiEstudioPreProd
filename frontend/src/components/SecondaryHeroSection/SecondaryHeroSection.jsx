@@ -159,41 +159,41 @@ export default function SecondaryHeroSection() {
         </div>
 
         {/* Sidebar Promocional (1/3) */}
-        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-6 flex flex-col h-auto lg:h-[380px]">
+        <div className="relative rounded-3xl border border-border shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background p-6 flex flex-col gap-4 h-auto lg:h-[380px]">
 
           {/* Encabezado */}
-          <div className="text-center mb-4">
-            <h3 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
-              ¿Quieres algo<br className="hidden lg:block" /> único?
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-foreground">
+              ¿Quieres algo único?
             </h3>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-sm text-muted-foreground mt-1">
               Diseñamos productos personalizados solo para ti.
             </p>
           </div>
 
+          {/* Divisor */}
+          <div className="hidden sm:block w-12 h-px bg-border mx-auto" />
+
           {/* Lista de beneficios */}
-          <div className="hidden sm:flex flex-col gap-2.5 text-sm text-muted-foreground flex-1 justify-center">
-            <p className="text-center text-sm mb-1">¿Tienes una idea en mente? ¡Hagámosla realidad!</p>
-            <ul className="space-y-2.5">
-              <li className="flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-                <span>Diseño 100% personalizado</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <Headphones className="w-4 h-4 text-accent flex-shrink-0" />
-                <span>Asesoría directa con el equipo</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <Palette className="w-4 h-4 text-sky-500 flex-shrink-0" />
-                <span>Materiales premium y acabados únicos</span>
-              </li>
-            </ul>
-          </div>
+          <ul className="hidden sm:flex flex-col gap-3 text-sm text-muted-foreground flex-1">
+            <li className="flex items-center gap-3">
+              <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+              <span>Diseño 100% personalizado</span>
+            </li>
+            <li className="flex items-center gap-3">
+              <Headphones className="w-4 h-4 text-accent flex-shrink-0" />
+              <span>Asesoría directa con el equipo</span>
+            </li>
+            <li className="flex items-center gap-3">
+              <Palette className="w-4 h-4 text-sky-500 flex-shrink-0" />
+              <span>Materiales premium y acabados únicos</span>
+            </li>
+          </ul>
 
           {/* Pie */}
-          <div className="flex flex-col items-center gap-2 mt-4">
+          <div className="flex flex-col items-center gap-2 mt-auto">
             <p className="text-xs text-center text-muted-foreground hidden sm:block">
-              Horario de 9:00 a 18:00 hrs. Respuesta en menos de 24 hrs.
+              Horario 9:00–18:00 · Respuesta en menos de 24 hrs.
             </p>
             <button
               onClick={handleWhatsAppClick}
