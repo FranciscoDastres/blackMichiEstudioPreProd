@@ -2,6 +2,50 @@ import AdminTable from "../components/AdminTable";
 import StatusBadge from "../components/StatusBadge";
 import useOrders from "../hooks/useOrders";
 
+const ESTADOS = [
+    { value: "pendiente",   label: "Pendiente" },
+    { value: "pagado",      label: "Pagado" },
+    { value: "confirmado",  label: "Confirmado" },
+    { value: "en_proceso",  label: "En proceso" },
+    { value: "enviado",     label: "Enviado" },
+    { value: "entregado",   label: "Entregado" },
+    { value: "cancelado",   label: "Cancelado" },
+    { value: "rechazado",   label: "Rechazado" },
+];
+
+const ESTADOS_TERMINALES = ["cancelado", "rechazado", "entregado"];
+
+function OrderStatusSelect({ orderId, estadoActual, onUpdate }) {
+    const esTerminal = ESTADOS_TERMINALES.includes(estadoActual);
+
+    if (esTerminal) {
+        return (
+            <span className="text-xs text-gray-500 italic">
+                {estadoActual === "entregado" ? "Completado" : "Cerrado"}
+            </span>
+        );
+    }
+
+    return (
+        <select
+            defaultValue={estadoActual}
+            onChange={(e) => {
+                const nuevoEstado = e.target.value;
+                if (nuevoEstado !== estadoActual) {
+                    onUpdate(orderId, nuevoEstado);
+                }
+            }}
+            className="bg-gray-800 border border-gray-600 text-white text-xs rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer"
+        >
+            {ESTADOS.map((e) => (
+                <option key={e.value} value={e.value}>
+                    {e.label}
+                </option>
+            ))}
+        </select>
+    );
+}
+
 export default function Orders() {
     const { orders, loading, error, updateOrderStatus } = useOrders();
 
@@ -49,36 +93,14 @@ export default function Orders() {
             },
         },
         {
-            header: "Acciones",
-            cell: (value, row) => {
-                const estadoActual = String(row?.estado || "").toLowerCase();
-
-                if (estadoActual !== "pendiente") {
-                    return (
-                        <span className="text-xs text-gray-500 italic">
-                            Procesado
-                        </span>
-                    );
-                }
-
-                return (
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => updateOrderStatus(row.id, "pagado")}
-                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded shadow-sm transition-colors text-xs font-medium"
-                        >
-                            Aprobar
-                        </button>
-
-                        <button
-                            onClick={() => updateOrderStatus(row.id, "cancelado")}
-                            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded shadow-sm transition-colors text-xs font-medium"
-                        >
-                            Anular
-                        </button>
-                    </div>
-                );
-            },
+            header: "Cambiar estado",
+            cell: (value, row) => (
+                <OrderStatusSelect
+                    orderId={row.id}
+                    estadoActual={String(row?.estado || "pendiente").toLowerCase()}
+                    onUpdate={updateOrderStatus}
+                />
+            ),
         },
     ];
 
