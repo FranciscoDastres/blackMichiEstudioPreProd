@@ -197,6 +197,7 @@ export default function SecondaryHeroSection() {
           <div className="flex flex-col items-center gap-2 mt-6">
             <p className="text-sm text-center text-muted-foreground hidden sm:block">
               Horario 9:00–18:00 · Respuesta en menos de 24 hrs.
+              <span> </span>
             </p>
             <button
               onClick={handleWhatsAppClick}
