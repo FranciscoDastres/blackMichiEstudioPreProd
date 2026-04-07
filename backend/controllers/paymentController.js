@@ -77,8 +77,17 @@ async function flowConfirmation(req, res) {
 
 async function getPedidoStatus(req, res) {
     try {
-        const pedido = await paymentService.getEstadoPedido(req.params.pedidoId);
-        if (!pedido) return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
+        const flowToken = req.query.token;
+        if (!flowToken) {
+            return res.status(401).json({ success: false, message: 'Token de pago requerido' });
+        }
+
+        const pedido = await paymentService.getEstadoPedido(req.params.pedidoId, flowToken);
+        if (!pedido) {
+            // Respuesta genérica: no distinguimos entre "no existe" y "token inválido"
+            // para no filtrar existencia de pedidos a atacantes
+            return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
+        }
 
         res.json({
             success: true,
