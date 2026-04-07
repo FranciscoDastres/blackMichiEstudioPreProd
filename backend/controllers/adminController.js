@@ -1,6 +1,11 @@
 // backend/controllers/adminController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en adminService.js
 const adminService = require("../services/adminService");
+const {
+  assertEnum,
+  USER_ROLES,
+  ORDER_STATES,
+} = require("../utils/validators");
 
 // ✅ Obtener todos los productos (admin)
 async function getAllProducts(req, res) {
@@ -30,15 +35,14 @@ async function updateOrderStatus(req, res) {
     const { id } = req.params;
     const { estado, numero_seguimiento } = req.body;
 
-    if (!id || !estado) {
-      return res.status(400).json({ error: "ID y estado requeridos" });
-    }
+    if (!id) return res.status(400).json({ error: "ID requerido" });
+    assertEnum(estado, ORDER_STATES, "estado");
 
     await adminService.updateOrderStatus(id, estado, numero_seguimiento || null);
     res.json({ ok: true });
   } catch (error) {
     console.error("❌ Error actualizando pedido:", error);
-    res.status(500).json({ error: error.message || "Error actualizando pedido" });
+    res.status(error.status || 500).json({ error: error.message || "Error actualizando pedido" });
   }
 }
 
@@ -87,15 +91,14 @@ async function updateUserRole(req, res) {
     const { id } = req.params;
     const { rol } = req.body;
 
-    if (!id || !rol) {
-      return res.status(400).json({ error: "ID y rol requeridos" });
-    }
+    if (!id) return res.status(400).json({ error: "ID requerido" });
+    assertEnum(rol, USER_ROLES, "rol");
 
     const updatedUser = await adminService.updateUserRole(id, rol);
     res.json({ ok: true, user: updatedUser, message: "Rol actualizado" });
   } catch (error) {
     console.error("❌ Error:", error);
-    res.status(500).json({ error: error.message || "Error actualizando rol" });
+    res.status(error.status || 500).json({ error: error.message || "Error actualizando rol" });
   }
 }
 
