@@ -21,7 +21,7 @@ function NotFound() {
 
       <div className="relative z-10 max-w-2xl w-full text-center">
         {/* 404 huge */}
-        <h1 className="text-[8rem] md:text-[12rem] font-black leading-none bg-gradient-to-b from-primary via-primary/70 to-transparent bg-clip-text text-transparent select-none mb-62">
+        <h1 className="text-[8rem] md:text-[12rem] font-black leading-none bg-gradient-to-b from-primary via-primary/70 to-transparent bg-clip-text text-transparent select-none mb-6">
           404
         </h1>
 
