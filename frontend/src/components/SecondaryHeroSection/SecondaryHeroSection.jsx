@@ -195,7 +195,7 @@ export default function SecondaryHeroSection() {
 
           {/* Pie */}
           <div className="flex flex-col items-center gap-2 ">
-            <p className="text-sm text-center text-muted-foreground hidden sm:block mt-6">
+            <p className="text-sm text-center text-muted-foreground hidden sm:block px-6">
               Horario 9:00–18:00 · Respuesta en menos de 24 hrs.
             </p>
             <button
