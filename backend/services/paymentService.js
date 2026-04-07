@@ -124,6 +124,7 @@ async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
         return {
             paymentUrl: `${flowResponse.url}?token=${flowResponse.token}`,
             flowOrder: flowResponse.flowOrder,
+            flowToken: flowResponse.token,
             pedidoId,
             commerceOrder,
             total: totalCalculado,
@@ -147,6 +148,23 @@ async function getPedidoByFlowToken(token) {
 // ── Procesar webhook de confirmación ─────────────────────────────────────────
 
 async function procesarWebhook(token, rawBody, rawHeaders, ip) {
+    // ── Idempotencia: si ya procesamos este token con éxito, acknowledge y salir ──
+    // Flow reenvía webhooks en caso de timeout, sin este guard se duplican emails y
+    // se intenta descontar stock dos veces.
+    const existente = await db.query(
+        `SELECT id, pedido_id, processed FROM flow_webhooks
+         WHERE token = $1 AND processed = true
+         ORDER BY id DESC LIMIT 1`,
+        [token]
+    );
+    if (existente.rows.length > 0) {
+        console.log('↩️  Webhook Flow duplicado ignorado (idempotencia)', {
+            token: token.substring(0, 8) + '…',
+            pedidoId: existente.rows[0].pedido_id,
+        });
+        return { pedidoId: existente.rows[0].pedido_id, estado: 'duplicado' };
+    }
+
     // Registrar webhook recibido
     const webhookResult = await db.query(
         `INSERT INTO flow_webhooks (token, request_body, request_headers, ip_origen)
@@ -236,8 +254,17 @@ async function procesarWebhook(token, rawBody, rawHeaders, ip) {
 }
 
 // ── Estado de pedido (para página de retorno) ─────────────────────────────────
+//
+// Requiere el flow_token como proof-of-ownership: solo quien inició el pago
+// (y recibió el token de Flow en el redirect) puede ver los datos del pedido.
+// Esto protege PII del comprador (nombre, email, teléfono, dirección) de ser
+// expuesta a cualquiera que conozca un pedidoId secuencial.
 
-async function getEstadoPedido(pedidoId) {
+async function getEstadoPedido(pedidoId, flowToken) {
+    if (!flowToken || typeof flowToken !== 'string') {
+        return null;
+    }
+
     const result = await db.query(
         `SELECT p.*,
                 json_agg(json_build_object(
@@ -249,9 +276,9 @@ async function getEstadoPedido(pedidoId) {
                 )) AS items
          FROM pedidos p
          LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
-         WHERE p.id = $1
+         WHERE p.id = $1 AND p.flow_token = $2
          GROUP BY p.id`,
-        [pedidoId]
+        [pedidoId, flowToken]
     );
     return result.rows[0] || null;
 }
