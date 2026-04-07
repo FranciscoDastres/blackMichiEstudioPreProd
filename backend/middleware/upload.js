@@ -5,22 +5,34 @@ const path = require("path");
 // Storage en memoria (NO en disco)
 const memoryStorage = multer.memoryStorage();
 
+// Whitelist estricta: mime types exactos permitidos
+const ALLOWED_MIME_TYPES = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+]);
+
+// Whitelist estricta de extensiones
+const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 const upload = multer({
     storage: memoryStorage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: MAX_FILE_SIZE },
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|webp|gif/;
-        const extname = allowedTypes.test(
-            path.extname(file.originalname).toLowerCase()
-        );
-        const mimetype = allowedTypes.test(file.mimetype);
+        const ext = path.extname(file.originalname).toLowerCase();
+        const mime = (file.mimetype || "").toLowerCase();
 
-        if (mimetype && extname) {
-            return cb(null, true);
+        if (!ALLOWED_MIME_TYPES.has(mime)) {
+            return cb(new Error(`Tipo MIME no permitido: ${mime}`));
         }
-
-        cb(new Error("Solo se permiten imágenes"));
-    }
+        if (!ALLOWED_EXTENSIONS.has(ext)) {
+            return cb(new Error(`Extensión no permitida: ${ext}`));
+        }
+        cb(null, true);
+    },
 });
 
 module.exports = upload;
