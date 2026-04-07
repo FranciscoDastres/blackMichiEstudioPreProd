@@ -200,7 +200,10 @@ export default function SecondaryHeroSection() {
             </p>
             <button
               onClick={handleWhatsAppClick}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-600 text-white font-bold rounded-full transition-all duration-300 shadow-lg hover:bg-green-500 hover:shadow-green-500/40 hover:shadow-xl text-sm"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-600 text-white font-bold rounded-full transition-all duration-300 text-sm"
+              style={{ boxShadow: "0 0 20px rgba(34, 197, 94, 0.35)" }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 35px rgba(34, 197, 94, 0.65)"}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 0 20px rgba(34, 197, 94, 0.35)"}
             >
               <MessageCircle className="w-5 h-5" />
               Consultar por WhatsApp
