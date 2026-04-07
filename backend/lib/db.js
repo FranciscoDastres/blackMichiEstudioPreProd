@@ -4,23 +4,26 @@ require("dotenv").config();
 // Prioriza DATABASE_URL, luego PG_URI
 const connectionString = process.env.DATABASE_URL || process.env.PG_URI;
 
-const config = connectionString
-  ? {
+let config;
+if (connectionString) {
+  config = {
     connectionString,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
+  };
+} else {
+  if (!process.env.DB_PASSWORD) {
+    console.error("❌ DB_PASSWORD es obligatorio cuando no se usa DATABASE_URL");
+    process.exit(1);
   }
-  : {
+  config = {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME || 'blackmichiestudio',
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'hola123',
-    ssl: process.env.NODE_ENV === 'production' ? {
-      rejectUnauthorized: false
-    } : false
+    password: process.env.DB_PASSWORD,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   };
+}
 
 console.log('Database config:', {
   mode: connectionString ? 'URL' : 'local/manual',
