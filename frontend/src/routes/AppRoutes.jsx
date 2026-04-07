@@ -1,36 +1,37 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
+import { lazyWithRetry } from "../utils/lazyWithRetry";
 
 import NotFound from "../components/NotFound/NotFound";
 import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
 import PrivateRoute from "./PrivateRoute";
 
-const ProductDetail = lazy(() => import("../pages/ProductDetail"));
-const ProductList = lazy(() => import("../pages/ProductList"));
-const Login = lazy(() => import("../pages/Login"));
-const Register = lazy(() => import("../pages/Register"));
-const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("../pages/ResetPassword"));
-const Checkout = lazy(() => import("../pages/Checkout"));
-const Success = lazy(() => import("../pages/Success"));
-const Home = lazy(() => import("../pages/Home"));
-const TermsAndConditions = lazy(() => import("../pages/TermsAndConditions"));
-const FAQ = lazy(() => import("../pages/FAQ"));
-const PrivacyPolicy = lazy(() => import("../pages/PrivacyPolicy"));
+const ProductDetail = lazyWithRetry(() => import("../pages/ProductDetail"));
+const ProductList = lazyWithRetry(() => import("../pages/ProductList"));
+const Login = lazyWithRetry(() => import("../pages/Login"));
+const Register = lazyWithRetry(() => import("../pages/Register"));
+const ForgotPassword = lazyWithRetry(() => import("../pages/ForgotPassword"));
+const ResetPassword = lazyWithRetry(() => import("../pages/ResetPassword"));
+const Checkout = lazyWithRetry(() => import("../pages/Checkout"));
+const Success = lazyWithRetry(() => import("../pages/Success"));
+const Home = lazyWithRetry(() => import("../pages/Home"));
+const TermsAndConditions = lazyWithRetry(() => import("../pages/TermsAndConditions"));
+const FAQ = lazyWithRetry(() => import("../pages/FAQ"));
+const PrivacyPolicy = lazyWithRetry(() => import("../pages/PrivacyPolicy"));
 
-const AdminLayout = lazy(() => import("../admin/layout/AdminLayout"));
-const AdminDashboard = lazy(() => import("../admin/pages/Dashboard"));
-const AdminOrders = lazy(() => import("../admin/pages/Orders"));
-const AdminUsers = lazy(() => import("../admin/pages/Users"));
-const AdminSettings = lazy(() => import("../admin/pages/Settings"));
+const AdminLayout = lazyWithRetry(() => import("../admin/layout/AdminLayout"));
+const AdminDashboard = lazyWithRetry(() => import("../admin/pages/Dashboard"));
+const AdminOrders = lazyWithRetry(() => import("../admin/pages/Orders"));
+const AdminUsers = lazyWithRetry(() => import("../admin/pages/Users"));
+const AdminSettings = lazyWithRetry(() => import("../admin/pages/Settings"));
 
 // ✅ Apunta a la carpeta Products/ correcta
-const AdminProducts = lazy(() => import("../admin/pages/Products/ProductsPage"));
-const AdminProductCreate = lazy(() => import("../admin/pages/Products/ProductCreate"));
-const AdminProductEdit = lazy(() => import("../admin/pages/Products/ProductEdit"));
+const AdminProducts = lazyWithRetry(() => import("../admin/pages/Products/ProductsPage"));
+const AdminProductCreate = lazyWithRetry(() => import("../admin/pages/Products/ProductCreate"));
+const AdminProductEdit = lazyWithRetry(() => import("../admin/pages/Products/ProductEdit"));
 
-const UserRoutes = lazy(() => import("../user/user.routes"));
+const UserRoutes = lazyWithRetry(() => import("../user/user.routes"));
 
 function LoadingFallback() {
   return (
