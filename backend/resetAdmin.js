@@ -8,8 +8,14 @@ const supabase = createClient(
 );
 
 async function resetAdmin() {
-    const email = 'admin@blackmichiestudio.com';
-    const newPassword = 'admin123';
+    const email = process.env.ADMIN_RESET_EMAIL || 'admin@blackmichiestudio.com';
+    const newPassword = process.env.ADMIN_RESET_PASSWORD;
+
+    if (!newPassword || newPassword.length < 12) {
+        console.error('❌ ADMIN_RESET_PASSWORD requerido (mínimo 12 caracteres)');
+        console.error('   Uso: ADMIN_RESET_PASSWORD="<pass-seguro>" node resetAdmin.js');
+        process.exit(1);
+    }
 
     // Buscar el admin en tu tabla
     const result = await db.query(
@@ -35,7 +41,7 @@ async function resetAdmin() {
     }
 
     console.log('✅ Admin actualizado:', email);
-    console.log('🔑 Nueva contraseña:', newPassword);
+    console.log('🔑 Contraseña actualizada desde ADMIN_RESET_PASSWORD');
     process.exit(0);
 }
 
