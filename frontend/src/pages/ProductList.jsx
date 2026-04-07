@@ -5,6 +5,7 @@ import useCart from "../hooks/useCart";
 import useSEO from "../hooks/useSEO";
 import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, X } from "lucide-react";
 import LazyImage from "../components/LazyImage/LazyImage";
+import { ProductListSkeleton } from "../components/Skeletons/Skeletons";
 import { getImageUrl } from "../utils/getImageUrl";
 
 const StarIcon = ({ filled }) => (
@@ -196,11 +197,7 @@ function ProductList() {
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
+    return <ProductListSkeleton count={productsPerPage} />;
   }
 
   if (error) {
