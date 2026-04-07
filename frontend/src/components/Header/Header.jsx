@@ -426,61 +426,6 @@ function Header() {
                     <span>COMPRAR POR CATEGORÍA</span>
                     <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${sidebarOpen ? "rotate-180" : ""}`} />
                   </button>
-
-                  {sidebarOpen && (
-                    <div
-                      className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
-                      onClick={() => setSidebarOpen(false)}
-                    />
-                  )}
-
-                  <div
-                    className={`fixed top-0 left-0 h-full w-80 bg-background shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-                  >
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="font-bold text-lg text-foreground">blackmichiestudio</div>
-                          <div className="text-xs text-muted">Impresiones 3D Personalizadas</div>
-                        </div>
-                      </div>
-                      <button
-                        aria-label="Cerrar menú de categorías"
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        <X className="w-6 h-6 text-muted" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto px-6 py-4">
-                      <ul className="space-y-2">
-                        <li>
-                          <button
-                            onClick={handleAllProducts}
-                            className="w-full text-left text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition capitalize"
-                          >
-                            Todos los Productos
-                          </button>
-                        </li>
-                        <li className="border-t border-border mt-4 pt-4"></li>
-                        {categories.map((cat) => (
-                          <li key={cat.id}>
-                            <button
-                              onClick={() => handleCategoryClick(cat.id)}
-                              className="w-full text-left text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition capitalize"
-                            >
-                              {capitalize(cat.nombre)}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="flex space-x-4 xl:space-x-6 overflow-x-auto scrollbar-hide h-[36px] items-center">
@@ -510,6 +455,63 @@ function Header() {
           </div>
         </nav>
       </header>
+
+      {/* OVERLAY CATEGORÍAS */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR CATEGORÍAS */}
+      <div
+        className={`fixed top-0 left-0 h-full w-80 bg-background shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+              </svg>
+            </div>
+            <div>
+              <div className="font-bold text-lg text-foreground">blackmichiestudio</div>
+              <div className="text-xs text-muted">Impresiones 3D Personalizadas</div>
+            </div>
+          </div>
+          <button
+            aria-label="Cerrar menú de categorías"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X className="w-6 h-6 text-muted" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <ul className="space-y-2">
+            <li>
+              <button
+                onClick={handleAllProducts}
+                className="w-full text-left text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition capitalize"
+              >
+                Todos los Productos
+              </button>
+            </li>
+            <li className="border-t border-border mt-4 pt-4"></li>
+            {categories.map((cat) => (
+              <li key={cat.id}>
+                <button
+                  onClick={() => handleCategoryClick(cat.id)}
+                  className="w-full text-left text-foreground hover:text-primary text-base font-medium py-2 px-2 rounded transition capitalize"
+                >
+                  {capitalize(cat.nombre)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
       {/* OVERLAY CARRITO */}
       {cartSidebarOpen && (
