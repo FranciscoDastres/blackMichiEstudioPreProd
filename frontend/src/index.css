@@ -19,8 +19,6 @@
     body {
         font-family: 'Trebuchet MS', sans-serif;
         @apply bg-background text-foreground antialiased;
-        background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
-        background-size: 32px 32px;
     }
 
     h1,
@@ -62,6 +60,11 @@
 }
 
 @layer utilities {
+    .bg-background {
+        background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.04) 1px, transparent 0) !important;
+        background-size: 32px 32px !important;
+    }
+
     .pattern-bg {
         background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
         background-size: 32px 32px;
