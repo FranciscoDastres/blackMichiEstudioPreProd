@@ -1,15 +1,20 @@
 // backend/controllers/productosController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en productService.js
 const productService = require("../services/productService");
+const {
+  assertString,
+  assertPositiveNumber,
+  assertNonNegativeInt,
+} = require("../utils/validators");
 
 // ✅ Crear producto
 async function createProduct(req, res) {
   try {
-    const { nombre, precio, stock, categoria, descripcion } = req.body;
-
-    if (!nombre || !precio || stock === undefined) {
-      return res.status(400).json({ error: "Faltan datos requeridos (nombre, precio, stock)" });
-    }
+    const nombre      = assertString(req.body.nombre,      "nombre",      { max: 200 });
+    const precio      = assertPositiveNumber(req.body.precio, "precio");
+    const stock       = assertNonNegativeInt(req.body.stock,  "stock");
+    const categoria   = req.body.categoria   ? assertString(req.body.categoria,   "categoria",   { max: 100 }) : null;
+    const descripcion = req.body.descripcion ? assertString(req.body.descripcion, "descripcion", { max: 5000 }) : null;
 
     await productService.createProduct(
       nombre,
@@ -23,7 +28,7 @@ async function createProduct(req, res) {
     res.status(201).json({ ok: true, message: "Producto creado correctamente" });
   } catch (err) {
     console.error("❌ Error creando producto:", err);
-    res.status(500).json({ error: err.message || "Error creando producto" });
+    res.status(err.status || 500).json({ error: err.message || "Error creando producto" });
   }
 }
 
@@ -31,11 +36,13 @@ async function createProduct(req, res) {
 async function updateProduct(req, res) {
   try {
     const { id } = req.params;
-    const { titulo, precio, stock, categoria, descripcion } = req.body;
+    if (!id) return res.status(400).json({ error: "ID de producto requerido" });
 
-    if (!id || !titulo || !precio || stock === undefined) {
-      return res.status(400).json({ error: "Faltan datos requeridos" });
-    }
+    const titulo      = assertString(req.body.titulo, "titulo", { max: 200 });
+    const precio      = assertPositiveNumber(req.body.precio, "precio");
+    const stock       = assertNonNegativeInt(req.body.stock,  "stock");
+    const categoria   = req.body.categoria   ? assertString(req.body.categoria,   "categoria",   { max: 100 }) : null;
+    const descripcion = req.body.descripcion ? assertString(req.body.descripcion, "descripcion", { max: 5000 }) : null;
 
     const result = await productService.updateProduct(
       id,
@@ -50,9 +57,8 @@ async function updateProduct(req, res) {
     res.json({ ok: true, data: result });
   } catch (err) {
     console.error("❌ Error actualizando producto:", err);
-    res.status(err.message?.includes("no encontrado") ? 404 : 500).json({
-      error: err.message || "Error actualizando producto",
-    });
+    const status = err.status || (err.message?.includes("no encontrado") ? 404 : 500);
+    res.status(status).json({ error: err.message || "Error actualizando producto" });
   }
 }
 
