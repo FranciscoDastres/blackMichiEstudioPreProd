@@ -216,6 +216,7 @@ export default function Checkout() {
       if (response.data.success && response.data.paymentUrl) {
         const pendingOrder = {
           pedidoId: response.data.pedidoId,
+          flowToken: response.data.flowToken,
           email,
           total: totalConEnvio,
           timestamp: Date.now()
