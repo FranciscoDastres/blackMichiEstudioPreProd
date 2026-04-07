@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+# Posicionarse en la raíz del proyecto (un nivel arriba de /scripts)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}/.."
+
 IMG_DIR="backend/uploads"
 QUALITY=80
 REMOVE_ORIGINALS=false

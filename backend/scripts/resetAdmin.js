@@ -1,6 +1,8 @@
+const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
-const db = require('./lib/db');
-require('dotenv').config();
+// Cargar .env desde la raíz del backend (un nivel arriba de /scripts)
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
+const db = require('../lib/db');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -13,7 +15,7 @@ async function resetAdmin() {
 
     if (!newPassword || newPassword.length < 12) {
         console.error('❌ ADMIN_RESET_PASSWORD requerido (mínimo 12 caracteres)');
-        console.error('   Uso: ADMIN_RESET_PASSWORD="<pass-seguro>" node resetAdmin.js');
+        console.error('   Uso: ADMIN_RESET_PASSWORD="<pass-seguro>" node backend/scripts/resetAdmin.js');
         process.exit(1);
     }
 

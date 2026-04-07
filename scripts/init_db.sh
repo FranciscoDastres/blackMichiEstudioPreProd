@@ -4,18 +4,36 @@ set -euo pipefail
 # ==============================
 # CONFIG BÁSICA
 # ==============================
+# Leer desde env vars; NO hay fallback inseguro para DB_PASS.
 DB_NAME="${DB_NAME:-blackmichiestudio}"
 DB_USER="${DB_USER:-postgres}"
-DB_PASS="${DB_PASS:-hola123}"
+DB_PASS="${DB_PASS:-}"
 
-# Ruta absoluta al proyecto y al schema
-PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SCHEMA_FILE="$PROJECT_DIR/backend/schema.sql"
-
-if [ ! -f "$SCHEMA_FILE" ]; then
-  echo "ERROR: No existe el archivo schema: $SCHEMA_FILE" >&2
+if [[ -z "$DB_PASS" ]]; then
+  echo "❌ DB_PASS requerido. Ejemplo: DB_PASS='mi-pass-fuerte' bash scripts/init_db.sh" >&2
   exit 1
 fi
+
+# ==============================
+# RUTAS (script vive en /scripts, proyecto un nivel arriba)
+# ==============================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SCHEMA_DIR="${PROJECT_DIR}/backend/db"
+
+# Orden importa: los archivos 01-06 se aplican secuencialmente
+SCHEMA_FILES=(
+  "${SCHEMA_DIR}/01_usuarios.sql"
+  "${SCHEMA_DIR}/02_catalogo.sql"
+  "${SCHEMA_DIR}/03_pedidos.sql"
+  "${SCHEMA_DIR}/04_reviews.sql"
+  "${SCHEMA_DIR}/05_extras.sql"
+  "${SCHEMA_DIR}/06_triggers.sql"
+)
+
+for f in "${SCHEMA_FILES[@]}"; do
+  [[ -f "$f" ]] || { echo "❌ No existe: $f" >&2; exit 1; }
+done
 
 # ==============================
 # CREAR / ACTUALIZAR ROL
@@ -59,10 +77,12 @@ GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
 SQL
 
 # ==============================
-# APLICAR SCHEMA
+# APLICAR SCHEMA (01-06 en orden)
 # ==============================
-echo "==> Ejecutando schema '${SCHEMA_FILE}' en DB '${DB_NAME}'..."
+for f in "${SCHEMA_FILES[@]}"; do
+  echo "==> Aplicando $(basename "$f")..."
+  sudo -u postgres psql -d "${DB_NAME}" -v ON_ERROR_STOP=1 -f "$f"
+done
 
-sudo -u postgres psql -d "${DB_NAME}" -v ON_ERROR_STOP=1 -f "${SCHEMA_FILE}"
-
-echo "✅ Listo: DB='${DB_NAME}', user='${DB_USER}' y schema aplicado."
+echo "✅ Listo: DB='${DB_NAME}', user='${DB_USER}', schema base aplicado."
+echo "ℹ️  Para migrations incrementales, ejecuta los SQL en backend/db/migrations/ en orden."

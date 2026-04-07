@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Posicionarse en la raíz del backend (un nivel arriba de /scripts)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}/.."
+
 # Instalar sharp globalmente si no lo tienes
 if ! command -v node >/dev/null 2>&1; then
   echo "❌ Node.js no está instalado"

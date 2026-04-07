@@ -1,6 +1,11 @@
 #!/bin/bash
+set -e
 
 # 🚀 INSTALACIÓN DE OPTIMIZACIONES - Black Michi Estudio
+
+# Posicionarse en la raíz del proyecto (un nivel arriba de /scripts)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}/.."
 
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║     🚀 INSTALANDO OPTIMIZACIONES DE RENDIMIENTO 🚀        ║"

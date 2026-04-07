@@ -6,11 +6,12 @@ log() { echo -e "\n\033[1;32m==>\033[0m $*"; }
 warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
 die() { echo -e "\033[1;31m[ERROR]\033[0m $*" >&2; exit 1; }
 
-# Resolve project root as "directory where this script lives"
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# El script ahora vive en /scripts, la raíz del proyecto es un nivel arriba
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BACKEND_DIR="${ROOT_DIR}/backend"
 FRONTEND_DIR="${ROOT_DIR}/frontend"
-INIT_DB="${ROOT_DIR}/init_db.sh"
+INIT_DB="${SCRIPT_DIR}/init_db.sh"
 
 # -------- sanity checks ----------
 [[ -d "$BACKEND_DIR" ]] || die "No existe $BACKEND_DIR"
