@@ -36,23 +36,22 @@ const PaymentReceipt = () => {
     const token = searchParams.get('token');
 
     useEffect(() => {
-        if (pedidoId) {
-            fetchPedido();
+        if (pedidoId && token) {
+            fetchPedido(pedidoId, token);
         } else {
             const pendingOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}');
-            if (pendingOrder.pedidoId) {
-                fetchPedidoById(pendingOrder.pedidoId);
+            if (pendingOrder.pedidoId && pendingOrder.flowToken) {
+                fetchPedido(pendingOrder.pedidoId, pendingOrder.flowToken);
             } else {
                 setLoading(false);
             }
         }
-    }, [pedidoId]);
+    }, [pedidoId, token]);
 
-    const fetchPedido = async () => {
+    const fetchPedido = async (id, flowToken) => {
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/payments/pedido/${pedidoId}/status`
-            );
+            const url = `${import.meta.env.VITE_API_URL}/api/payments/pedido/${id}/status?token=${encodeURIComponent(flowToken)}`;
+            const response = await fetch(url);
             const data = await response.json();
             if (data.success) {
                 setPedido(data.pedido);
@@ -62,20 +61,6 @@ const PaymentReceipt = () => {
                     clearCart();
                 }
             }
-        } catch (error) {
-            console.error('Error:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchPedidoById = async (id) => {
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/payments/pedido/${id}/status`
-            );
-            const data = await response.json();
-            if (data.success) setPedido(data.pedido);
         } catch (error) {
             console.error('Error:', error);
         } finally {
