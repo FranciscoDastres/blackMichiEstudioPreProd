@@ -166,10 +166,10 @@ export default function SecondaryHeroSection() {
 
           {/* Encabezado */}
           <div className="text-center">
-            <h3 className="text-xl font-bold text-foreground">
+            <h3 className="text-2xl font-bold text-foreground">
               ¿Quieres algo único?
             </h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-base text-muted-foreground mt-1">
               Diseñamos productos personalizados solo para ti.
             </p>
           </div>
@@ -178,7 +178,7 @@ export default function SecondaryHeroSection() {
           <div className="hidden sm:block w-12 h-px bg-border mx-auto" />
 
           {/* Lista de beneficios */}
-          <ul className="hidden sm:flex flex-col gap-3 text-sm text-muted-foreground flex-1">
+          <ul className="hidden sm:flex flex-col gap-3 text-base text-muted-foreground flex-1">
             <li className="flex items-center gap-3">
               <Sparkles className="w-4 h-4 text-yellow-500 flex-shrink-0" />
               <span>Diseño 100% personalizado</span>
@@ -194,8 +194,8 @@ export default function SecondaryHeroSection() {
           </ul>
 
           {/* Pie */}
-          <div className="flex flex-col items-center gap-2 mt-auto">
-            <p className="text-xs text-center text-muted-foreground hidden sm:block">
+          <div className="flex flex-col items-center gap-2 mt-2">
+            <p className="text-sm text-center text-muted-foreground hidden sm:block">
               Horario 9:00–18:00 · Respuesta en menos de 24 hrs.
             </p>
             <button
