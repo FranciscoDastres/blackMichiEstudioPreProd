@@ -15,6 +15,10 @@ const isProd = process.env.NODE_ENV === "production";
 const requiredEnvVars = ["DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD"];
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
 if (missingVars.length > 0) {
+  if (isProd && !process.env.DATABASE_URL) {
+    console.error(`❌ Variables de entorno críticas faltantes: ${missingVars.join(", ")}`);
+    process.exit(1);
+  }
   console.warn(`⚠️  Variables faltantes: ${missingVars.join(", ")}`);
   console.warn("⚠️  Usando DATABASE_URL si está disponible...");
 }
@@ -152,8 +156,8 @@ if (!isProd) {
 // ─────────────────────────────────────────────
 // BODY PARSERS
 // ─────────────────────────────────────────────
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // ─────────────────────────────────────────────
 // SANITIZACIÓN BÁSICA DE INPUTS
@@ -265,6 +269,14 @@ const paymentLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const reviewsLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 10,
+  message: { error: "Demasiadas reseñas. Espera una hora." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Config pública de la tienda (nombre, costo envío, moneda)
 app.get("/api/config", async (req, res) => {
   try {
@@ -282,7 +294,7 @@ try {
   app.use("/api/categorias", categoriasRoutes);
   app.use("/api/hero-images", heroImagesRoutes);
   app.use("/api/featured", featuredRoutes);
-  app.use("/api/reviews", reviewsRoutes);
+  app.use("/api/reviews", reviewsLimiter, reviewsRoutes);
   app.use("/api/client", requireAuth, clientRoutes);
   app.use("/api/payments/flow/create", paymentLimiter);
   app.use("/api/payments", paymentRoutes);
