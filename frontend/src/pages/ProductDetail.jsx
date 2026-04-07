@@ -22,6 +22,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { getImageUrl } from "../utils/getImageUrl";
+import { ProductDetailSkeleton } from "../components/Skeletons/Skeletons";
 
 export default function ProductDetail() {
   const { productId } = useParams();
@@ -145,17 +146,7 @@ export default function ProductDetail() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="absolute inset-0 animate-pulse bg-primary/20 rounded-full blur-xl"></div>
-            <div className="relative animate-spin rounded-full h-20 w-20 border-t-2 border-b-2 border-primary mx-auto mb-6"></div>
-          </div>
-          <p className="text-lg text-muted font-light animate-pulse">Cargando producto...</p>
-        </div>
-      </div>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (error) {
