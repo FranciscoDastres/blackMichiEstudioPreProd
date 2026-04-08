@@ -61,18 +61,18 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: isProd
       ? {
-          directives: {
-            defaultSrc:     ["'self'"],
-            scriptSrc:      ["'self'"],
-            styleSrc:       ["'self'", "'unsafe-inline'"],
-            imgSrc:         ["'self'", "data:", "https://res.cloudinary.com"],
-            fontSrc:        ["'self'"],
-            connectSrc:     ["'self'", supabaseUrl, "https://*.supabase.co"].filter(Boolean),
-            frameSrc:       ["'none'"],
-            objectSrc:      ["'none'"],
-            upgradeInsecureRequests: [],
-          },
-        }
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+          fontSrc: ["'self'"],
+          connectSrc: ["'self'", supabaseUrl, "https://*.supabase.co"].filter(Boolean),
+          frameSrc: ["'none'"],
+          objectSrc: ["'none'"],
+          upgradeInsecureRequests: [],
+        },
+      }
       : false,
   })
 );
@@ -96,25 +96,22 @@ const webhookPaths = [
   "/api/payments/flow/return",
 ];
 
-app.use((req, res, next) => {
-  if (webhookPaths.includes(req.path)) {
-    return next();
-  }
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
 
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || VERCEL_PREVIEW_PATTERN.test(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`🚫 CORS bloqueado para origen: ${origin}`);
-        callback(new Error("Origen no permitido por CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
-  })(req, res, next);
-});
+    if (
+      allowedOrigins.includes(origin) ||
+      VERCEL_PREVIEW_PATTERN.test(origin)
+    ) {
+      return callback(null, true);
+    }
+
+    console.warn("❌ CORS bloqueado: ", origin);
+    return callback(new Error("Origen no permitido por CORS"));
+  },
+  credentials: true,
+}));
 
 // ─────────────────────────────────────────────
 // COMPRESIÓN
@@ -337,9 +334,9 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`🛡️  Helmet activo`);
   console.log(`📦 Entorno: ${process.env.NODE_ENV || "development"}`);
 
-  if (isProd || process.env.RENDER) {
-    keepAlive.start();
-  }
+  // if (isProd || process.env.RENDER) {
+  //   keepAlive.start();
+  // }
   cleanupJobs.start();
 }).on("error", (err) => {
   console.error("❌ Error al iniciar el servidor:", err);
