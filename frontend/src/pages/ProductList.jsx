@@ -1,26 +1,19 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { SlidersHorizontal, X } from "lucide-react";
 import api from "../services/api";
 import useCart from "../hooks/useCart";
 import useSEO from "../hooks/useSEO";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, SlidersHorizontal, X } from "lucide-react";
-import LazyImage from "../components/LazyImage/LazyImage";
+import ProductFilters from "../components/ProductList/ProductFilters";
+import ProductCard from "../components/ProductList/ProductCard";
+import Pagination from "../components/ProductList/Pagination";
 import { ProductListSkeleton } from "../components/Skeletons/Skeletons";
-import { getImageUrl } from "../utils/getImageUrl";
-
-const StarIcon = ({ filled }) => (
-  <svg
-    className={`w-4 h-4 ${filled ? "text-yellow-400 fill-yellow-400" : "text-muted fill-muted"}`}
-    viewBox="0 0 24 24"
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.16 12 17.77 5.82 21.16 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
 
 function ProductList() {
   useSEO({
     title: "Productos",
-    description: "Explora toda la colección de figuras impresas en 3D de Black Michi Estudio. Cultura pop, anime, ciencia ficción y más.",
+    description:
+      "Explora toda la colección de figuras impresas en 3D de Black Michi Estudio. Cultura pop, anime, ciencia ficción y más.",
   });
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,30 +27,22 @@ function ProductList() {
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 12;
 
-  // Sidebar open state (mobile)
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Sections collapse state
-  const [catOpen, setCatOpen] = useState(true);
-  const [priceOpen, setPriceOpen] = useState(true);
-  const [ratingOpen, setRatingOpen] = useState(true);
 
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-  const [, setSelectedCategoryName] = useState("");
-  const [sortBy, setSortBy] = useState(searchParams.get("orden") || "newest");
+  const [sortBy, setSortBy] = useState(
+    searchParams.get("orden") || "newest"
+  );
   const [maxPrice, setMaxPrice] = useState(200000);
   const [priceRange, setPriceRange] = useState([0, 200000]);
-  const [selectedRating, setSelectedRating] = useState(Number(searchParams.get("rating")) || 0);
+  const [selectedRating, setSelectedRating] = useState(
+    Number(searchParams.get("rating")) || 0
+  );
 
   const { addToCart, isStockExceeded } = useCart();
 
   const categoriaParam = searchParams.get("categoria");
   const busquedaParam = searchParams.get("busqueda");
-
-  const CLP = new Intl.NumberFormat("es-CL", {
-    style: "currency",
-    currency: "CLP",
-    maximumFractionDigits: 0,
-  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -82,7 +67,6 @@ function ProductList() {
         const allData = Array.isArray(allResponse.data) ? allResponse.data : [];
         setAllProducts(allData);
 
-        // Calcular precio máximo real para el slider
         if (allData.length > 0) {
           const max = Math.max(...allData.map((p) => Number(p.precio) || 0));
           const rounded = Math.ceil(max / 10000) * 10000 || 200000;
@@ -102,21 +86,15 @@ function ProductList() {
 
   useEffect(() => {
     if (categoriaParam) {
-      const catId = parseInt(categoriaParam);
-      setSelectedCategoryId(catId);
-      const foundCat = categories.find((c) => c.id === catId);
-      if (foundCat) setSelectedCategoryName(foundCat.nombre);
-      setCurrentPage(1);
+      setSelectedCategoryId(parseInt(categoriaParam));
     } else {
       setSelectedCategoryId(null);
-      setSelectedCategoryName("");
-      setCurrentPage(1);
     }
-  }, [categoriaParam, categories]);
+    setCurrentPage(1);
+  }, [categoriaParam]);
 
   const handleCategoryToggle = (cat) => {
     if (selectedCategoryId === cat.id) {
-      // Deseleccionar
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.delete("categoria");
@@ -189,16 +167,24 @@ function ProductList() {
             return new Date(b.created_at) - new Date(a.created_at);
         }
       });
-  }, [allProducts, busquedaParam, selectedCategoryId, priceRange, selectedRating, sortBy]);
+  }, [
+    allProducts,
+    busquedaParam,
+    selectedCategoryId,
+    priceRange,
+    selectedRating,
+    sortBy,
+  ]);
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const currentProducts = filteredProducts.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  if (loading) {
-    return <ProductListSkeleton count={productsPerPage} />;
-  }
+  if (loading) return <ProductListSkeleton count={productsPerPage} />;
 
   if (error) {
     return (
@@ -208,173 +194,22 @@ function ProductList() {
     );
   }
 
-  const SidebarContent = () => (
-    <div className="space-y-6">
-
-      {/* Comprar por Categoría */}
-      <div className="border border-border rounded-xl overflow-hidden">
-        <button
-          className="w-full flex items-center justify-between px-4 py-3 bg-background font-semibold text-foreground text-sm"
-          onClick={() => setCatOpen((o) => !o)}
-        >
-          <span>Comprar por Categoría</span>
-          {catOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-
-        {catOpen && (
-          <div className="px-4 pb-4 pt-2 space-y-2">
-            {categories.map((cat) => (
-              <label
-                key={cat.id}
-                className="flex items-center gap-2.5 cursor-pointer group"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedCategoryId === cat.id}
-                  onChange={() => handleCategoryToggle(cat)}
-                  className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
-                />
-                <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                  {cat.nombre}
-                </span>
-              </label>
-            ))}
-            {categories.length === 0 && (
-              <p className="text-xs text-muted">Sin categorías</p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Filtrar por Precio */}
-      <div className="border border-border rounded-xl overflow-hidden">
-        <button
-          className="w-full flex items-center justify-between px-4 py-3 bg-background font-semibold text-foreground text-sm"
-          onClick={() => setPriceOpen((o) => !o)}
-        >
-          <span>Filtrar por Precio</span>
-          {priceOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-
-        {priceOpen && (
-          <div className="px-4 pb-4 pt-2 space-y-3">
-            <div className="flex items-center justify-between text-xs text-muted">
-              <span>{CLP.format(priceRange[0])}</span>
-              <span>{CLP.format(priceRange[1])}</span>
-            </div>
-
-            {/* Slider min */}
-            <div className="relative">
-              <input
-                type="range"
-                min={0}
-                max={maxPrice}
-                step={1000}
-                value={priceRange[0]}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  if (v <= priceRange[1]) setPriceRange([v, priceRange[1]]);
-                }}
-                className="w-full h-1.5 appearance-none rounded-full bg-border cursor-pointer accent-primary"
-              />
-              <input
-                type="range"
-                min={0}
-                max={maxPrice}
-                step={1000}
-                value={priceRange[1]}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  if (v >= priceRange[0]) setPriceRange([priceRange[0], v]);
-                }}
-                className="w-full h-1.5 appearance-none rounded-full bg-border cursor-pointer accent-primary mt-2"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="text-xs text-muted block mb-1">Mín</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={priceRange[1]}
-                  step={1000}
-                  value={priceRange[0]}
-                  onChange={(e) => {
-                    const v = Math.min(Number(e.target.value), priceRange[1]);
-                    setPriceRange([v, priceRange[1]]);
-                  }}
-                  className="w-full text-xs border border-border rounded-lg px-2 py-1.5 bg-background text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs text-muted block mb-1">Máx</label>
-                <input
-                  type="number"
-                  min={priceRange[0]}
-                  max={maxPrice}
-                  step={1000}
-                  value={priceRange[1]}
-                  onChange={(e) => {
-                    const v = Math.max(Number(e.target.value), priceRange[0]);
-                    setPriceRange([priceRange[0], v]);
-                  }}
-                  className="w-full text-xs border border-border rounded-lg px-2 py-1.5 bg-background text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Filtrar por Calificación */}
-      <div className="border border-border rounded-xl overflow-hidden">
-        <button
-          className="w-full flex items-center justify-between px-4 py-3 bg-background font-semibold text-foreground text-sm"
-          onClick={() => setRatingOpen((o) => !o)}
-        >
-          <span>Filtrar por Calificación</span>
-          {ratingOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-
-        {ratingOpen && (
-          <div className="px-4 pb-4 pt-2 space-y-2">
-            {[5, 4, 3, 2, 1].map((stars) => (
-              <label key={stars} className="flex items-center gap-2.5 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={selectedRating === stars}
-                  onChange={() => setSelectedRating(selectedRating === stars ? 0 : stars)}
-                  className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
-                />
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <StarIcon key={i} filled={i < stars} />
-                  ))}
-                </div>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Limpiar filtros */}
-      {hasActiveFilters && (
-        <button
-          onClick={clearFilters}
-          className="w-full flex items-center justify-center gap-2 text-sm text-muted hover:text-primary border border-border rounded-xl py-2 transition-colors"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Limpiar filtros
-        </button>
-      )}
-    </div>
-  );
+  const filtersProps = {
+    categories,
+    selectedCategoryId,
+    onCategoryToggle: handleCategoryToggle,
+    priceRange,
+    setPriceRange,
+    maxPrice,
+    selectedRating,
+    setSelectedRating,
+    hasActiveFilters,
+    onClearFilters: clearFilters,
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
-
         {/* Botón sidebar móvil */}
         <div className="flex items-center justify-between mb-4 lg:hidden">
           <button
@@ -420,7 +255,7 @@ function ProductList() {
                   <X className="w-5 h-5 text-muted" />
                 </button>
               </div>
-              <SidebarContent />
+              <ProductFilters {...filtersProps} />
             </div>
           </div>
         )}
@@ -428,12 +263,11 @@ function ProductList() {
         <div className="flex gap-8">
           {/* Sidebar desktop */}
           <aside className="hidden lg:block w-64 shrink-0">
-            <SidebarContent />
+            <ProductFilters {...filtersProps} />
           </aside>
 
-          {/* Contenido principal */}
+          {/* Contenido */}
           <div className="flex-1 min-w-0">
-
             {/* Barra superior */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-5 p-3 bg-background border border-border rounded-xl">
               <div className="flex items-center gap-2 flex-wrap">
@@ -455,13 +289,17 @@ function ProductList() {
                 )}
                 <span className="text-sm text-muted">
                   Hay{" "}
-                  <strong className="text-foreground">{filteredProducts.length}</strong>{" "}
+                  <strong className="text-foreground">
+                    {filteredProducts.length}
+                  </strong>{" "}
                   producto{filteredProducts.length !== 1 ? "s" : ""}
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-sm text-muted whitespace-nowrap">Ordenar por</label>
+                <label className="text-sm text-muted whitespace-nowrap">
+                  Ordenar por
+                </label>
                 <select
                   value={sortBy}
                   onChange={(e) => {
@@ -495,132 +333,23 @@ function ProductList() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-                {currentProducts.map((product) => {
-                  const outOfStock = isStockExceeded(product);
-                  const primaryImage = product.imagen_principal;
-                  const additionalImages = product.imagenes_adicionales || [];
-                  const avgRating = product.promedio_calificacion
-                    ? Math.round(parseFloat(product.promedio_calificacion))
-                    : 0;
-
-                  return (
-                    <div
-                      key={product.id}
-                      className="group bg-background rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-300 flex flex-col"
-                      onClick={() => navigate(`/producto/${product.id}`)}
-                    >
-                      {/* Imagen */}
-                      <div className="relative w-full h-52 bg-muted/20 overflow-hidden">
-                        <LazyImage
-                          src={getImageUrl(primaryImage)}
-                          alt={product.titulo}
-                          width={300}
-                          height={300}
-                          sizes="(max-width: 768px) 50vw, 300px"
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                        {additionalImages.length > 0 && (
-                          <LazyImage
-                            src={getImageUrl(additionalImages[0])}
-                            alt={`${product.titulo} alternativa`}
-                            width={300}
-                            height={300}
-                            sizes="(max-width: 768px) 50vw, 300px"
-                            className="hover-image w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          />
-                        )}
-                      </div>
-
-                      {/* Contenido */}
-                      <div className="p-4 flex flex-col flex-grow">
-                        <h3 className="font-semibold text-sm text-foreground line-clamp-2 mb-2">
-                          {product.titulo}
-                        </h3>
-
-                        <div className="flex items-center mb-2">
-                          {[...Array(5)].map((_, i) => (
-                            <StarIcon key={i} filled={i < avgRating} />
-                          ))}
-                        </div>
-
-                        <div className="mb-3">
-                          <span className="text-lg font-bold text-primary">
-                            {CLP.format(product.precio || 0)}
-                          </span>
-                        </div>
-
-                        <button
-                          className={`w-full py-2 rounded-xl font-semibold text-sm mt-auto transition-colors ${
-                            outOfStock
-                              ? "bg-muted text-muted cursor-not-allowed"
-                              : "border border-primary text-primary hover:bg-primary/10"
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!outOfStock) addToCart(product);
-                          }}
-                          disabled={outOfStock}
-                        >
-                          {outOfStock ? "Sin stock" : "Agregar al carrito"}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {currentProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    outOfStock={isStockExceeded(product)}
+                    onClick={(p) => navigate(`/producto/${p.id}`)}
+                    onAddToCart={addToCart}
+                  />
+                ))}
               </div>
             )}
 
-            {/* Paginación */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg border border-border hover:border-primary disabled:opacity-40 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                {[...Array(totalPages)].map((_, i) => {
-                  const page = i + 1;
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    Math.abs(page - currentPage) <= 1
-                  ) {
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-9 h-9 rounded-lg text-sm font-medium border transition-colors ${
-                          page === currentPage
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "border-border hover:border-primary text-foreground"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  }
-                  if (Math.abs(page - currentPage) === 2) {
-                    return (
-                      <span key={page} className="text-muted text-sm">
-                        …
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
-
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg border border-border hover:border-primary disabled:opacity-40 transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         </div>
       </div>
