@@ -12,7 +12,7 @@ const cleanupJobs = require("./lib/cleanupJobs");
 
 const isProd = process.env.NODE_ENV === "production";
 
-const requiredEnvVars = ["DB_HOST", "DB_NAME", "DB_USER", "DB_PASSWORD"];
+const requiredEnvVars = ["DATABASE_URL"];
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
 if (missingVars.length > 0) {
   if (isProd && !process.env.DATABASE_URL) {

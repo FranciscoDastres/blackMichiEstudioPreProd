@@ -30,13 +30,13 @@ export default function SecondaryHeroSection() {
             categoria: item.categoria || item.category || "",
             button_text: item.button_text || item.buttonText || "Ver Colección"
           }));
-          setSlides(lastThree.length > 0 ? lastThree : getDefaultSlides());
+          setSlides(lastThree);
         } else {
-          setSlides(getDefaultSlides());
+          setSlides([]);
         }
       } catch (error) {
         console.error("Error cargando hero:", error);
-        setSlides(getDefaultSlides());
+        setSlides([]);
       } finally {
         setLoading(false);
       }
@@ -58,6 +58,10 @@ export default function SecondaryHeroSection() {
         </div>
       </div>
     );
+  }
+
+  if (slides.length === 0) {
+    return null;
   }
 
   return (
