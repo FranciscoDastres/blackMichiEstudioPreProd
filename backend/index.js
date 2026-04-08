@@ -12,6 +12,17 @@ const cleanupJobs = require("./lib/cleanupJobs");
 
 const isProd = process.env.NODE_ENV === "production";
 
+// ─────────────────────────────────────────────
+// Evitar doble arranque en Render (CRÍTICO)
+// ─────────────────────────────────────────────
+if (process.env.RENDER === "true" && require.main !== module) {
+  console.log("⛔ Render detuvo doble instancia (module.exports).");
+  return;
+}
+
+// ─────────────────────────────────────────────
+// VALIDAR ENV VARIABLES
+// ─────────────────────────────────────────────
 const requiredEnvVars = ["DATABASE_URL"];
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
 if (missingVars.length > 0) {
@@ -20,7 +31,6 @@ if (missingVars.length > 0) {
     process.exit(1);
   }
   console.warn(`⚠️  Variables faltantes: ${missingVars.join(", ")}`);
-  console.warn("⚠️  Usando DATABASE_URL si está disponible...");
 }
 
 let pool;
@@ -31,6 +41,9 @@ try {
   console.error("❌ Error al cargar la BD:", error.message);
 }
 
+// ─────────────────────────────────────────────
+// IMPORTAR RUTAS
+// ─────────────────────────────────────────────
 const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const clientRoutes = require("./routes/client");
@@ -46,14 +59,12 @@ const { requireAuth, requireAdmin } = require("./middleware/auth");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Render (y la mayoría de hosts cloud) usan un proxy inverso.
-// Sin esto, express-rate-limit lanza ERR_ERL_UNEXPECTED_X_FORWARDED_FOR en cada request.
+// Render usa proxy inverso → requerido
 app.set("trust proxy", 1);
 
 // ─────────────────────────────────────────────
-// HELMET + CSP
+// HELMET
 // ─────────────────────────────────────────────
-const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 const supabaseUrl = process.env.SUPABASE_URL || "";
 
 app.use(
@@ -66,11 +77,9 @@ app.use(
           scriptSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
-          fontSrc: ["'self'"],
           connectSrc: ["'self'", supabaseUrl, "https://*.supabase.co"].filter(Boolean),
-          frameSrc: ["'none'"],
           objectSrc: ["'none'"],
-          upgradeInsecureRequests: [],
+          frameSrc: ["'none'"],
         },
       }
       : false,
@@ -78,7 +87,7 @@ app.use(
 );
 
 // ─────────────────────────────────────────────
-// CORS — restringido excepto webhooks server-to-server
+// CORS — con patrones y whitelist
 // ─────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -87,31 +96,22 @@ const allowedOrigins = [
   "http://localhost:3000",
 ].filter(Boolean);
 
-// Patrón para URLs de preview de Vercel (black-michi-estudio-pre-prod-*.vercel.app)
-const VERCEL_PREVIEW_PATTERN = /^https:\/\/black-michi-estudio-pre-prod-[a-z0-9]+(\.vercel\.app)$/;
+const VERCEL_PREVIEW_PATTERN =
+  /^https:\/\/black-michi-estudio-pre-prod-[a-z0-9]+\.vercel\.app$/;
 
-// Rutas de webhook — son server-to-server, no necesitan CORS
-const webhookPaths = [
-  "/api/payments/flow/confirmation",
-  "/api/payments/flow/return",
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-
-    if (
-      allowedOrigins.includes(origin) ||
-      VERCEL_PREVIEW_PATTERN.test(origin)
-    ) {
-      return callback(null, true);
-    }
-
-    console.warn("❌ CORS bloqueado: ", origin);
-    return callback(new Error("Origen no permitido por CORS"));
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || VERCEL_PREVIEW_PATTERN.test(origin)) {
+        return callback(null, true);
+      }
+      console.warn("❌ CORS bloqueado:", origin);
+      return callback(new Error("Origen no permitido por CORS"));
+    },
+    credentials: true,
+  })
+);
 
 // ─────────────────────────────────────────────
 // COMPRESIÓN
@@ -120,35 +120,18 @@ const compression = require("compression");
 app.use(compression({ level: 6, threshold: 1024 }));
 
 // ─────────────────────────────────────────────
-// CACHE HEADERS
+// CACHE
 // ─────────────────────────────────────────────
 app.use((req, res, next) => {
   if (req.path.match(/\.(webp|jpg|jpeg|png|gif|svg)$/i)) {
     res.setHeader("Cache-Control", "public, max-age=2592000, immutable");
   } else if (req.path.match(/\.[a-f0-9]{8}\.(js|css)$/)) {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-  } else if (
-    req.path.startsWith("/api/admin") ||
-    req.path.startsWith("/api/client") ||
-    req.path.startsWith("/api/users") ||
-    req.path.startsWith("/api/orders")
-  ) {
-    res.setHeader("Cache-Control", "no-store, no-cache, private");
   } else if (req.path.startsWith("/api/")) {
-    res.setHeader("Cache-Control", "public, max-age=300");
+    res.setHeader("Cache-Control", "public, max-age=60");
   }
   next();
 });
-
-// ─────────────────────────────────────────────
-// LOGGING — solo en desarrollo
-// ─────────────────────────────────────────────
-if (!isProd) {
-  app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
-  });
-}
 
 // ─────────────────────────────────────────────
 // BODY PARSERS
@@ -157,31 +140,20 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // ─────────────────────────────────────────────
-// SANITIZACIÓN BÁSICA DE INPUTS
-// Recorre strings del body y elimina tags HTML peligrosos
-// React escapa por defecto, pero bloqueamos en la fuente
+// SANITIZACIÓN
 // ─────────────────────────────────────────────
 const DANGEROUS_TAGS = /<\s*(script|iframe|object|embed|link|base|form|meta)[^>]*>/gi;
 
 function sanitizeValue(value) {
-  if (typeof value === "string") {
-    return value.replace(DANGEROUS_TAGS, "");
-  }
-  if (Array.isArray(value)) {
-    return value.map(sanitizeValue);
-  }
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, sanitizeValue(v)])
-    );
-  }
+  if (typeof value === "string") return value.replace(DANGEROUS_TAGS, "");
+  if (Array.isArray(value)) return value.map(sanitizeValue);
+  if (value && typeof value === "object")
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, sanitizeValue(v)]));
   return value;
 }
 
 app.use((req, _res, next) => {
-  if (req.body && typeof req.body === "object") {
-    req.body = sanitizeValue(req.body);
-  }
+  if (req.body && typeof req.body === "object") req.body = sanitizeValue(req.body);
   next();
 });
 
@@ -189,9 +161,7 @@ app.use((req, _res, next) => {
 // ARCHIVOS ESTÁTICOS
 // ─────────────────────────────────────────────
 const uploadsPath = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsPath)) {
-  fs.mkdirSync(uploadsPath, { recursive: true });
-}
+if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath, { recursive: true });
 
 app.use(
   "/uploads",
@@ -201,90 +171,43 @@ app.use(
       else if (filePath.endsWith(".jpg") || filePath.endsWith(".jpeg"))
         res.setHeader("Content-Type", "image/jpeg");
       else if (filePath.endsWith(".png")) res.setHeader("Content-Type", "image/png");
+
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
       res.setHeader("Access-Control-Allow-Origin", "*");
     },
   })
 );
 
-const publicPath = path.join(__dirname, "public");
-if (fs.existsSync(publicPath)) {
-  app.use(express.static(publicPath));
-}
-
 // ─────────────────────────────────────────────
 // ENDPOINTS BASE
 // ─────────────────────────────────────────────
-app.get("/", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "healthy" });
-});
-
-if (!isProd) {
-  app.get("/test-db", async (req, res) => {
-    if (!pool) {
-      return res.status(503).json({ error: "Pool de BD no inicializado" });
-    }
-    try {
-      const result = await pool.query("SELECT NOW()");
-      res.json({
-        message: "Conexión a la base de datos exitosa",
-        timestamp: result.rows[0].now,
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Error de conexión", details: error.message });
-    }
-  });
-
-  app.get("/api/test", (req, res) => {
-    res.json({ success: true, message: "API de prueba funcionando" });
-  });
-}
+app.get("/", (req, res) => res.json({ status: "ok" }));
+app.get("/health", (req, res) => res.json({ status: "healthy" }));
 
 // ─────────────────────────────────────────────
-// RUTAS API
-// ─────────────────────────────────────────────
-// ─────────────────────────────────────────────
-// RATE LIMITING
+// RATE LIMITERS
 // ─────────────────────────────────────────────
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+  windowMs: 15 * 60 * 1000,
   max: 20,
   message: { error: "Demasiados intentos. Espera 15 minutos." },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
 const paymentLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutos
+  windowMs: 10 * 60 * 1000,
   max: 5,
-  message: { error: "Demasiados intentos de pago. Espera 10 minutos." },
-  standardHeaders: true,
-  legacyHeaders: false,
+  message: { error: "Demasiados intentos de pago." },
 });
 
 const reviewsLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
+  windowMs: 60 * 60 * 1000,
   max: 10,
-  message: { error: "Demasiadas reseñas. Espera una hora." },
-  standardHeaders: true,
-  legacyHeaders: false,
+  message: { error: "Demasiadas reseñas." },
 });
 
-// Config pública de la tienda (nombre, costo envío, moneda)
-app.get("/api/config", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT clave, valor FROM configuracion");
-    const config = Object.fromEntries(result.rows.map(r => [r.clave, r.valor]));
-    res.json(config);
-  } catch {
-    res.json({ costo_envio: "3500", moneda: "CLP" });
-  }
-});
-
+// ─────────────────────────────────────────────
+// RUTAS
+// ─────────────────────────────────────────────
 try {
   app.use("/api/auth", authLimiter, authRoutes);
   app.use("/api/productos", productosRoutes);
@@ -297,7 +220,6 @@ try {
   app.use("/api/payments", paymentRoutes);
   app.use("/api/orders", requireAuth, orderRoutes);
   app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
-  app.use("/api/admin/hero-images", requireAuth, requireAdmin, heroImagesRoutes);
 
   console.log("✅ Todas las rutas montadas correctamente");
 } catch (error) {
@@ -307,9 +229,7 @@ try {
 // ─────────────────────────────────────────────
 // 404
 // ─────────────────────────────────────────────
-app.use("*", (req, res) => {
-  res.status(404).json({ error: "Ruta no encontrada" });
-});
+app.use("*", (req, res) => res.status(404).json({ error: "Ruta no encontrada" }));
 
 // ─────────────────────────────────────────────
 // ERROR GLOBAL
@@ -319,48 +239,33 @@ app.use((err, req, res, next) => {
     return res.status(403).json({ error: "Origen no permitido" });
   }
   console.error("❌ Error global:", err.message);
-  res.status(err.status || 500).json({
-    error: isProd ? "Error interno del servidor" : err.message,
-    ...(!isProd && { stack: err.stack }),
-  });
+  res.status(err.status || 500).json({ error: isProd ? "Error interno" : err.message });
 });
 
 // ─────────────────────────────────────────────
-// INICIAR SERVIDOR
+// INICIAR SERVIDOR — FIX RENDER
 // ─────────────────────────────────────────────
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Servidor corriendo en puerto: ${PORT}`);
-  console.log(`🔒 CORS restringido a: ${allowedOrigins.join(", ")}`);
-  console.log(`🛡️  Helmet activo`);
-  console.log(`📦 Entorno: ${process.env.NODE_ENV || "development"}`);
-
-  // if (isProd || process.env.RENDER) {
-  //   keepAlive.start();
-  // }
+  console.log(`🛡️ Helmet activo`);
+  console.log(`📦 Entorno: ${process.env.NODE_ENV}`);
+  console.log(`🔒 CORS permitido: ${allowedOrigins.join(", ")}`);
   cleanupJobs.start();
-}).on("error", (err) => {
-  console.error("❌ Error al iniciar el servidor:", err);
-  process.exit(1);
 });
 
+// keepAlive SOLO en local
+if (!process.env.RENDER) {
+  keepAlive.start();
+}
+
 // ─────────────────────────────────────────────
-// CIERRE GRACEFUL
+// MANEJO DE SALIDA
 // ─────────────────────────────────────────────
 process.on("SIGTERM", () => {
-  keepAlive.stop();
   server.close(() => {
     console.log("✅ Servidor cerrado");
     process.exit(0);
   });
-});
-
-process.on("uncaughtException", (err) => {
-  console.error("❌ Excepción no capturada:", err);
-  process.exit(1);
-});
-
-process.on("unhandledRejection", (reason) => {
-  console.error("❌ Promesa rechazada:", reason);
 });
 
 module.exports = app;
