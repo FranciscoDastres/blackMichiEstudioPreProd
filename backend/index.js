@@ -99,7 +99,16 @@ const allowedOrigins = [
 const VERCEL_PREVIEW_PATTERN =
   /^https:\/\/black-michi-estudio-pre-prod-[a-z0-9]+\.vercel\.app$/;
 
-app.use(
+// Webhooks server-to-server: no pasan por CORS (Flow no es un browser)
+const webhookPaths = [
+  "/api/payments/flow/confirmation",
+  "/api/payments/flow/return",
+];
+
+app.use((req, res, next) => {
+  if (webhookPaths.includes(req.path)) {
+    return next();
+  }
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
@@ -110,8 +119,8 @@ app.use(
       return callback(new Error("Origen no permitido por CORS"));
     },
     credentials: true,
-  })
-);
+  })(req, res, next);
+});
 
 // ─────────────────────────────────────────────
 // COMPRESIÓN
