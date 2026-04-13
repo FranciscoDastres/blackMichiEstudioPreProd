@@ -1,14 +1,14 @@
 // backend/controllers/adminController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en adminService.js
-const adminService = require("../services/adminService");
-const {
+import * as adminService from "../services/adminService.js";
+import {
   assertEnum,
   USER_ROLES,
   ORDER_STATES,
-} = require("../utils/validators");
+} from "../utils/validators.js";
 
 // ✅ Obtener todos los productos (admin)
-async function getAllProducts(req, res) {
+export async function getAllProducts(req, res) {
   try {
     const products = await adminService.getAllProducts();
     res.json(products);
@@ -19,7 +19,7 @@ async function getAllProducts(req, res) {
 }
 
 // ✅ Obtener todos los pedidos
-async function getAllOrders(req, res) {
+export async function getAllOrders(req, res) {
   try {
     const orders = await adminService.getAllOrders();
     res.json(orders);
@@ -30,7 +30,7 @@ async function getAllOrders(req, res) {
 }
 
 // ✅ Actualizar estado del pedido
-async function updateOrderStatus(req, res) {
+export async function updateOrderStatus(req, res) {
   try {
     const { id } = req.params;
     const { estado, numero_seguimiento } = req.body;
@@ -47,7 +47,7 @@ async function updateOrderStatus(req, res) {
 }
 
 // ✅ Obtener estadísticas
-async function getStats(req, res) {
+export async function getStats(req, res) {
   try {
     const stats = await adminService.getStats();
     res.json(stats);
@@ -58,7 +58,7 @@ async function getStats(req, res) {
 }
 
 // ✅ Obtener todos los usuarios
-async function getAllUsers(req, res) {
+export async function getAllUsers(req, res) {
   try {
     const users = await adminService.getAllUsers();
     res.json(users);
@@ -69,7 +69,7 @@ async function getAllUsers(req, res) {
 }
 
 // ✅ Eliminar usuario
-async function deleteUser(req, res) {
+export async function deleteUser(req, res) {
   try {
     const { id } = req.params;
 
@@ -86,7 +86,7 @@ async function deleteUser(req, res) {
 }
 
 // ✅ Actualizar rol de usuario
-async function updateUserRole(req, res) {
+export async function updateUserRole(req, res) {
   try {
     const { id } = req.params;
     const { rol } = req.body;
@@ -101,13 +101,3 @@ async function updateUserRole(req, res) {
     res.status(error.status || 500).json({ error: error.message || "Error actualizando rol" });
   }
 }
-
-module.exports = {
-  getAllProducts,
-  getAllOrders,
-  updateOrderStatus,
-  getStats,
-  getAllUsers,
-  deleteUser,
-  updateUserRole,
-};
