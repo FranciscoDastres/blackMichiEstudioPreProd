@@ -1,11 +1,12 @@
 import { NavLink, Link } from "react-router-dom";
-import { LayoutDashboard, ShoppingCart, Users, Package, Settings, X, Store } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Users, Package, Settings, X, Store, Tag } from "lucide-react";
 
 const navItems = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
     { to: "/admin/orders", label: "Pedidos", icon: ShoppingCart },
     { to: "/admin/users", label: "Usuarios", icon: Users },
     { to: "/admin/products", label: "Productos", icon: Package },
+    { to: "/admin/coupons", label: "Cupones", icon: Tag },
     { to: "/admin/settings", label: "Configuración", icon: Settings },
 ];
 
