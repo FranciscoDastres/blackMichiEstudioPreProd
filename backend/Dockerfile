@@ -1,30 +1,37 @@
-# 1. Usamos una imagen con herramientas de compilación para dependencias nativas (como sharp)
+# ─── Builder: dependencias nativas (sharp, etc.) ─────────────────────────────
 FROM node:20-alpine AS builder
 
-# Instalamos dependencias necesarias para compilar módulos nativos de Node
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
 COPY package*.json ./
 
-# Usamos npm ci para instalaciones exactas y limpias
+# Instalación exacta y limpia, sólo prod
 RUN npm ci --omit=dev
 
-# 2. Etapa final: imagen más ligera para ejecución
+# ─── Runtime ─────────────────────────────────────────────────────────────────
 FROM node:20-alpine
+
+# vips-dev es requerido por sharp en Alpine
+RUN apk add --no-cache vips-dev wget tini \
+ && addgroup -S app && adduser -S app -G app
 
 WORKDIR /app
 
-# Instalamos librerías de sistema que 'sharp' necesita para correr en Alpine
-RUN apk add --no-cache vips-dev
-
-# Copiamos solo lo necesario desde la etapa de compilación
 COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
-# Render usa dinámicamente el puerto, pero es buena práctica exponer 10000
-EXPOSE 10000
+# uploads como volumen propio del usuario de la app
+RUN mkdir -p /app/uploads && chown -R app:app /app
 
-# Script de inicio asegurando que usemos la variable de entorno PORT
+USER app
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -q --spider http://localhost:3000/health || exit 1
+
+# tini como PID 1: manejo correcto de señales (SIGTERM)
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "index.js"]

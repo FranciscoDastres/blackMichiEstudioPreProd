@@ -6,9 +6,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ── 1. Tests / lint ────────────────────────────────────────────────────────
-  test:
-    name: Lint & type-check
+  # ── 1. Backend: tests ────────────────────────────────────────────────────
+  backend-test:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test --if-present
+
+  # ── 2. Frontend: build (detecta errores de TS/Vite) ─────────────────────
+  frontend-build:
+    name: Frontend build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,20 +44,24 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Build frontend (catches TS/Vite errors)
+      - name: Build frontend
         working-directory: frontend
         run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_API_URL:           ${{ secrets.VITE_API_URL }}
+          VITE_SUPABASE_URL:      ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SENTRY_DSN:        ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_PLAUSIBLE_DOMAIN:  ${{ secrets.VITE_PLAUSIBLE_DOMAIN }}
 
-  # ── 2. Deploy ──────────────────────────────────────────────────────────────
+  # ── 3. Deploy vía SSH ───────────────────────────────────────────────────
   deploy:
     name: Deploy via SSH
-    needs: test
+    needs: [backend-test, frontend-build]
     runs-on: ubuntu-latest
     environment: production
+    # Sólo deploy en push a main (no en workflow_dispatch desde otras ramas)
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +84,10 @@ jobs:
               -f docker-compose.yml \
               -f docker-compose.prod.yml \
               up -d --build --remove-orphans
+
+            echo "⏳ Esperando healthchecks..."
+            sleep 15
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 
             echo "🧹 Cleaning up unused images..."
             docker image prune -f
