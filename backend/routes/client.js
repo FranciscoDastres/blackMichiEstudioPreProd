@@ -9,6 +9,7 @@ import {
     cancelarPedido,
     getMisResenas,
 } from '../controllers/clientController.js';
+import * as favoritosController from '../controllers/favoritosController.js';
 
 const router = express.Router();
 
@@ -23,5 +24,12 @@ router.put('/pedidos/:id/cancelar',requireAuth, cancelarPedido);
 
 // ===== RESEÑAS =====
 router.get('/mis-resenas',         requireAuth, getMisResenas);
+
+// ===== FAVORITOS / WISHLIST =====
+router.get('/favoritos',                    requireAuth, favoritosController.listar);
+router.get('/favoritos/ids',                requireAuth, favoritosController.listarIds);
+router.post('/favoritos/toggle/:productoId',requireAuth, favoritosController.toggle);
+router.post('/favoritos/:productoId',       requireAuth, favoritosController.agregar);
+router.delete('/favoritos/:productoId',     requireAuth, favoritosController.quitar);
 
 export default router;
