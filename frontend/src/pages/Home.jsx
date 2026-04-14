@@ -1,6 +1,7 @@
 import HeroSection from "../components/HeroSection/HeroSection";
 import PopularProducts from "../components/PopularProducts/PopularProducts";
 import SecondaryHeroSection from "../components/SecondaryHeroSection/SecondaryHeroSection";
+import Newsletter from "../components/Newsletter/Newsletter";
 import useSEO from "../hooks/useSEO";
 
 function Home() {
@@ -24,6 +25,10 @@ function Home() {
 
       <section className="w-full mb-10">
         <SecondaryHeroSection />
+      </section>
+
+      <section className="w-full">
+        <Newsletter />
       </section>
     </div></>
   );
