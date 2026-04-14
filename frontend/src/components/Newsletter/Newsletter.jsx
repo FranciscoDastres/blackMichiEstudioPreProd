@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Mail, ArrowRight, Check } from "lucide-react";
 
-export default function Newsletter() {
+function Newsletter() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
 
@@ -11,7 +11,7 @@ export default function Newsletter() {
 
     setStatus("loading");
 
-    // Simulated — replace with real API call when newsletter service is ready
+    // Simulado — reemplazar con llamada real a API
     setTimeout(() => {
       setStatus("success");
       setEmail("");
@@ -27,7 +27,7 @@ export default function Newsletter() {
           <Mail className="w-7 h-7 text-primary" />
         </div>
 
-        <h2 className="text-2xl md:text-3xl font-display font-extrabold text-foreground mb-3">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-3">
           No te pierdas nada
         </h2>
         <p className="text-muted max-w-md mx-auto mb-8">
@@ -77,3 +77,5 @@ export default function Newsletter() {
     </section>
   );
 }
+
+export default Newsletter;
