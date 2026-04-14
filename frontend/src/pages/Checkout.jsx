@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { useAuth } from "../contexts/AuthContext";
-import { ShoppingBag, Lock, Truck, CreditCard, User, Mail, Phone, MapPin, FileText, Package, Home } from "lucide-react";
+import { ShoppingBag, Lock, Truck, CreditCard, User, Mail, Phone, MapPin, FileText, Package, Home, Tag, X, Check } from "lucide-react";
 import useSEO from "../hooks/useSEO";
 
 export default function Checkout() {
@@ -31,7 +31,15 @@ export default function Checkout() {
   });
 
   const [costoEnvio, setCostoEnvio] = useState(3500);
-  const totalConEnvio = cartTotal + costoEnvio;
+
+  // ── Cupón ──
+  const [cuponInput, setCuponInput] = useState("");
+  const [cuponAplicado, setCuponAplicado] = useState(null); // { codigo, descuento, tipo, valor }
+  const [cuponLoading, setCuponLoading] = useState(false);
+  const [cuponError, setCuponError] = useState("");
+
+  const descuento = cuponAplicado?.descuento || 0;
+  const totalConEnvio = Math.max(0, cartTotal - descuento) + costoEnvio;
 
   useEffect(() => {
     api.get("/config").then(res => {
@@ -159,6 +167,70 @@ export default function Checkout() {
     }
   };
 
+  const aplicarCupon = async () => {
+    const codigo = cuponInput.trim();
+    if (!codigo) {
+      setCuponError("Ingresa un código");
+      return;
+    }
+    setCuponLoading(true);
+    setCuponError("");
+    try {
+      const res = await api.post("/cupones/validar", { codigo, total: cartTotal });
+      if (res.data?.valido) {
+        setCuponAplicado({
+          codigo: res.data.cupon.codigo,
+          descuento: res.data.descuento,
+          tipo: res.data.cupon.tipo,
+          valor: res.data.cupon.valor,
+        });
+        setCuponError("");
+      } else {
+        setCuponError(res.data?.error || "Cupón inválido");
+        setCuponAplicado(null);
+      }
+    } catch (err) {
+      setCuponError(err.response?.data?.error || "No se pudo validar el cupón");
+      setCuponAplicado(null);
+    } finally {
+      setCuponLoading(false);
+    }
+  };
+
+  const quitarCupon = () => {
+    setCuponAplicado(null);
+    setCuponInput("");
+    setCuponError("");
+  };
+
+  // Si cambia el total del carrito mientras hay un cupón aplicado, re-validar
+  useEffect(() => {
+    if (!cuponAplicado || cartTotal <= 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.post("/cupones/validar", {
+          codigo: cuponAplicado.codigo,
+          total: cartTotal,
+        });
+        if (cancelled) return;
+        if (res.data?.valido) {
+          setCuponAplicado({
+            codigo: res.data.cupon.codigo,
+            descuento: res.data.descuento,
+            tipo: res.data.cupon.tipo,
+            valor: res.data.cupon.valor,
+          });
+        } else {
+          setCuponAplicado(null);
+          setCuponError(res.data?.error || "Cupón ya no es válido");
+        }
+      } catch { /* noop */ }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartTotal]);
+
   const canProceed = () => {
     return (
       cart.length > 0 &&
@@ -211,6 +283,7 @@ export default function Checkout() {
         telefono: telefono.trim(),
         direccion: direccion.trim(),
         notas: notas.trim(),
+        cuponCodigo: cuponAplicado?.codigo || null,
       });
 
       if (response.data.success && response.data.paymentUrl) {
@@ -457,12 +530,83 @@ export default function Checkout() {
                     </div>
                   </div>
 
+                  {/* Cupón */}
+                  <div className="mb-4 pb-4 border-b border-border">
+                    <label className="text-sm font-medium text-muted flex items-center gap-2 mb-2">
+                      <Tag className="w-4 h-4" />
+                      Código de cupón
+                    </label>
+
+                    {cuponAplicado ? (
+                      <div className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-emerald-400 truncate">
+                              {cuponAplicado.codigo}
+                            </p>
+                            <p className="text-xs text-emerald-400/80">
+                              {cuponAplicado.tipo === "porcentaje"
+                                ? `${cuponAplicado.valor}% de descuento`
+                                : `${CLP.format(cuponAplicado.valor)} de descuento`}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={quitarCupon}
+                          aria-label="Quitar cupón"
+                          className="p-1 text-emerald-400 hover:text-rose-400 transition-colors shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={cuponInput}
+                          onChange={(e) => {
+                            setCuponInput(e.target.value.toUpperCase());
+                            if (cuponError) setCuponError("");
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") { e.preventDefault(); aplicarCupon(); }
+                          }}
+                          placeholder="Ej: DESCUENTO10"
+                          disabled={cuponLoading || loading}
+                          className="flex-1 glass-panel px-3 py-2 rounded-lg border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all uppercase"
+                        />
+                        <button
+                          type="button"
+                          onClick={aplicarCupon}
+                          disabled={cuponLoading || !cuponInput.trim() || loading}
+                          className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {cuponLoading ? "..." : "Aplicar"}
+                        </button>
+                      </div>
+                    )}
+                    {cuponError && (
+                      <p className="mt-2 text-xs text-rose-400">{cuponError}</p>
+                    )}
+                  </div>
+
                   {/* Totales */}
                   <div className="space-y-3 pb-4 border-b border-border mb-4">
                     <div className="flex justify-between text-muted">
                       <span>Subtotal</span>
                       <span>{CLP.format(cartTotal)}</span>
                     </div>
+                    {descuento > 0 && (
+                      <div className="flex justify-between text-emerald-400">
+                        <span className="flex items-center gap-2">
+                          <Tag className="w-4 h-4" />
+                          Descuento ({cuponAplicado.codigo})
+                        </span>
+                        <span>−{CLP.format(descuento)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-muted">
                       <span className="flex items-center gap-2">
                         <Truck className="w-4 h-4" />
