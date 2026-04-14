@@ -2,9 +2,10 @@ import db from "../lib/db.js";
 import logger from "../lib/logger.js";
 import flowService from "./flowService.js";
 import * as emailService from "./emailService.js";
+import * as cuponService from "./cuponService.js";
 import { invalidateCache } from "./productService.js";
 
-export async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
+export async function crearPago({ items, email, nombre, notas, telefono, direccion, cuponCodigo }) {
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
     const commerceOrder = `BMS-${timestamp}-${randomSuffix}`;
@@ -36,7 +37,21 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
             `SELECT valor FROM configuracion WHERE clave = 'costo_envio'`
         );
         const costoEnvio = configResult.rows.length > 0 ? Number(configResult.rows[0].valor) : 3500;
-        totalCalculado += costoEnvio;
+
+        // ── Validar cupón (si se envió) sobre el subtotal (sin envío) ──
+        let cuponAplicado = null;
+        let descuento = 0;
+        if (cuponCodigo) {
+            const resultadoCupon = await cuponService.validarCupon(cuponCodigo, totalCalculado);
+            if (!resultadoCupon.valido) {
+                await db.query('ROLLBACK');
+                throw Object.assign(new Error(resultadoCupon.error || 'Cupón inválido'), { status: 400 });
+            }
+            cuponAplicado = resultadoCupon.cupon;
+            descuento = resultadoCupon.descuento;
+        }
+
+        totalCalculado = Math.max(0, totalCalculado - descuento) + costoEnvio;
 
         const userResult = await db.query(
             'SELECT id FROM usuarios WHERE email = $1',
@@ -47,8 +62,9 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
         const pedidoResult = await db.query(
             `INSERT INTO pedidos (
                 usuario_id, comprador_nombre, comprador_email, comprador_telefono,
-                direccion_envio, total, costo_envio, notas, estado, commerce_order, metodo_pago
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente', $9, 'flow')
+                direccion_envio, total, costo_envio, descuento, cupon_codigo, cupon_id,
+                notas, estado, commerce_order, metodo_pago
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pendiente', $12, 'flow')
             RETURNING id`,
             [
                 usuarioId,
@@ -58,6 +74,9 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
                 direccion?.trim() || 'Por coordinar',
                 totalCalculado,
                 costoEnvio,
+                descuento,
+                cuponAplicado?.codigo || null,
+                cuponAplicado?.id || null,
                 notas?.trim() || null,
                 commerceOrder,
             ]
@@ -204,6 +223,15 @@ export async function procesarWebhook(token, rawBody, rawHeaders, ip) {
             }
         }
         invalidateCache();
+
+        // Incrementar uso del cupón si aplica
+        const cuponRow = await db.query(
+            'SELECT cupon_id FROM pedidos WHERE id = $1',
+            [pedido.id]
+        );
+        if (cuponRow.rows[0]?.cupon_id) {
+            await cuponService.incrementarUso(cuponRow.rows[0].cupon_id);
+        }
     }
 
     await db.query(
