@@ -246,6 +246,51 @@ export async function getAllProducts() {
     return result.rows;
 }
 
+/**
+ * Búsqueda server-side con filtros.
+ * @param {{ q?: string, categoriaId?: number, min?: number, max?: number, limit?: number }} params
+ */
+export async function searchProducts({ q, categoriaId, min, max, limit } = {}) {
+    const conditions = ["p.activo = true"];
+    const values = [];
+    let i = 1;
+
+    if (q && typeof q === "string" && q.trim().length) {
+        values.push(`%${q.trim().toLowerCase()}%`);
+        conditions.push(`(LOWER(p.titulo) LIKE $${i} OR LOWER(p.descripcion) LIKE $${i})`);
+        i++;
+    }
+    if (categoriaId != null && !Number.isNaN(Number(categoriaId))) {
+        values.push(Number(categoriaId));
+        conditions.push(`p.categoria_id = $${i}`);
+        i++;
+    }
+    if (min != null && !Number.isNaN(Number(min))) {
+        values.push(Number(min));
+        conditions.push(`p.precio >= $${i}`);
+        i++;
+    }
+    if (max != null && !Number.isNaN(Number(max))) {
+        values.push(Number(max));
+        conditions.push(`p.precio <= $${i}`);
+        i++;
+    }
+
+    let sql = `SELECT p.*, c.nombre AS categoria_nombre
+                 FROM productos p
+                 LEFT JOIN categorias c ON p.categoria_id = c.id
+                WHERE ${conditions.join(" AND ")}
+                ORDER BY p.created_at DESC`;
+
+    if (limit != null && !Number.isNaN(Number(limit))) {
+        values.push(Number(limit));
+        sql += ` LIMIT $${i}`;
+    }
+
+    const result = await db.query(sql, values);
+    return result.rows;
+}
+
 export async function getProductById(id) {
     const result = await db.query(
         `SELECT p.*, c.nombre categoria_nombre
