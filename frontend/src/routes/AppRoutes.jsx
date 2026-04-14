@@ -25,6 +25,7 @@ const AdminDashboard = lazyWithRetry(() => import("../admin/pages/Dashboard"));
 const AdminOrders = lazyWithRetry(() => import("../admin/pages/Orders"));
 const AdminUsers = lazyWithRetry(() => import("../admin/pages/Users"));
 const AdminSettings = lazyWithRetry(() => import("../admin/pages/Settings"));
+const AdminCoupons = lazyWithRetry(() => import("../admin/pages/Coupons"));
 
 // ✅ Apunta a la carpeta Products/ correcta
 const AdminProducts = lazyWithRetry(() => import("../admin/pages/Products/ProductsPage"));
@@ -169,6 +170,11 @@ export default function AppRoutes() {
         <Route path="settings" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminSettings />
+          </Suspense>
+        } />
+        <Route path="coupons" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminCoupons />
           </Suspense>
         } />
       </Route>
