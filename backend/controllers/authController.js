@@ -1,9 +1,9 @@
 // backend/controllers/authController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en authService.js
-const authService = require("../services/authService");
+import * as authService from "../services/authService.js";
 
-// ✅ Registro — sin cambios
-exports.register = async (req, res) => {
+// ✅ Registro
+export async function register(req, res) {
   try {
     const { nombre, email, password } = req.body;
     if (!nombre || !email || !password) {
@@ -15,10 +15,10 @@ exports.register = async (req, res) => {
     console.error("❌ Error registro:", err);
     res.status(400).json({ error: err.message || "Error al registrar usuario" });
   }
-};
+}
 
-// ✅ Login — sin cambios
-exports.login = async (req, res) => {
+// ✅ Login
+export async function login(req, res) {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -30,10 +30,10 @@ exports.login = async (req, res) => {
     console.error("❌ Error login:", err);
     res.status(400).json({ error: err.message || "Error en el login" });
   }
-};
+}
 
 // ✅ Google Login
-exports.googleLogin = async (req, res) => {
+export async function googleLogin(req, res) {
   try {
     const { token } = req.body;
     console.log("🔵 Google Login request recibido, token:", token ? `${token.substring(0, 20)}...` : "FALTA");
@@ -47,22 +47,20 @@ exports.googleLogin = async (req, res) => {
     console.error("❌ Error Google Login:", err.message);
     res.status(400).json({ error: err.message || "Error en Google Login" });
   }
-};
+}
 
-// ✅ NUEVO — Me: devuelve el usuario del token actual
-// El middleware requireAuth ya validó el token y puso req.user
-// Solo devolvemos lo que ya tenemos, sin llamada extra a la BD
-exports.me = async (req, res) => {
+// ✅ Me: devuelve el usuario del token actual
+export async function me(req, res) {
   try {
     res.json({ user: req.user });
   } catch (err) {
     console.error("❌ Error en /me:", err);
     res.status(500).json({ error: "Error al obtener usuario" });
   }
-};
+}
 
-// ✅ NUEVO — Logout: invalida el token en Supabase
-exports.logout = async (req, res) => {
+// ✅ Logout: invalida el token en Supabase
+export async function logout(req, res) {
   try {
     await authService.logout(req.user.auth_id);
     res.json({ success: true });
@@ -71,10 +69,10 @@ exports.logout = async (req, res) => {
     console.error("❌ Error en logout:", err);
     res.json({ success: true });
   }
-};
+}
 
 // ✅ Solicitar reset de contraseña
-exports.forgotPassword = async (req, res) => {
+export async function forgotPassword(req, res) {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'El email es requerido' });
@@ -84,10 +82,10 @@ exports.forgotPassword = async (req, res) => {
     console.error('❌ Error forgotPassword:', err);
     res.json({ success: true });
   }
-};
+}
 
 // ✅ Restablecer contraseña con token del email
-exports.resetPassword = async (req, res) => {
+export async function resetPassword(req, res) {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) {
@@ -99,10 +97,10 @@ exports.resetPassword = async (req, res) => {
     console.error('❌ Error resetPassword:', err);
     res.status(400).json({ error: err.message || 'Error al restablecer la contraseña' });
   }
-};
+}
 
-// ✅ NUEVO — Cambiar contraseña
-exports.changePassword = async (req, res) => {
+// ✅ Cambiar contraseña
+export async function changePassword(req, res) {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) {
@@ -117,4 +115,4 @@ exports.changePassword = async (req, res) => {
     console.error('❌ Error cambiando contraseña:', err);
     res.status(400).json({ error: err.message || 'Error al cambiar contraseña' });
   }
-};
+}
