@@ -1,14 +1,14 @@
-version: "3.9"
-
 # ─── PRODUCCIÓN ──────────────────────────────────────────────────────────────
-# Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 #
 # Diferencias clave vs dev:
 #   - Sin servicio "db" local → usa Supabase (DATABASE_URL en .env)
 #   - NODE_ENV=production
 #   - Nginx expone 80 y 443 con certificados Let's Encrypt
-#   - Logging con limits para no llenar el disco
-#   - Build args para inyectar VITE_API_URL al frontend
+#   - Healthchecks en todos los servicios
+#   - Logging con límites para no llenar el disco
+#   - Build args inyectan VITE_* al frontend en build time
 
 services:
   frontend:
@@ -17,6 +17,16 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL:?VITE_API_URL is required}
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:?VITE_SUPABASE_URL is required}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:?VITE_SUPABASE_ANON_KEY is required}
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN:-}
+        - VITE_PLAUSIBLE_DOMAIN=${VITE_PLAUSIBLE_DOMAIN:-}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     logging:
       driver: "json-file"
       options:
@@ -26,11 +36,18 @@ services:
   backend:
     environment:
       - NODE_ENV=production
+      # Forzamos a vacío las variables de dev para que no se pisen con las de Supabase
       - DB_HOST=
       - DB_PORT=
       - DB_NAME=
       - DB_USER=
       - DB_PASSWORD=
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     logging:
       driver: "json-file"
       options:
@@ -46,13 +63,19 @@ services:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-  # Certbot para renovación automática de certificados
+  # Certbot: renovación automática cada 12h (webroot challenge)
   certbot:
     image: certbot/certbot:latest
     volumes:
