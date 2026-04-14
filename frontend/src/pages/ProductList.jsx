@@ -10,10 +10,11 @@ import Pagination from "../components/ProductList/Pagination";
 import { ProductListSkeleton } from "../components/Skeletons/Skeletons";
 
 function ProductList() {
-  useSEO({
+  const seo = useSEO({
     title: "Productos",
     description:
       "Explora toda la colección de figuras impresas en 3D de Black Michi Estudio. Cultura pop, anime, ciencia ficción y más.",
+    path: "/productos",
   });
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -208,7 +209,7 @@ function ProductList() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>{seo}<div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Botón sidebar móvil */}
         <div className="flex items-center justify-between mb-4 lg:hidden">
@@ -353,7 +354,7 @@ function ProductList() {
           </div>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }
 

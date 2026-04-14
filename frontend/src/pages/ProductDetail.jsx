@@ -11,6 +11,7 @@ import api from "../services/api";
 import useCart from "../hooks/useCart";
 import { useAuth } from "../contexts/AuthContext";
 import { getImageUrl } from "../utils/getImageUrl";
+import useSEO from "../hooks/useSEO";
 
 export default function ProductDetail() {
   const { productId } = useParams();
@@ -26,9 +27,6 @@ export default function ProductDetail() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    return () => {
-      document.title = "Black Michi Estudio";
-    };
   }, [productId]);
 
   useEffect(() => {
@@ -41,16 +39,6 @@ export default function ProductDetail() {
         const productResponse = await api.get(`/productos/${productId}`);
         const productData = productResponse.data;
         setProduct(productData);
-
-        document.title = `${productData.titulo} — Black Michi Estudio`;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) {
-          metaDesc.setAttribute(
-            "content",
-            productData.descripcion ||
-              `${productData.titulo} — Impresión 3D personalizada`
-          );
-        }
 
         try {
           setLoadingReviews(true);
@@ -106,6 +94,51 @@ export default function ProductDetail() {
     }
   };
 
+  const productJsonLd = product
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: product.titulo,
+        description:
+          product.descripcion ||
+          `${product.titulo} — Impresión 3D personalizada`,
+        image: product.imagen_principal
+          ? [getImageUrl(product.imagen_principal)]
+          : undefined,
+        brand: { "@type": "Brand", name: "Black Michi Estudio" },
+        offers: {
+          "@type": "Offer",
+          price: product.precio,
+          priceCurrency: "CLP",
+          availability:
+            product.stock > 0
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+          url: `https://blackmichiestudio.cl/producto/${product.id}`,
+        },
+        ...(reviews.length > 0 && {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avgRating.toFixed(1),
+            reviewCount: reviews.length,
+          },
+        }),
+      }
+    : undefined;
+
+  const seo = useSEO({
+    title: product?.titulo,
+    description:
+      product?.descripcion ||
+      (product ? `${product.titulo} — Impresión 3D personalizada` : undefined),
+    path: `/producto/${productId}`,
+    image: product?.imagen_principal
+      ? getImageUrl(product.imagen_principal)
+      : undefined,
+    type: "product",
+    jsonLd: productJsonLd,
+  });
+
   if (loading) return <ProductDetailSkeleton />;
 
   if (error) {
@@ -144,7 +177,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <>{seo}<div className="min-h-screen py-12 px-4">
       {/* Decoración */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"></div>
@@ -219,6 +252,6 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
-    </div>
+    </div></>
   );
 }

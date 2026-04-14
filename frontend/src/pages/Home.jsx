@@ -4,12 +4,13 @@ import SecondaryHeroSection from "../components/SecondaryHeroSection/SecondaryHe
 import useSEO from "../hooks/useSEO";
 
 function Home() {
-  useSEO({
+  const seo = useSEO({
     title: "Figuras 3D Personalizadas",
     description: "Black Michi Estudio — Figuras impresas en 3D, coleccionables únicos y decoraciones personalizadas. Envíos a todo Chile.",
+    path: "/",
   });
   return (
-    <div className="min-h-screen bg-background">
+    <>{seo}<div className="min-h-screen bg-background">
       <section className="relative w-full flex flex-col items-center justify-center bg-background bg-grid py-10 overflow-hidden">
         <div className="absolute inset-0 bg-background/70"></div>
         <div className="relative z-10 w-full">
@@ -24,7 +25,7 @@ function Home() {
       <section className="w-full mb-10">
         <SecondaryHeroSection />
       </section>
-    </div>
+    </div></>
   );
 }
 

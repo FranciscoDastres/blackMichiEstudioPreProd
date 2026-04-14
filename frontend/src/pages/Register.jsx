@@ -6,7 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import useSEO from "../hooks/useSEO";
 
 export default function Register() {
-  useSEO({ title: "Crear Cuenta" });
+  const seo = useSEO({ title: "Crear Cuenta", path: "/registro" });
 
   const [formData, setFormData] = useState({ nombre: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
@@ -55,7 +55,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <>{seo}<div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
 
         <div className="text-center mb-8">
@@ -184,6 +184,6 @@ export default function Register() {
           </p>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }

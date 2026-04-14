@@ -3,6 +3,7 @@ import React, { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "sonner";
 import App from "./App";
 import { CartProvider } from "./contexts/CartContext";
@@ -18,6 +19,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
+    <HelmetProvider>
     <ErrorBoundary>
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -42,5 +44,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </BrowserRouter>
       </GoogleOAuthProvider>
     </ErrorBoundary>
+    </HelmetProvider>
   </StrictMode>
 );

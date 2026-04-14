@@ -138,12 +138,12 @@ const highlights = [
 ];
 
 export default function PrivacyPolicy() {
-    useSEO({ title: "Política de Privacidad" });
+    const seo = useSEO({ title: "Política de Privacidad", path: "/privacidad" });
 
     const navigate = useNavigate();
 
     return (
-        <div
+        <>{seo}<div
             className="min-h-screen bg-background"
             style={{
                 backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.04) 1px, transparent 0)",
@@ -235,6 +235,6 @@ export default function PrivacyPolicy() {
                 </div>
 
             </div>
-        </div>
+        </div></>
     );
 }

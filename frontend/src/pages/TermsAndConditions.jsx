@@ -111,12 +111,12 @@ const highlights = [
 ];
 
 export default function TermsAndConditions() {
-    useSEO({ title: "Términos y Condiciones" });
+    const seo = useSEO({ title: "Términos y Condiciones", path: "/terminos" });
 
     const navigate = useNavigate();
 
     return (
-        <div
+        <>{seo}<div
             className="min-h-screen bg-background"
             style={{
                 backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.04) 1px, transparent 0)",
@@ -208,6 +208,6 @@ export default function TermsAndConditions() {
                 </div>
 
             </div>
-        </div>
+        </div></>
     );
 }

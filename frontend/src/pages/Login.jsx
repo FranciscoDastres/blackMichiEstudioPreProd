@@ -6,7 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import useSEO from "../hooks/useSEO";
 
 export default function Login() {
-  useSEO({ title: "Iniciar Sesión" });
+  const seo = useSEO({ title: "Iniciar Sesión", path: "/login" });
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState("");
@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <>{seo}<div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
 
         {/* Logo / título */}
@@ -175,6 +175,6 @@ export default function Login() {
           </p>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }

@@ -79,13 +79,13 @@ function FAQItem({ faq, isOpen, onToggle }) {
 }
 
 export default function FAQ() {
-    useSEO({ title: "Preguntas Frecuentes" });
+    const seo = useSEO({ title: "Preguntas Frecuentes", path: "/faq" });
 
     const navigate = useNavigate();
     const [openId, setOpenId] = useState(null);
 
     return (
-        <div
+        <>{seo}<div
             className="min-h-screen bg-background"
             style={{
                 backgroundImage: "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.04) 1px, transparent 0)",
@@ -131,6 +131,6 @@ export default function FAQ() {
                 </div>
 
             </div>
-        </div>
+        </div></>
     );
 }

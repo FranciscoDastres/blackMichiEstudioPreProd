@@ -6,13 +6,13 @@ import useSEO from "../../hooks/useSEO";
 function NotFound() {
   const navigate = useNavigate();
 
-  useSEO({
+  const seo = useSEO({
     title: "Página no encontrada",
     description: "La página que buscas no existe o fue movida.",
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
+    <>{seo}<div className="min-h-screen flex items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
       {/* Glow background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
@@ -82,7 +82,7 @@ function NotFound() {
           </div>
         </div>
       </div>
-    </div>
+    </div></>
   );
 }
 

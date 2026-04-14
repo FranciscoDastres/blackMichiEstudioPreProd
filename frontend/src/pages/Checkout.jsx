@@ -7,7 +7,7 @@ import { ShoppingBag, Lock, Truck, CreditCard, User, Mail, Phone, MapPin, FileTe
 import useSEO from "../hooks/useSEO";
 
 export default function Checkout() {
-  useSEO({ title: "Checkout" });
+  const seo = useSEO({ title: "Checkout", path: "/checkout" });
 
   const { cart, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
@@ -247,7 +247,7 @@ export default function Checkout() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4" style={{
+    <>{seo}<div className="min-h-screen bg-background py-12 px-4" style={{
       backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.04) 1px, transparent 0)',
       backgroundSize: '32px 32px'
     }}>
@@ -524,6 +524,6 @@ export default function Checkout() {
           </>
         )}
       </div>
-    </div>
+    </div></>
   );
 }
