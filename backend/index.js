@@ -23,6 +23,7 @@ import paymentRoutes from "./routes/payments.js";
 import featuredRoutes from "./routes/featuredRoutes.js";
 import reviewsRoutes from "./routes/reviews.js";
 import orderRoutes from "./routes/order.js";
+import cuponesRoutes from "./routes/cupones.js";
 import { requireAuth, requireAdmin } from "./middleware/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -295,6 +296,7 @@ try {
   app.use("/api/hero-images", heroImagesRoutes);
   app.use("/api/featured", featuredRoutes);
   app.use("/api/reviews", reviewsLimiter, reviewsRoutes);
+  app.use("/api/cupones", cuponesRoutes);
   app.use("/api/client", requireAuth, clientRoutes);
   app.use("/api/payments/flow/create", paymentLimiter);
   app.use("/api/payments", paymentRoutes);
