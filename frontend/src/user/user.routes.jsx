@@ -6,6 +6,7 @@ import Security from './pages/Account/Security';
 import OrdersPage from './pages/Orders/OrdersPage';
 import OrderDetail from './pages/Orders/OrderDetail';
 import ReviewsPage from './pages/Reviews/ReviewsPage';
+import FavoritesPage from './pages/Favorites/FavoritesPage';
 
 export default function UserRoutes() {
     return (
@@ -17,6 +18,7 @@ export default function UserRoutes() {
                 <Route path="pedidos" element={<OrdersPage />} />
                 <Route path="pedidos/:id" element={<OrderDetail />} />
                 <Route path="resenas" element={<ReviewsPage />} />
+                <Route path="favoritos" element={<FavoritesPage />} />
             </Route>
         </Routes>
     );
