@@ -8,6 +8,7 @@ import { Toaster } from "sonner";
 import App from "./App";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { FavoritesProvider } from "./contexts/FavoritesContext";
 import ErrorBoundary from "./components/ErrorBoundary/ErrorBoundary";
 import { initHoverImageLoading, initIntersectionObserver } from "./utils/lazyImageLoader";
 import "./index.css";
@@ -24,6 +25,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
+            <FavoritesProvider>
             <CartProvider>
               <App />
               <Toaster
@@ -40,6 +42,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 }}
               />
             </CartProvider>
+            </FavoritesProvider>
           </AuthProvider>
         </BrowserRouter>
       </GoogleOAuthProvider>
