@@ -60,15 +60,14 @@ export async function me(req, res) {
   }
 }
 
-// ✅ Logout: invalida el token en Supabase
+// ✅ Logout (manejado en frontend con Supabase)
 export async function logout(req, res) {
   try {
-    await authService.logout(req.user.auth_id);
-    res.json({ success: true });
+    // 🔥 No hacemos nada en backend
+    return res.json({ success: true, message: "Logout manejado en frontend" });
   } catch (err) {
-    // Aunque falle en Supabase, el frontend igual limpia su localStorage
     logger.error({ err }, "Error en logout");
-    res.json({ success: true });
+    return res.json({ success: true });
   }
 }
 
