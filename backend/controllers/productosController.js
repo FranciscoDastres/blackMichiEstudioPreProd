@@ -80,10 +80,22 @@ export async function deleteProduct(req, res) {
   }
 }
 
-// ✅ Obtener todos los productos
+// ✅ Obtener todos los productos (con filtros opcionales: q, categoria, min, max, limit)
 export async function getAllProducts(req, res) {
   try {
-    const products = await productService.getAllProducts();
+    const { q, categoria, min, max, limit } = req.query;
+    const hasFilters = q || categoria || min || max || limit;
+
+    const products = hasFilters
+      ? await productService.searchProducts({
+          q,
+          categoriaId: categoria,
+          min,
+          max,
+          limit,
+        })
+      : await productService.getAllProducts();
+
     res.json(products);
   } catch (err) {
     logger.error({ err }, "Error obteniendo productos");
