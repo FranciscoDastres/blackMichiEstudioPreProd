@@ -3,6 +3,7 @@ import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
 import * as adminController from "../controllers/adminController.js";
 import * as productosController from "../controllers/productosController.js";
+import * as cuponesController from "../controllers/cuponesController.js";
 
 const router = express.Router();
 
@@ -95,5 +96,14 @@ router.delete(
   requireAdmin,
   adminController.deleteUser
 );
+
+// =======================================================
+// 📌 CUPONES (Admin)
+// =======================================================
+
+router.get("/cupones", requireAuth, requireAdmin, cuponesController.listar);
+router.post("/cupones", requireAuth, requireAdmin, cuponesController.crear);
+router.put("/cupones/:id", requireAuth, requireAdmin, cuponesController.actualizar);
+router.delete("/cupones/:id", requireAuth, requireAdmin, cuponesController.eliminar);
 
 export default router;
