@@ -19,8 +19,8 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
+    <section className="relative overflow-hidden bg-[hsl(220_20%_10%)]">
+      <div className="absolute inset-0 bg-gradient-to-r from-[hsl(215_40%_15%)] via-[hsl(220_20%_10%)] to-[hsl(215_40%_15%)]" />
 
       <div className="relative max-w-4xl mx-auto px-4 py-16 text-center">
         <div className="w-14 h-14 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center mx-auto mb-6">
@@ -70,7 +70,7 @@ export default function Newsletter() {
           </form>
         )}
 
-        <p className="text-xs text-muted mt-4">
+        <p className="text-sm text-muted mt-4">
           Sin spam. Puedes darte de baja en cualquier momento.
         </p>
       </div>
