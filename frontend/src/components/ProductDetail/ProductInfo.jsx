@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Star,
   ShoppingBag,
@@ -8,8 +10,12 @@ import {
   Minus,
   Check,
   Package,
+  Heart,
+  AlertCircle,
 } from "lucide-react";
 import { getImageUrl } from "../../utils/getImageUrl";
+import { useFavorites } from "../../contexts/FavoritesContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const CLP = new Intl.NumberFormat("es-CL", {
   style: "currency",
@@ -26,10 +32,29 @@ export default function ProductInfo({
   isStockExceeded,
 }) {
   const [quantity, setQuantity] = useState(1);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(product.id);
 
   const stock = product.stock ?? 99;
   const maxQty = Math.max(1, stock);
   const outOfStock = isStockExceeded(product);
+  const lowStock = stock > 0 && stock < 5;
+
+  const handleToggleFav = async () => {
+    if (!user) {
+      toast.error("Inicia sesión para guardar favoritos");
+      navigate("/login");
+      return;
+    }
+    try {
+      await toggle(product.id);
+      toast.success(fav ? "Quitado de favoritos" : "Agregado a favoritos");
+    } catch {
+      toast.error("No se pudo actualizar favoritos");
+    }
+  };
 
   const handleAdd = () => {
     if (outOfStock) return;
@@ -91,6 +116,14 @@ export default function ProductInfo({
         </span>
       </div>
 
+      {/* Aviso pocos disponibles */}
+      {lowStock && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-sm font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          ¡Solo quedan {stock} disponibles! Aprovecha antes de que se agote.
+        </div>
+      )}
+
       {/* Precio */}
       <div className="flex items-center gap-4 py-4 border-y border-border">
         <span className="text-4xl font-bold text-primary">
@@ -146,6 +179,18 @@ export default function ProductInfo({
         >
           <ShoppingBag className="w-5 h-5" />
           {outOfStock ? "Sin stock" : "Agregar al carrito"}
+        </button>
+
+        <button
+          onClick={handleToggleFav}
+          aria-label={fav ? "Quitar de favoritos" : "Agregar a favoritos"}
+          className={`h-12 w-12 flex items-center justify-center rounded-lg border transition-colors ${
+            fav
+              ? "bg-rose-500/10 border-rose-500/40 text-rose-500"
+              : "bg-secondary/20 border-border text-muted hover:text-rose-500 hover:border-rose-500/40"
+          }`}
+        >
+          <Heart className={`w-5 h-5 ${fav ? "fill-rose-500" : ""}`} />
         </button>
       </div>
 
