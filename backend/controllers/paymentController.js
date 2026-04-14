@@ -4,7 +4,7 @@ import * as paymentService from '../services/paymentService.js';
 import logger from '../lib/logger.js';
 
 export async function createPayment(req, res) {
-    const { items, email, nombre, notas, telefono, direccion } = req.body;
+    const { items, email, nombre, notas, telefono, direccion, cuponCodigo } = req.body;
 
     if (!process.env.BACKEND_URL) {
         return res.status(500).json({ success: false, message: 'BACKEND_URL no está configurado.' });
@@ -20,7 +20,7 @@ export async function createPayment(req, res) {
     }
 
     try {
-        const result = await paymentService.crearPago({ items, email, nombre, notas, telefono, direccion });
+        const result = await paymentService.crearPago({ items, email, nombre, notas, telefono, direccion, cuponCodigo });
         res.json({ success: true, ...result });
     } catch (err) {
         logger.error({ err }, "Error creando pago");
