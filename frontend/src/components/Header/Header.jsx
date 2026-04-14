@@ -82,14 +82,12 @@ function Header() {
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await api.get('/productos');
+        const res = await api.get('/productos', {
+          params: { q: searchQuery.trim(), limit: 6 },
+        });
         const all = Array.isArray(res.data) ? res.data : (res.data?.productos || []);
-        const q = searchQuery.trim().toLowerCase();
-        const filtered = all
-          .filter(p => p.titulo?.toLowerCase().includes(q))
-          .slice(0, 6);
-        setSearchResults(filtered);
-        setSearchOpen(filtered.length > 0);
+        setSearchResults(all);
+        setSearchOpen(all.length > 0);
       } catch { /* silencioso */ }
     }, 280);
     return () => clearTimeout(timer);
