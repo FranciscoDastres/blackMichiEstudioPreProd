@@ -1,11 +1,11 @@
 // backend/routes/heroImages.js
-const express = require("express");
-const router = express.Router();
-const multer = require("multer");
-const path = require("path");
+import express from "express";
+import multer from "multer";
+import path from "path";
+import * as heroController from "../controllers/heroImagesController.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
-const heroController = require("../controllers/heroImagesController");
-const { requireAuth, requireAdmin } = require("../middleware/auth");
+const router = express.Router();
 
 // Multer en memoria (NO disco)
 const upload = multer({
@@ -38,4 +38,4 @@ router.get("/first", heroController.getFirstHeroImage);
 // Público — todas las imágenes
 router.get("/public", heroController.getPublicHeroImages);
 
-module.exports = router;
+export default router;

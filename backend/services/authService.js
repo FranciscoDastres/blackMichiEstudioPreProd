@@ -1,27 +1,22 @@
-// backend/services/authService.js
-const pool = require("../lib/db");
-const { createClient } = require("@supabase/supabase-js");
-const { OAuth2Client } = require("google-auth-library");
+import db from "../lib/db.js";
+import { createClient } from "@supabase/supabase-js";
+import { OAuth2Client } from "google-auth-library";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
 if (!GOOGLE_CLIENT_ID) throw new Error("Falta GOOGLE_CLIENT_ID en variables de entorno");
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// Cliente admin (service role) — para operaciones de administración
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY
 );
 
-// Cliente anon — NECESARIO para verifyOtp y operaciones de sesión de usuario
-// La service role key no crea sesiones de usuario correctamente en verifyOtp
 const supabaseAnon = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY
 );
 
-// ✅ Registro
-async function register(nombre, email, password) {
+export async function register(nombre, email, password) {
     const { data, error } = await supabase.auth.admin.createUser({
         email,
         password,
@@ -31,7 +26,7 @@ async function register(nombre, email, password) {
 
     const authId = data.user.id;
 
-    const exists = await pool.query(
+    const exists = await db.query(
         "SELECT id FROM usuarios WHERE email = $1",
         [email]
     );
@@ -40,7 +35,7 @@ async function register(nombre, email, password) {
         throw new Error("El email ya está registrado");
     }
 
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO usuarios (auth_id, nombre, email, rol)
      VALUES ($1, $2, $3, 'cliente')
      RETURNING id, nombre, email, rol`,
@@ -57,15 +52,14 @@ async function register(nombre, email, password) {
     };
 }
 
-// ✅ Login
-async function login(email, password) {
+export async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
     });
     if (error) throw new Error("Credenciales incorrectas");
 
-    const result = await pool.query(
+    const result = await db.query(
         "SELECT id, nombre, email, rol FROM usuarios WHERE auth_id = $1",
         [data.user.id]
     );
@@ -78,9 +72,7 @@ async function login(email, password) {
     };
 }
 
-// ✅ Google Login
-async function googleLogin(idToken) {
-    // Verificar ID token con google-auth-library (el frontend usa GoogleLogin component)
+export async function googleLogin(idToken) {
     const ticket = await googleClient.verifyIdToken({
         idToken,
         audience: GOOGLE_CLIENT_ID,
@@ -89,7 +81,6 @@ async function googleLogin(idToken) {
 
     if (!email) throw new Error("No se pudo obtener el email de Google");
 
-    // Buscar o crear usuario en Supabase Auth
     const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1, page: 1, filter: `email=${email}` });
     const existingUser = listData?.users?.find(u => u.email === email);
 
@@ -105,27 +96,24 @@ async function googleLogin(idToken) {
         authUser = existingUser;
     }
 
-    // Buscar o crear perfil en la tabla local
-    let result = await pool.query(
+    let result = await db.query(
         "SELECT id, nombre, email, rol FROM usuarios WHERE auth_id = $1",
         [authUser.id]
     );
 
     if (!result.rows.length) {
-        // También verificar por email por si el auth_id no coincide
-        const byEmail = await pool.query(
+        const byEmail = await db.query(
             "SELECT id, nombre, email, rol FROM usuarios WHERE email = $1",
             [email]
         );
         if (byEmail.rows.length > 0) {
-            // Actualizar el auth_id si el usuario existe por email pero con otro auth_id
-            await pool.query(
+            await db.query(
                 "UPDATE usuarios SET auth_id = $1 WHERE email = $2",
                 [authUser.id, email]
             );
             result = byEmail;
         } else {
-            result = await pool.query(
+            result = await db.query(
                 `INSERT INTO usuarios (auth_id, nombre, email, rol)
                  VALUES ($1, $2, $3, 'cliente')
                  RETURNING id, nombre, email, rol`,
@@ -134,15 +122,12 @@ async function googleLogin(idToken) {
         }
     }
 
-    // Generar magic link OTP usando el cliente admin
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email,
     });
     if (linkError) throw new Error("Error generando sesión: " + linkError.message);
 
-    // Verificar OTP con el cliente ANON (NO con service role)
-    // La service role key no retorna sesiones de usuario en verifyOtp
     const { data: sessionData, error: otpError } = await supabaseAnon.auth.verifyOtp({
         email,
         token: linkData.properties.email_otp,
@@ -158,21 +143,18 @@ async function googleLogin(idToken) {
     };
 }
 
-// ✅ Verificar token
-async function verifyToken(token) {
+export async function verifyToken(token) {
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data.user) throw new Error("Token inválido");
     return data.user;
 }
 
-// ✅ Logout
-async function logout(authId) {
+export async function logout(authId) {
     const { error } = await supabase.auth.admin.signOut(authId, "global");
     if (error) throw new Error(error.message);
 }
 
-// ✅ Cambiar contraseña
-async function changePassword(authId, email, currentPassword, newPassword) {
+export async function changePassword(authId, email, currentPassword, newPassword) {
     const { error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password: currentPassword,
@@ -185,31 +167,24 @@ async function changePassword(authId, email, currentPassword, newPassword) {
     if (updateError) throw new Error(updateError.message);
 }
 
-// ✅ Solicitar reset de contraseña
-async function forgotPassword(email) {
+export async function forgotPassword(email) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${frontendUrl}/reset-password`,
     });
-    // No revelamos si el email existe o no (seguridad)
     if (error) console.warn('⚠️ forgotPassword error (puede que el email no exista):', error.message);
 }
 
-// ✅ Cambiar contraseña con token de recovery (desde el link del email)
-async function resetPassword(token, newPassword) {
+export async function resetPassword(token, newPassword) {
     if (!newPassword || newPassword.length < 6) {
         throw new Error('La contraseña debe tener al menos 6 caracteres');
     }
 
-    // Verificar el token y obtener el usuario
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user) throw new Error('El enlace es inválido o ya expiró');
 
-    // Actualizar contraseña via admin API
     const { error: updateError } = await supabase.auth.admin.updateUserById(data.user.id, {
         password: newPassword,
     });
     if (updateError) throw new Error(updateError.message);
 }
-
-module.exports = { register, login, googleLogin, verifyToken, logout, changePassword, forgotPassword, resetPassword };

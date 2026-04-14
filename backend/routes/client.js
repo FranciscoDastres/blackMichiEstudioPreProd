@@ -1,15 +1,16 @@
 // backend/routes/client.js
-const express = require('express');
-const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
-const {
+import express from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import {
     getPerfil,
     updatePerfil,
     getPedidos,
     getPedidoById,
     cancelarPedido,
     getMisResenas,
-} = require('../controllers/clientController');
+} from '../controllers/clientController.js';
+
+const router = express.Router();
 
 // ===== PERFIL =====
 router.get('/perfil',              requireAuth, getPerfil);
@@ -23,4 +24,4 @@ router.put('/pedidos/:id/cancelar',requireAuth, cancelarPedido);
 // ===== RESEÑAS =====
 router.get('/mis-resenas',         requireAuth, getMisResenas);
 
-module.exports = router;
+export default router;

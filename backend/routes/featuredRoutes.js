@@ -1,13 +1,12 @@
-const express = require("express");
-const router = express.Router();
-
-const {
+import express from "express";
+import {
     getFeaturedProductos,
     addFeaturedProducto,
     removeFeaturedProducto
-} = require("../controllers/featuredController");
+} from "../controllers/featuredController.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
-const { requireAuth, requireAdmin } = require("../middleware/auth");
+const router = express.Router();
 
 // Público
 router.get("/", getFeaturedProductos);
@@ -16,4 +15,4 @@ router.get("/", getFeaturedProductos);
 router.post("/", requireAuth, requireAdmin, addFeaturedProducto);
 router.delete("/:id", requireAuth, requireAdmin, removeFeaturedProducto);
 
-module.exports = router;
+export default router;

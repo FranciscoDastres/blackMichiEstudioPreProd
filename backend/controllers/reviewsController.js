@@ -1,7 +1,7 @@
 // backend/controllers/reviewsController.js
-const reviewsService = require('../services/reviewsService');
+import * as reviewsService from '../services/reviewsService.js';
 
-async function getByProducto(req, res) {
+export async function getByProducto(req, res) {
     const { producto_id } = req.query;
     if (!producto_id) {
         return res.status(400).json({ error: 'producto_id requerido' });
@@ -15,7 +15,7 @@ async function getByProducto(req, res) {
     }
 }
 
-async function create(req, res) {
+export async function create(req, res) {
     const { producto_id, calificacion, comentario } = req.body;
 
     if (!producto_id || !calificacion || calificacion < 1 || calificacion > 5) {
@@ -30,5 +30,3 @@ async function create(req, res) {
         res.status(err.status || 500).json({ error: err.message || 'Error al guardar la reseña' });
     }
 }
-
-module.exports = { getByProducto, create };

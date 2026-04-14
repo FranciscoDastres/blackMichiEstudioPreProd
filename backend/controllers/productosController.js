@@ -1,14 +1,14 @@
 // backend/controllers/productosController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en productService.js
-const productService = require("../services/productService");
-const {
+import * as productService from "../services/productService.js";
+import {
   assertString,
   assertPositiveNumber,
   assertNonNegativeInt,
-} = require("../utils/validators");
+} from "../utils/validators.js";
 
 // ✅ Crear producto
-async function createProduct(req, res) {
+export async function createProduct(req, res) {
   try {
     const nombre      = assertString(req.body.nombre,      "nombre",      { max: 200 });
     const precio      = assertPositiveNumber(req.body.precio, "precio");
@@ -33,7 +33,7 @@ async function createProduct(req, res) {
 }
 
 // ✅ Actualizar producto
-async function updateProduct(req, res) {
+export async function updateProduct(req, res) {
   try {
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: "ID de producto requerido" });
@@ -63,7 +63,7 @@ async function updateProduct(req, res) {
 }
 
 // ✅ Eliminar producto
-async function deleteProduct(req, res) {
+export async function deleteProduct(req, res) {
   try {
     const { id } = req.params;
 
@@ -80,7 +80,7 @@ async function deleteProduct(req, res) {
 }
 
 // ✅ Obtener todos los productos
-async function getAllProducts(req, res) {
+export async function getAllProducts(req, res) {
   try {
     const products = await productService.getAllProducts();
     res.json(products);
@@ -91,7 +91,7 @@ async function getAllProducts(req, res) {
 }
 
 // ✅ Obtener producto por ID
-async function getProductById(req, res) {
+export async function getProductById(req, res) {
   try {
     const { id } = req.params;
 
@@ -108,11 +108,3 @@ async function getProductById(req, res) {
     });
   }
 }
-
-module.exports = {
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  getAllProducts,
-  getProductById,
-};

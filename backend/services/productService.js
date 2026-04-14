@@ -1,27 +1,24 @@
-// backend/services/productService.js
-const pool = require("../lib/db");
-const cloudinaryService = require("./cloudinaryService");
+import db from "../lib/db.js";
+import * as cloudinaryService from "./cloudinaryService.js";
 
 // ===============================
-// CACHE SIMPLE (5 minutos)
+// CACHE SIMPLE (30 segundos)
 // ===============================
 const cache = {
     products: null,
     timestamp: 0,
-    ttl: 30 * 1000 // 30 segundos,
+    ttl: 30 * 1000,
 };
 
-const invalidateCache = () => {
+export const invalidateCache = () => {
     cache.products = null;
     cache.timestamp = 0;
 };
 
 // ===============================
 // HELPER: Extraer public_id de URL de Cloudinary
-// Ejemplo: https://res.cloudinary.com/demo/image/upload/v123/blackmichi/productos/zapatilla/123-card.webp
-// →        blackmichi/productos/zapatilla/123-card
 // ===============================
-const extractPublicId = (url) => {
+export const extractPublicId = (url) => {
     if (!url || !url.includes("cloudinary.com")) return null;
     const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.\w+$/);
     return match ? match[1] : null;
@@ -45,144 +42,128 @@ const deleteCloudinaryImages = async (urls = []) => {
     );
 };
 
-// ===============================
-// ✅ Crear producto con imágenes
-// ===============================
-async function createProduct(nombre, precio, stock, categoria, descripcion, files) {
-    try {
-        let imagenPrincipal = null;
-        let imagenesAdicionales = [];
+export async function createProduct(nombre, precio, stock, categoria, descripcion, files) {
+    let imagenPrincipal = null;
+    let imagenesAdicionales = [];
 
-        if (files?.length) {
-            const productSlug = nombre.toLowerCase().replace(/\s+/g, "-");
+    if (files?.length) {
+        const productSlug = nombre.toLowerCase().replace(/\s+/g, "-");
 
-            // Imagen principal → usamos .card (600px)
-            const main = await cloudinaryService.uploadProductImage(
-                files[0].buffer,
-                productSlug
+        const main = await cloudinaryService.uploadProductImage(
+            files[0].buffer,
+            productSlug
+        );
+        imagenPrincipal = main.images.card;
+
+        if (files.length > 1) {
+            const uploads = await Promise.all(
+                files.slice(1).map((file) =>
+                    cloudinaryService.uploadProductImage(file.buffer, productSlug)
+                )
             );
-            imagenPrincipal = main.images.card;
-
-            // Imágenes adicionales
-            if (files.length > 1) {
-                const uploads = await Promise.all(
-                    files.slice(1).map((file) =>
-                        cloudinaryService.uploadProductImage(file.buffer, productSlug)
-                    )
-                );
-                imagenesAdicionales = uploads.map((u) => u.images.card);
-            }
+            imagenesAdicionales = uploads.map((u) => u.images.card);
         }
+    }
 
-        const slug = nombre
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "");
+    const slug = nombre
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
 
-        let categoriaId = null;
-        if (categoria) {
-            const result = await pool.query(
-                `INSERT INTO categorias(nombre)
+    let categoriaId = null;
+    if (categoria) {
+        const result = await db.query(
+            `INSERT INTO categorias(nombre)
                  VALUES($1)
                  ON CONFLICT(nombre)
                  DO UPDATE SET nombre = EXCLUDED.nombre
                  RETURNING id`,
-                [categoria]
-            );
-            categoriaId = result.rows[0].id;
-        }
+            [categoria]
+        );
+        categoriaId = result.rows[0].id;
+    }
 
-        await pool.query(
-            `INSERT INTO productos
+    await db.query(
+        `INSERT INTO productos
              (titulo, slug, precio, descripcion, imagen_principal, imagenes_adicionales, categoria_id, stock, activo)
              VALUES($1, $2, $3, $4, $5, $6, $7, $8, true)`,
-            [
-                nombre,
-                slug,
-                Number(precio),
-                descripcion || null,
-                imagenPrincipal,
-                imagenesAdicionales.length ? imagenesAdicionales : null,
-                categoriaId,
-                Number(stock),
-            ]
-        );
+        [
+            nombre,
+            slug,
+            Number(precio),
+            descripcion || null,
+            imagenPrincipal,
+            imagenesAdicionales.length ? imagenesAdicionales : null,
+            categoriaId,
+            Number(stock),
+        ]
+    );
 
-        invalidateCache();
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+    invalidateCache();
+    return { success: true };
 }
 
-// ===============================
-// ✅ Actualizar producto
-// ===============================
-async function updateProduct(id, titulo, precio, stock, categoria, descripcion, files) {
-    try {
-        const productResult = await pool.query(
-            "SELECT * FROM productos WHERE id=$1",
-            [id]
+export async function updateProduct(id, titulo, precio, stock, categoria, descripcion, files) {
+    const productResult = await db.query(
+        "SELECT * FROM productos WHERE id=$1",
+        [id]
+    );
+
+    if (!productResult.rows.length) {
+        throw new Error("Producto no encontrado");
+    }
+
+    const existing = productResult.rows[0];
+    let imagenPrincipal = existing.imagen_principal;
+    let imagenesAdicionales = existing.imagenes_adicionales || [];
+
+    if (files?.length) {
+        const productSlug = titulo.toLowerCase().replace(/\s+/g, "-");
+
+        const oldUrls = [
+            existing.imagen_principal,
+            ...(existing.imagenes_adicionales || []),
+        ];
+
+        const main = await cloudinaryService.uploadProductImage(
+            files[0].buffer,
+            productSlug
         );
+        imagenPrincipal = main.images.card;
 
-        if (!productResult.rows.length) {
-            throw new Error("Producto no encontrado");
-        }
-
-        const existing = productResult.rows[0];
-        let imagenPrincipal = existing.imagen_principal;
-        let imagenesAdicionales = existing.imagenes_adicionales || [];
-
-        if (files?.length) {
-            const productSlug = titulo.toLowerCase().replace(/\s+/g, "-");
-
-            // Guardar URLs antiguas para borrar después
-            const oldUrls = [
-                existing.imagen_principal,
-                ...(existing.imagenes_adicionales || []),
-            ];
-
-            // Subir nuevas imágenes
-            const main = await cloudinaryService.uploadProductImage(
-                files[0].buffer,
-                productSlug
+        imagenesAdicionales = [];
+        if (files.length > 1) {
+            const uploads = await Promise.all(
+                files.slice(1).map((file) =>
+                    cloudinaryService.uploadProductImage(file.buffer, productSlug)
+                )
             );
-            imagenPrincipal = main.images.card; // ✅ corregido (antes era u.publicUrl)
-
-            imagenesAdicionales = [];
-            if (files.length > 1) {
-                const uploads = await Promise.all(
-                    files.slice(1).map((file) =>
-                        cloudinaryService.uploadProductImage(file.buffer, productSlug)
-                    )
-                );
-                imagenesAdicionales = uploads.map((u) => u.images.card); // ✅ corregido
-            }
-
-            // Borrar imágenes antiguas de Cloudinary (sin bloquear si falla)
-            await deleteCloudinaryImages(oldUrls);
+            imagenesAdicionales = uploads.map((u) => u.images.card);
         }
 
-        const slug = titulo
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "");
+        await deleteCloudinaryImages(oldUrls);
+    }
 
-        let categoriaId = null;
-        if (categoria) {
-            const result = await pool.query(
-                `INSERT INTO categorias(nombre)
+    const slug = titulo
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+
+    let categoriaId = null;
+    if (categoria) {
+        const result = await db.query(
+            `INSERT INTO categorias(nombre)
                  VALUES($1)
                  ON CONFLICT(nombre)
                  DO UPDATE SET nombre = EXCLUDED.nombre
                  RETURNING id`,
-                [categoria]
-            );
-            categoriaId = result.rows[0].id;
-        }
+            [categoria]
+        );
+        categoriaId = result.rows[0].id;
+    }
 
-        const result = await pool.query(
-            `UPDATE productos
+    const result = await db.query(
+        `UPDATE productos
              SET titulo=$1,
                  slug=$2,
                  precio=$3,
@@ -194,81 +175,63 @@ async function updateProduct(id, titulo, precio, stock, categoria, descripcion, 
                  updated_at=NOW()
              WHERE id=$9
              RETURNING *`,
-            [
-                titulo,
-                slug,
-                Number(precio),
-                descripcion || null,
-                imagenPrincipal,
-                imagenesAdicionales.length ? imagenesAdicionales : null,
-                categoriaId,
-                Number(stock),
-                id,
-            ]
-        );
+        [
+            titulo,
+            slug,
+            Number(precio),
+            descripcion || null,
+            imagenPrincipal,
+            imagenesAdicionales.length ? imagenesAdicionales : null,
+            categoriaId,
+            Number(stock),
+            id,
+        ]
+    );
 
-        invalidateCache();
-        return result.rows[0];
-    } catch (error) {
-        throw error;
-    }
+    invalidateCache();
+    return result.rows[0];
 }
 
-// ===============================
-// ✅ Eliminar producto (+ imágenes de Cloudinary + categoría vacía)
-// ===============================
-async function deleteProduct(id) {
-    try {
-        // Obtener datos del producto antes de borrar
-        const productResult = await pool.query(
-            "SELECT imagen_principal, imagenes_adicionales, categoria_id FROM productos WHERE id=$1",
-            [id]
-        );
+export async function deleteProduct(id) {
+    const productResult = await db.query(
+        "SELECT imagen_principal, imagenes_adicionales, categoria_id FROM productos WHERE id=$1",
+        [id]
+    );
 
-        if (!productResult.rows.length) {
-            throw new Error("Producto no encontrado");
-        }
-
-        const { imagen_principal, imagenes_adicionales, categoria_id } = productResult.rows[0];
-
-        // Borrar imágenes de Cloudinary
-        const allUrls = [imagen_principal, ...(imagenes_adicionales || [])];
-        await deleteCloudinaryImages(allUrls);
-
-        // Borrar producto
-        await pool.query("DELETE FROM productos WHERE id=$1", [id]);
-
-        // Si tenía categoría, verificar si quedó vacía y eliminarla
-        if (categoria_id) {
-            const remaining = await pool.query(
-                "SELECT COUNT(*) FROM productos WHERE categoria_id=$1",
-                [categoria_id]
-            );
-            if (parseInt(remaining.rows[0].count) === 0) {
-                await pool.query("DELETE FROM categorias WHERE id=$1", [categoria_id]);
-                console.log(`🗑️ Categoría ID ${categoria_id} eliminada por quedar sin productos`);
-            }
-        }
-
-        invalidateCache();
-        return { success: true };
-    } catch (error) {
-        throw error;
+    if (!productResult.rows.length) {
+        throw new Error("Producto no encontrado");
     }
+
+    const { imagen_principal, imagenes_adicionales, categoria_id } = productResult.rows[0];
+
+    const allUrls = [imagen_principal, ...(imagenes_adicionales || [])];
+    await deleteCloudinaryImages(allUrls);
+
+    await db.query("DELETE FROM productos WHERE id=$1", [id]);
+
+    if (categoria_id) {
+        const remaining = await db.query(
+            "SELECT COUNT(*) FROM productos WHERE categoria_id=$1",
+            [categoria_id]
+        );
+        if (parseInt(remaining.rows[0].count) === 0) {
+            await db.query("DELETE FROM categorias WHERE id=$1", [categoria_id]);
+            console.log(`🗑️ Categoría ID ${categoria_id} eliminada por quedar sin productos`);
+        }
+    }
+
+    invalidateCache();
+    return { success: true };
 }
 
-// ===============================
-// ✅ Obtener todos los productos (con cache)
-// ===============================
-async function getAllProducts() {
-    try {
-        const now = Date.now();
+export async function getAllProducts() {
+    const now = Date.now();
 
-        if (cache.products && now - cache.timestamp < cache.ttl) {
-            return cache.products;
-        }
+    if (cache.products && now - cache.timestamp < cache.ttl) {
+        return cache.products;
+    }
 
-        const result = await pool.query(`
+    const result = await db.query(`
             SELECT p.*, c.nombre categoria_nombre
             FROM productos p
             LEFT JOIN categorias c ON p.categoria_id = c.id
@@ -276,43 +239,24 @@ async function getAllProducts() {
             ORDER BY p.created_at DESC
         `);
 
-        cache.products = result.rows;
-        cache.timestamp = now;
+    cache.products = result.rows;
+    cache.timestamp = now;
 
-        return result.rows;
-    } catch (error) {
-        throw error;
-    }
+    return result.rows;
 }
 
-// ===============================
-// ✅ Obtener producto por ID
-// ===============================
-async function getProductById(id) {
-    try {
-        const result = await pool.query(
-            `SELECT p.*, c.nombre categoria_nombre
+export async function getProductById(id) {
+    const result = await db.query(
+        `SELECT p.*, c.nombre categoria_nombre
              FROM productos p
              LEFT JOIN categorias c ON p.categoria_id = c.id
              WHERE p.id=$1`,
-            [id]
-        );
+        [id]
+    );
 
-        if (!result.rows.length) {
-            throw new Error("Producto no encontrado");
-        }
-
-        return result.rows[0];
-    } catch (error) {
-        throw error;
+    if (!result.rows.length) {
+        throw new Error("Producto no encontrado");
     }
-}
 
-module.exports = {
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    getAllProducts,
-    getProductById,
-    invalidateCache,
-};
+    return result.rows[0];
+}

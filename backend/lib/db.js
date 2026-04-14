@@ -1,5 +1,7 @@
-const { Pool } = require("pg");
-require("dotenv").config();
+import pg from "pg";
+import "dotenv/config";
+
+const { Pool } = pg;
 
 // Prioriza DATABASE_URL, luego PG_URI
 const connectionString = process.env.DATABASE_URL || process.env.PG_URI;
@@ -42,7 +44,7 @@ pool.on('error', (err) => {
   console.error('❌ Error inesperado en PostgreSQL:', err);
 });
 
-// Función helper para queries (compatible con tu código de payments.js)
+// Función helper para queries
 const query = async (text, params) => {
   const start = Date.now();
   try {
@@ -61,9 +63,5 @@ const query = async (text, params) => {
 };
 
 // Exportar tanto el pool como la función query
-module.exports = {
-  query,
-  pool,
-  // Para compatibilidad con código que importa solo el pool
-  ...pool
-};
+export { query, pool };
+export default { query, pool };

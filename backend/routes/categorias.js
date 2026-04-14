@@ -1,12 +1,12 @@
-const express = require('express');
-const pool = require('../lib/db');
+import express from 'express';
+import db from '../lib/db.js';
 
 const router = express.Router();
 
 // GET /api/categorias
 router.get('/', async (req, res) => {
     try {
-        const result = await pool.query(
+        const result = await db.query(
             'SELECT id, nombre FROM categorias ORDER BY nombre ASC'
         );
         res.json(result.rows);
@@ -25,7 +25,7 @@ router.get('/:id', async (req, res) => {
             return res.status(400).json({ error: 'ID de categoría inválido' });
         }
 
-        const result = await pool.query(
+        const result = await db.query(
             `SELECT p.id, p.titulo, p.precio, p.imagen_principal, p.categoria_id, p.promedio_calificacion
              FROM productos p
              WHERE p.categoria_id = $1 AND p.activo = true
@@ -40,4 +40,4 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

@@ -1,6 +1,7 @@
-// backend/services/cloudinaryService.js
-const cloudinary = require("cloudinary").v2;
-const sharp = require("sharp");
+import cloudinaryPkg from "cloudinary";
+import sharp from "sharp";
+
+const cloudinary = cloudinaryPkg.v2;
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -8,11 +9,6 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/*
--------------------------------------------------------
-SANITIZE TEXT (soporta acentos)
--------------------------------------------------------
-*/
 const sanitize = (text = "") => {
     return text
         .toString()
@@ -24,11 +20,6 @@ const sanitize = (text = "") => {
         .replace(/\-\-+/g, "-");
 };
 
-/*
--------------------------------------------------------
-OPTIMIZACIÓN DE IMÁGENES (antes de subir)
--------------------------------------------------------
-*/
 const optimizeImage = async (buffer, width) => {
     return sharp(buffer)
         .rotate()
@@ -37,11 +28,6 @@ const optimizeImage = async (buffer, width) => {
         .toBuffer();
 };
 
-/*
--------------------------------------------------------
-SUBIR BUFFER A CLOUDINARY
--------------------------------------------------------
-*/
 const uploadBuffer = (buffer, publicId, folder) => {
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -61,13 +47,7 @@ const uploadBuffer = (buffer, publicId, folder) => {
     });
 };
 
-/*
--------------------------------------------------------
-PRODUCT IMAGES
-Sube 3 tamaños: thumb(300), card(600), full(1000)
--------------------------------------------------------
-*/
-exports.uploadProductImage = async (fileBuffer, productName) => {
+export async function uploadProductImage(fileBuffer, productName) {
     try {
         if (!fileBuffer) throw new Error("No se recibió imagen");
         if (!productName) productName = "producto";
@@ -95,14 +75,9 @@ exports.uploadProductImage = async (fileBuffer, productName) => {
         console.error("❌ Error uploadProductImage:", error);
         throw error;
     }
-};
+}
 
-/*
--------------------------------------------------------
-HERO IMAGE
--------------------------------------------------------
-*/
-exports.uploadHeroImage = async (fileBuffer, section) => {
+export async function uploadHeroImage(fileBuffer, section) {
     try {
         const sanitized = section.toString().toLowerCase().replace(/\s+/g, "-");
         const folder = `blackmichi/hero`;
@@ -122,14 +97,9 @@ exports.uploadHeroImage = async (fileBuffer, section) => {
         console.error("❌ Error uploadHeroImage:", error);
         throw error;
     }
-};
+}
 
-/*
--------------------------------------------------------
-LOGO
--------------------------------------------------------
-*/
-exports.uploadLogo = async (fileBuffer) => {
+export async function uploadLogo(fileBuffer) {
     try {
         const optimized = await optimizeImage(fileBuffer, 500);
         const url = await uploadBuffer(optimized, "logo", "blackmichi/logo");
@@ -138,15 +108,9 @@ exports.uploadLogo = async (fileBuffer) => {
         console.error("❌ Error uploadLogo:", error);
         throw error;
     }
-};
+}
 
-/*
--------------------------------------------------------
-DELETE FILE
-Recibe el public_id de Cloudinary (sin extensión)
--------------------------------------------------------
-*/
-exports.deleteFile = async (publicId) => {
+export async function deleteFile(publicId) {
     try {
         const result = await cloudinary.uploader.destroy(publicId);
         if (result.result !== "ok" && result.result !== "not found") {
@@ -157,14 +121,9 @@ exports.deleteFile = async (publicId) => {
         console.error("❌ Error eliminando archivo:", error);
         throw error;
     }
-};
+}
 
-/*
--------------------------------------------------------
-LIST FILES
--------------------------------------------------------
-*/
-exports.listFiles = async (folder) => {
+export async function listFiles(folder) {
     try {
         const result = await cloudinary.api.resources({
             type: "upload",
@@ -176,4 +135,4 @@ exports.listFiles = async (folder) => {
         console.error("❌ Error listando archivos:", error);
         throw error;
     }
-};
+}

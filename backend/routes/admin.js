@@ -1,11 +1,10 @@
-const express = require("express");
+import express from "express";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import upload from "../middleware/upload.js";
+import * as adminController from "../controllers/adminController.js";
+import * as productosController from "../controllers/productosController.js";
+
 const router = express.Router();
-
-const { requireAuth, requireAdmin } = require("../middleware/auth");
-const upload = require("../middleware/upload");
-
-const adminController = require("../controllers/adminController");
-const productosController = require("../controllers/productosController");
 
 // =======================================================
 // 📌 PRODUCTOS (Admin) → CRUD real hecho en productosController
@@ -97,4 +96,4 @@ router.delete(
   adminController.deleteUser
 );
 
-module.exports = router;
+export default router;

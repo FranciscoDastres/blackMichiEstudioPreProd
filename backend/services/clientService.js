@@ -1,18 +1,15 @@
-// backend/services/clientService.js
-const pool = require('../lib/db');
+import db from "../lib/db.js";
 
-// ===== PERFIL =====
-
-async function getPerfil(userId) {
-    const result = await pool.query(
+export async function getPerfil(userId) {
+    const result = await db.query(
         'SELECT id, nombre, email, rol, telefono, direccion_defecto, created_at FROM usuarios WHERE id=$1',
         [userId]
     );
     return result.rows[0] || null;
 }
 
-async function updatePerfil(userId, { nombre, telefono, direccion_defecto }) {
-    const result = await pool.query(
+export async function updatePerfil(userId, { nombre, telefono, direccion_defecto }) {
+    const result = await db.query(
         `UPDATE usuarios
          SET nombre=$1, telefono=$2, direccion_defecto=$3, updated_at=CURRENT_TIMESTAMP
          WHERE id=$4
@@ -21,8 +18,6 @@ async function updatePerfil(userId, { nombre, telefono, direccion_defecto }) {
     );
     return result.rows[0];
 }
-
-// ===== PEDIDOS =====
 
 const PEDIDO_ITEMS_SQL = `
     json_agg(
@@ -40,8 +35,8 @@ const PEDIDO_ITEMS_SQL = `
     ) AS items
 `;
 
-async function getPedidos(userId) {
-    const result = await pool.query(`
+export async function getPedidos(userId) {
+    const result = await db.query(`
         SELECT p.*, ${PEDIDO_ITEMS_SQL}
         FROM pedidos p
         LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
@@ -53,8 +48,8 @@ async function getPedidos(userId) {
     return result.rows;
 }
 
-async function getPedidoById(pedidoId, userId) {
-    const result = await pool.query(`
+export async function getPedidoById(pedidoId, userId) {
+    const result = await db.query(`
         SELECT p.*,
             json_agg(
                 json_build_object(
@@ -79,8 +74,8 @@ async function getPedidoById(pedidoId, userId) {
     return result.rows[0] || null;
 }
 
-async function cancelarPedido(pedidoId, userId) {
-    const pedido = await pool.query(
+export async function cancelarPedido(pedidoId, userId) {
+    const pedido = await db.query(
         'SELECT estado FROM pedidos WHERE id=$1 AND usuario_id=$2',
         [pedidoId, userId]
     );
@@ -89,27 +84,25 @@ async function cancelarPedido(pedidoId, userId) {
         throw Object.assign(new Error('Solo pedidos pendientes se pueden cancelar'), { status: 400 });
     }
 
-    await pool.query(
+    await db.query(
         "UPDATE pedidos SET estado='cancelado', updated_at=CURRENT_TIMESTAMP WHERE id=$1",
         [pedidoId]
     );
 
-    const items = await pool.query(
+    const items = await db.query(
         'SELECT producto_id, cantidad FROM pedido_items WHERE pedido_id=$1',
         [pedidoId]
     );
     for (const item of items.rows) {
-        await pool.query(
+        await db.query(
             'UPDATE productos SET stock = stock + $1 WHERE id=$2',
             [item.cantidad, item.producto_id]
         );
     }
 }
 
-// ===== RESEÑAS =====
-
-async function getMisResenas(userId) {
-    const result = await pool.query(
+export async function getMisResenas(userId) {
+    const result = await db.query(
         `SELECT v.id, v.calificacion, v.comentario, v.created_at,
                 v.producto_id,
                 p.titulo           AS producto_titulo,
@@ -122,12 +115,3 @@ async function getMisResenas(userId) {
     );
     return result.rows;
 }
-
-module.exports = {
-    getPerfil,
-    updatePerfil,
-    getPedidos,
-    getPedidoById,
-    cancelarPedido,
-    getMisResenas,
-};

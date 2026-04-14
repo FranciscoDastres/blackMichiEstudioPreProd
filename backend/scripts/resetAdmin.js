@@ -1,8 +1,14 @@
-const path = require("path");
-const { createClient } = require("@supabase/supabase-js");
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
+import db from "../lib/db.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Cargar .env desde la raíz del backend (un nivel arriba de /scripts)
-require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
-const db = require('../lib/db');
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const supabase = createClient(
     process.env.SUPABASE_URL,

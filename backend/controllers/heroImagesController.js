@@ -1,9 +1,9 @@
 // backend/controllers/heroImagesController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en heroImagesService.js
-const heroImagesService = require("../services/heroImagesService");
+import * as heroImagesService from "../services/heroImagesService.js";
 
 // ✅ Obtener hero images (Admin)
-async function getHeroImages(req, res) {
+export async function getHeroImages(req, res) {
   try {
     const images = await heroImagesService.getHeroImages();
     res.json(images);
@@ -14,7 +14,7 @@ async function getHeroImages(req, res) {
 }
 
 // ✅ Obtener hero images públicas
-async function getPublicHeroImages(req, res) {
+export async function getPublicHeroImages(req, res) {
   try {
     const images = await heroImagesService.getPublicHeroImages();
     res.json(images);
@@ -25,7 +25,7 @@ async function getPublicHeroImages(req, res) {
 }
 
 // ✅ Obtener SOLO la primera hero image (para preload LCP)
-async function getFirstHeroImage(req, res) {
+export async function getFirstHeroImage(req, res) {
   try {
     const image = await heroImagesService.getFirstHeroImage();
     // Cache agresivo: la primera imagen cambia poco
@@ -38,7 +38,7 @@ async function getFirstHeroImage(req, res) {
 }
 
 // ✅ Subir/actualizar hero image
-async function uploadHeroImage(req, res) {
+export async function uploadHeroImage(req, res) {
   try {
     const { section, title, subtitle, buttonText, categoria } = req.body;
 
@@ -70,7 +70,7 @@ async function uploadHeroImage(req, res) {
 }
 
 // ✅ Eliminar hero image
-async function deleteHeroImage(req, res) {
+export async function deleteHeroImage(req, res) {
   try {
     const { section } = req.params;
 
@@ -85,11 +85,3 @@ async function deleteHeroImage(req, res) {
     res.status(400).json({ error: error.message });
   }
 }
-
-module.exports = {
-  getHeroImages,
-  getPublicHeroImages,
-  getFirstHeroImage,
-  uploadHeroImage,
-  deleteHeroImage,
-};

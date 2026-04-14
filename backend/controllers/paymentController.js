@@ -1,8 +1,8 @@
 // backend/controllers/paymentController.js
-const flowService = require('../services/flowService');
-const paymentService = require('../services/paymentService');
+import flowService from '../services/flowService.js';
+import * as paymentService from '../services/paymentService.js';
 
-async function createPayment(req, res) {
+export async function createPayment(req, res) {
     const { items, email, nombre, notas, telefono, direccion } = req.body;
 
     if (!process.env.BACKEND_URL) {
@@ -37,7 +37,7 @@ async function createPayment(req, res) {
     }
 }
 
-async function flowReturn(req, res) {
+export async function flowReturn(req, res) {
     const token = req.body?.token || req.query?.token;
     console.log('🔙 Usuario retornó de Flow');
     try {
@@ -52,7 +52,7 @@ async function flowReturn(req, res) {
     }
 }
 
-async function flowConfirmation(req, res) {
+export async function flowConfirmation(req, res) {
     const token = req.body.token;
     console.log('📥 Webhook Flow recibido:', { timestamp: new Date().toISOString() });
 
@@ -75,7 +75,7 @@ async function flowConfirmation(req, res) {
     }
 }
 
-async function getPedidoStatus(req, res) {
+export async function getPedidoStatus(req, res) {
     try {
         const flowToken = req.query.token;
         if (!flowToken) {
@@ -84,8 +84,6 @@ async function getPedidoStatus(req, res) {
 
         const pedido = await paymentService.getEstadoPedido(req.params.pedidoId, flowToken);
         if (!pedido) {
-            // Respuesta genérica: no distinguimos entre "no existe" y "token inválido"
-            // para no filtrar existencia de pedidos a atacantes
             return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
         }
 
@@ -115,5 +113,3 @@ async function getPedidoStatus(req, res) {
         res.status(500).json({ success: false, error: 'Error al obtener el pedido' });
     }
 }
-
-module.exports = { createPayment, flowReturn, flowConfirmation, getPedidoStatus };

@@ -1,8 +1,9 @@
 // backend/routes/auth.js
-const express = require('express');
+import express from 'express';
+import * as authController from '../controllers/authController.js';
+import { requireAuth } from '../middleware/auth.js';
+
 const router = express.Router();
-const authController = require('../controllers/authController');
-const { requireAuth } = require('../middleware/auth');
 
 // Rutas públicas — sin cambios
 router.post('/register', authController.register);
@@ -16,4 +17,4 @@ router.get('/me', requireAuth, authController.me);
 router.post('/logout', requireAuth, authController.logout);
 router.post('/change-password', requireAuth, authController.changePassword);
 
-module.exports = router;
+export default router;

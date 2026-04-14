@@ -1,8 +1,8 @@
-const pool = require("../lib/db");
+import db from "../lib/db.js";
 
-async function getOrders(userId = null) {
+export async function getOrders(userId = null) {
     let query = `
-        SELECT p.*, 
+        SELECT p.*,
                json_agg(pi.*) as items
         FROM pedidos p
         LEFT JOIN pedido_items pi ON pi.pedido_id = p.id
@@ -13,13 +13,13 @@ async function getOrders(userId = null) {
         params.push(userId);
     }
     query += " GROUP BY p.id ORDER BY p.created_at DESC";
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
     return result.rows;
 }
 
-async function getMyOrders(usuarioId) {
-    const result = await pool.query(
-        `SELECT p.*, 
+export async function getMyOrders(usuarioId) {
+    const result = await db.query(
+        `SELECT p.*,
                 json_agg(pi.*) as items
          FROM pedidos p
          LEFT JOIN pedido_items pi ON pi.pedido_id = p.id
@@ -31,8 +31,8 @@ async function getMyOrders(usuarioId) {
     return result.rows;
 }
 
-async function getOrderById(id, usuarioId = null, esAdmin = false) {
-    const result = await pool.query(
+export async function getOrderById(id, usuarioId = null, esAdmin = false) {
+    const result = await db.query(
         `SELECT p.*,
                 json_agg(pi.*) as items
          FROM pedidos p
@@ -49,13 +49,11 @@ async function getOrderById(id, usuarioId = null, esAdmin = false) {
     return pedido;
 }
 
-async function updateOrderStatus(id, status) {
-    const result = await pool.query(
+export async function updateOrderStatus(id, status) {
+    const result = await db.query(
         "UPDATE pedidos SET estado = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
         [status, id]
     );
     if (!result.rows.length) throw new Error("Pedido no encontrado");
     return result.rows[0];
 }
-
-module.exports = { getOrders, getMyOrders, getOrderById, updateOrderStatus };

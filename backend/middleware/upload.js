@@ -1,11 +1,8 @@
-// backend/middleware/upload.js
-const multer = require("multer");
-const path = require("path");
+import multer from "multer";
+import path from "path";
 
-// Storage en memoria (NO en disco)
 const memoryStorage = multer.memoryStorage();
 
-// Whitelist estricta: mime types exactos permitidos
 const ALLOWED_MIME_TYPES = new Set([
     "image/jpeg",
     "image/png",
@@ -13,10 +10,9 @@ const ALLOWED_MIME_TYPES = new Set([
     "image/gif",
 ]);
 
-// Whitelist estricta de extensiones
 const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const upload = multer({
     storage: memoryStorage,
@@ -35,4 +31,4 @@ const upload = multer({
     },
 });
 
-module.exports = upload;
+export default upload;

@@ -1,23 +1,40 @@
 // index.js — Black Michi Estudio Backend
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
-const path = require("path");
-const fs = require("fs");
-require("dotenv").config();
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import path from "path";
+import fs from "fs";
+import compression from "compression";
+import { fileURLToPath } from "url";
+import "dotenv/config";
 
-const keepAlive = require("./lib/keepAlive");
-const cleanupJobs = require("./lib/cleanupJobs");
+import * as keepAlive from "./lib/keepAlive.js";
+import * as cleanupJobs from "./lib/cleanupJobs.js";
+
+import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/admin.js";
+import clientRoutes from "./routes/client.js";
+import productosRoutes from "./routes/productos.js";
+import categoriasRoutes from "./routes/categorias.js";
+import heroImagesRoutes from "./routes/heroImages.js";
+import paymentRoutes from "./routes/payments.js";
+import featuredRoutes from "./routes/featuredRoutes.js";
+import reviewsRoutes from "./routes/reviews.js";
+import orderRoutes from "./routes/order.js";
+import { requireAuth, requireAdmin } from "./middleware/auth.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isProd = process.env.NODE_ENV === "production";
 
 // ─────────────────────────────────────────────
 // Evitar doble arranque en Render (CRÍTICO)
 // ─────────────────────────────────────────────
-if (process.env.RENDER === "true" && require.main !== module) {
-  console.log("⛔ Render detuvo doble instancia (module.exports).");
-  return;
+if (process.env.RENDER === "true" && process.argv[1] !== __filename) {
+  console.log("⛔ Render detuvo doble instancia.");
+  process.exit(0);
 }
 
 // ─────────────────────────────────────────────
@@ -33,28 +50,7 @@ if (missingVars.length > 0) {
   console.warn(`⚠️  Variables faltantes: ${missingVars.join(", ")}`);
 }
 
-let pool;
-try {
-  pool = require("./lib/db");
-  console.log("✅ Pool de conexión a BD inicializado");
-} catch (error) {
-  console.error("❌ Error al cargar la BD:", error.message);
-}
-
-// ─────────────────────────────────────────────
-// IMPORTAR RUTAS
-// ─────────────────────────────────────────────
-const authRoutes = require("./routes/auth");
-const adminRoutes = require("./routes/admin");
-const clientRoutes = require("./routes/client");
-const productosRoutes = require("./routes/productos");
-const categoriasRoutes = require("./routes/categorias");
-const heroImagesRoutes = require("./routes/heroImages");
-const paymentRoutes = require("./routes/payments");
-const featuredRoutes = require("./routes/featuredRoutes");
-const reviewsRoutes = require("./routes/reviews");
-const orderRoutes = require("./routes/order");
-const { requireAuth, requireAdmin } = require("./middleware/auth");
+console.log("✅ Pool de conexión a BD inicializado");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -125,7 +121,6 @@ app.use((req, res, next) => {
 // ─────────────────────────────────────────────
 // COMPRESIÓN
 // ─────────────────────────────────────────────
-const compression = require("compression");
 app.use(compression({ level: 6, threshold: 1024 }));
 
 // ─────────────────────────────────────────────
@@ -277,4 +272,4 @@ process.on("SIGTERM", () => {
   });
 });
 
-module.exports = app;
+export default app;

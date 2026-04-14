@@ -1,7 +1,6 @@
-// backend/services/reviewsService.js
-const db = require('../lib/db');
+import db from "../lib/db.js";
 
-async function getByProducto(productoId) {
+export async function getByProducto(productoId) {
     const result = await db.query(
         `SELECT v.id, v.calificacion, v.comentario, v.created_at,
                 u.nombre AS usuario_nombre, u.email AS usuario_email
@@ -14,8 +13,7 @@ async function getByProducto(productoId) {
     return result.rows;
 }
 
-async function create(usuarioId, { producto_id, calificacion, comentario }) {
-    // Verificar que el usuario haya recibido el producto
+export async function create(usuarioId, { producto_id, calificacion, comentario }) {
     const ordenEntregada = await db.query(
         `SELECT 1 FROM pedido_items pi
          JOIN pedidos p ON pi.pedido_id = p.id
@@ -40,5 +38,3 @@ async function create(usuarioId, { producto_id, calificacion, comentario }) {
 
     return result.rows[0];
 }
-
-module.exports = { getByProducto, create };

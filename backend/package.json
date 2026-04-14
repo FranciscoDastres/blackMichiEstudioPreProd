@@ -2,9 +2,13 @@
   "name": "blackmichiestudio-backend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test-db": "node lib/test-db.js"
   },
   "dependencies": {
@@ -23,6 +27,7 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "vitest": "^4.1.4"
   }
 }

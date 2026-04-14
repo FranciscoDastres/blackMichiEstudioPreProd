@@ -1,19 +1,15 @@
-// backend/services/paymentService.js
-const db = require('../lib/db');
-const flowService = require('./flowService');
-const emailService = require('./emailService');
-const { invalidateCache } = require('./productService');
+import db from "../lib/db.js";
+import flowService from "./flowService.js";
+import * as emailService from "./emailService.js";
+import { invalidateCache } from "./productService.js";
 
-// ── Crear pago Flow ──────────────────────────────────────────────────────────
-
-async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
+export async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
     const commerceOrder = `BMS-${timestamp}-${randomSuffix}`;
 
     await db.query('BEGIN');
     try {
-        // Recalcular precios desde DB (nunca confiar en el cliente)
         const productIds = items.map(item => item.id);
         const productosDB = await db.query(
             'SELECT id, precio, stock, activo FROM productos WHERE id = ANY($1)',
@@ -35,21 +31,18 @@ async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
             totalCalculado += Number(prod.precio) * item.quantity;
         }
 
-        // Costo de envío desde configuración
         const configResult = await db.query(
             `SELECT valor FROM configuracion WHERE clave = 'costo_envio'`
         );
         const costoEnvio = configResult.rows.length > 0 ? Number(configResult.rows[0].valor) : 3500;
         totalCalculado += costoEnvio;
 
-        // Buscar usuario por email (puede no estar registrado)
         const userResult = await db.query(
             'SELECT id FROM usuarios WHERE email = $1',
             [email.trim().toLowerCase()]
         );
         const usuarioId = userResult.rows.length > 0 ? userResult.rows[0].id : null;
 
-        // Crear pedido
         const pedidoResult = await db.query(
             `INSERT INTO pedidos (
                 usuario_id, comprador_nombre, comprador_email, comprador_telefono,
@@ -70,7 +63,6 @@ async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
         );
         const pedidoId = pedidoResult.rows[0].id;
 
-        // Validar stock antes de insertar items
         const stockInsuficiente = items
             .filter(item => preciosMap[item.id]?.stock < item.quantity)
             .map(item => ({
@@ -88,7 +80,6 @@ async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
             );
         }
 
-        // Insertar items del pedido
         for (const item of items) {
             await db.query(
                 `INSERT INTO pedido_items (
@@ -107,7 +98,6 @@ async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
             );
         }
 
-        // Crear pago en Flow
         const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
         const flowResponse = await flowService.createPayment({
             commerceOrder,
@@ -135,9 +125,7 @@ async function crearPago({ items, email, nombre, notas, telefono, direccion }) {
     }
 }
 
-// ── Buscar pedido por flow_token (para redirects) ────────────────────────────
-
-async function getPedidoByFlowToken(token) {
+export async function getPedidoByFlowToken(token) {
     const result = await db.query(
         'SELECT id FROM pedidos WHERE flow_token = $1',
         [token]
@@ -145,12 +133,7 @@ async function getPedidoByFlowToken(token) {
     return result.rows[0]?.id || null;
 }
 
-// ── Procesar webhook de confirmación ─────────────────────────────────────────
-
-async function procesarWebhook(token, rawBody, rawHeaders, ip) {
-    // ── Idempotencia: si ya procesamos este token con éxito, acknowledge y salir ──
-    // Flow reenvía webhooks en caso de timeout, sin este guard se duplican emails y
-    // se intenta descontar stock dos veces.
+export async function procesarWebhook(token, rawBody, rawHeaders, ip) {
     const existente = await db.query(
         `SELECT id, pedido_id, processed FROM flow_webhooks
          WHERE token = $1 AND processed = true
@@ -165,7 +148,6 @@ async function procesarWebhook(token, rawBody, rawHeaders, ip) {
         return { pedidoId: existente.rows[0].pedido_id, estado: 'duplicado' };
     }
 
-    // Registrar webhook recibido
     const webhookResult = await db.query(
         `INSERT INTO flow_webhooks (token, request_body, request_headers, ip_origen)
          VALUES ($1, $2, $3, $4) RETURNING id`,
@@ -173,7 +155,6 @@ async function procesarWebhook(token, rawBody, rawHeaders, ip) {
     );
     const webhookId = webhookResult.rows[0].id;
 
-    // Obtener estado del pago desde Flow
     const payment = await flowService.getPaymentStatus(token);
     console.log('💳 Estado del pago:', {
         flowOrder: payment.flowOrder,
@@ -212,7 +193,6 @@ async function procesarWebhook(token, rawBody, rawHeaders, ip) {
 
     const pedido = updateResult.rows[0];
 
-    // Descontar stock si el pago fue confirmado
     if (payment.status === 2) {
         console.log('✅ Pago confirmado — descontando stock, Pedido #' + pedido.id);
         const itemsResult = await db.query(
@@ -233,14 +213,12 @@ async function procesarWebhook(token, rawBody, rawHeaders, ip) {
         invalidateCache();
     }
 
-    // Marcar webhook como procesado
     await db.query(
         `UPDATE flow_webhooks SET processed = true, pedido_id = $1, flow_order = $2, flow_status = $3
          WHERE id = $4`,
         [pedido.id, payment.flowOrder, payment.status, webhookId]
     );
 
-    // Enviar emails según estado
     if (payment.status === 2) {
         const [itemsResult, pedidoCompleto] = await Promise.all([
             db.query('SELECT producto_titulo, cantidad, precio_unitario FROM pedido_items WHERE pedido_id = $1', [pedido.id]),
@@ -253,14 +231,7 @@ async function procesarWebhook(token, rawBody, rawHeaders, ip) {
     return { pedidoId: pedido.id, estado: nuevoEstado };
 }
 
-// ── Estado de pedido (para página de retorno) ─────────────────────────────────
-//
-// Requiere el flow_token como proof-of-ownership: solo quien inició el pago
-// (y recibió el token de Flow en el redirect) puede ver los datos del pedido.
-// Esto protege PII del comprador (nombre, email, teléfono, dirección) de ser
-// expuesta a cualquiera que conozca un pedidoId secuencial.
-
-async function getEstadoPedido(pedidoId, flowToken) {
+export async function getEstadoPedido(pedidoId, flowToken) {
     if (!flowToken || typeof flowToken !== 'string') {
         return null;
     }
@@ -282,5 +253,3 @@ async function getEstadoPedido(pedidoId, flowToken) {
     );
     return result.rows[0] || null;
 }
-
-module.exports = { crearPago, getPedidoByFlowToken, procesarWebhook, getEstadoPedido };

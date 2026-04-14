@@ -1,7 +1,4 @@
-// services/emailService.js
-// En desarrollo: imprime en consola (no necesita config)
-// En producción: usa Resend (RESEND_API_KEY en .env)
-const axios = require("axios");
+import axios from "axios";
 
 const isProd = process.env.NODE_ENV === "production";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -35,8 +32,7 @@ async function sendEmail({ to, subject, html }) {
     }
 }
 
-// Email al comprador cuando se confirma el pago
-async function emailConfirmacionPago(pedido, items) {
+export async function emailConfirmacionPago(pedido, items) {
     const itemsHtml = items.map(i =>
         `<tr>
             <td style="padding:8px;border-bottom:1px solid #333">${i.producto_titulo}</td>
@@ -69,8 +65,7 @@ async function emailConfirmacionPago(pedido, items) {
     });
 }
 
-// Email al admin cuando llega un pedido nuevo
-async function emailNuevoPedidoAdmin(pedido, items) {
+export async function emailNuevoPedidoAdmin(pedido, items) {
     const itemsHtml = items.map(i =>
         `<li>${i.cantidad}x ${i.producto_titulo} — $${Number(i.precio_unitario).toLocaleString("es-CL")}</li>`
     ).join("");
@@ -89,8 +84,7 @@ async function emailNuevoPedidoAdmin(pedido, items) {
     });
 }
 
-// Email al comprador cuando el admin marca como enviado
-async function emailPedidoEnviado(pedido) {
+export async function emailPedidoEnviado(pedido) {
     await sendEmail({
         to: pedido.comprador_email,
         subject: `📦 Tu pedido #${pedido.id} fue enviado — Black Michi Estudio`,
@@ -105,5 +99,3 @@ async function emailPedidoEnviado(pedido) {
         </div>`
     });
 }
-
-module.exports = { emailConfirmacionPago, emailNuevoPedidoAdmin, emailPedidoEnviado };

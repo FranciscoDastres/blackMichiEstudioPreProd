@@ -1,11 +1,8 @@
-// backend/services/featuredService.js
-const pool = require("../lib/db");
+import db from "../lib/db.js";
 
-// ✅ Obtener productos destacados
-async function getFeaturedProducts() {
-    try {
-        const result = await pool.query(`
-      SELECT 
+export async function getFeaturedProducts() {
+    const result = await db.query(`
+      SELECT
         p.id,
         p.titulo,
         p.precio,
@@ -15,37 +12,18 @@ async function getFeaturedProducts() {
       JOIN productos p ON p.id = f.producto_id
       ORDER BY f.position ASC
     `);
-        return result.rows;
-    } catch (error) {
-        throw error;
-    }
+    return result.rows;
 }
 
-// ✅ Agregar producto destacado
-async function addFeaturedProduct(producto_id, position) {
-    try {
-        await pool.query(
-            "INSERT INTO featured_productos (producto_id, position) VALUES ($1, $2)",
-            [producto_id, position]
-        );
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+export async function addFeaturedProduct(producto_id, position) {
+    await db.query(
+        "INSERT INTO featured_productos (producto_id, position) VALUES ($1, $2)",
+        [producto_id, position]
+    );
+    return { success: true };
 }
 
-// ✅ Eliminar producto destacado
-async function removeFeaturedProduct(id) {
-    try {
-        await pool.query("DELETE FROM featured_productos WHERE id = $1", [id]);
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+export async function removeFeaturedProduct(id) {
+    await db.query("DELETE FROM featured_productos WHERE id = $1", [id]);
+    return { success: true };
 }
-
-module.exports = {
-    getFeaturedProducts,
-    addFeaturedProduct,
-    removeFeaturedProduct,
-};

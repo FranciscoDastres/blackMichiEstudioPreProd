@@ -1,10 +1,7 @@
-// lib/cleanupJobs.js
-// Cancela pedidos pendientes con más de 24h (sin tocar stock — nunca fue decrementado)
-const db = require("./db");
+import db from "./db.js";
 
 async function cancelarPedidosAbandonados() {
     try {
-        // Buscar pedidos pendientes con más de 24h
         const result = await db.query(
             `SELECT id FROM pedidos
              WHERE estado = 'pendiente'
@@ -16,13 +13,10 @@ async function cancelarPedidosAbandonados() {
         console.log(`🧹 Cancelando ${result.rows.length} pedido(s) abandonado(s)...`);
 
         for (const { id } of result.rows) {
-            // Cancelar el pedido (sin reponer stock — estos pedidos nunca fueron pagados,
-            // por lo tanto el stock nunca fue decrementado)
             await db.query(
                 `UPDATE pedidos SET estado = 'cancelado', updated_at = NOW() WHERE id = $1`,
                 [id]
             );
-
             console.log(`✅ Pedido #${id} cancelado`);
         }
     } catch (error) {
@@ -31,10 +25,10 @@ async function cancelarPedidosAbandonados() {
 }
 
 function start() {
-    // Ejecutar al arrancar y luego cada hora
     cancelarPedidosAbandonados();
     setInterval(cancelarPedidosAbandonados, 60 * 60 * 1000);
     console.log("🧹 Job de limpieza de pedidos activo (cada 1h)");
 }
 
-module.exports = { start };
+export { start };
+export default { start };

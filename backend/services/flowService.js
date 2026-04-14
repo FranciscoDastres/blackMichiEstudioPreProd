@@ -1,7 +1,6 @@
-const crypto = require('crypto');
-const axios = require('axios');
-require('dotenv').config();
-
+import crypto from "crypto";
+import axios from "axios";
+import "dotenv/config";
 
 class FlowService {
     constructor() {
@@ -72,8 +71,6 @@ class FlowService {
 
             const data = response.data;
 
-            // ✅ FIX #4: Validar que Flow retornó una respuesta válida con token y url
-            // Flow puede retornar error con HTTP 200 en sandbox (code != 0)
             if (!data || !data.token || !data.url) {
                 console.error('❌ Flow respuesta inválida o sin token:', data);
                 throw new Error(
@@ -85,7 +82,6 @@ class FlowService {
             return data;
 
         } catch (error) {
-            // Si el error ya lo lanzamos nosotros arriba, lo re-lanzamos tal cual
             if (!error.response) {
                 throw error;
             }
@@ -148,5 +144,4 @@ class FlowService {
     }
 }
 
-
-module.exports = new FlowService();
+export default new FlowService();

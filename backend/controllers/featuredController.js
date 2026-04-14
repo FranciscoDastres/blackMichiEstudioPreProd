@@ -1,9 +1,9 @@
 // backend/controllers/featuredController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en featuredService.js
-const featuredService = require("../services/featuredService");
+import * as featuredService from "../services/featuredService.js";
 
 // ✅ Obtener productos destacados
-async function getFeaturedProducts(req, res) {
+export async function getFeaturedProducts(req, res) {
   try {
     const products = await featuredService.getFeaturedProducts();
     res.json(products);
@@ -14,7 +14,7 @@ async function getFeaturedProducts(req, res) {
 }
 
 // ✅ Agregar producto destacado
-async function addFeaturedProduct(req, res) {
+export async function addFeaturedProduct(req, res) {
   try {
     const { producto_id, position } = req.body;
 
@@ -31,7 +31,7 @@ async function addFeaturedProduct(req, res) {
 }
 
 // ✅ Eliminar producto destacado
-async function removeFeaturedProduct(req, res) {
+export async function removeFeaturedProduct(req, res) {
   try {
     const { id } = req.params;
 
@@ -47,8 +47,9 @@ async function removeFeaturedProduct(req, res) {
   }
 }
 
-module.exports = {
-  getFeaturedProductos: getFeaturedProducts,
-  addFeaturedProducto: addFeaturedProduct,
-  removeFeaturedProducto: removeFeaturedProduct,
+// Aliases para compatibilidad con routes
+export {
+  getFeaturedProducts as getFeaturedProductos,
+  addFeaturedProduct as addFeaturedProducto,
+  removeFeaturedProduct as removeFeaturedProducto,
 };

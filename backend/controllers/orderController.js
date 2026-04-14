@@ -1,6 +1,6 @@
-const orderService = require("../services/orderService");
+import * as orderService from "../services/orderService.js";
 
-async function getOrders(req, res) {
+export async function getOrders(req, res) {
   try {
     const orders = await orderService.getOrders();
     res.json(orders);
@@ -10,7 +10,7 @@ async function getOrders(req, res) {
   }
 }
 
-async function getMyOrders(req, res) {
+export async function getMyOrders(req, res) {
   try {
     const usuarioId = req.user.id; // viene del middleware auth
     const orders = await orderService.getMyOrders(usuarioId);
@@ -21,7 +21,7 @@ async function getMyOrders(req, res) {
   }
 }
 
-async function getOrderById(req, res) {
+export async function getOrderById(req, res) {
   try {
     const esAdmin = req.user?.rol === 'admin';
     const order = await orderService.getOrderById(req.params.id, req.user?.id, esAdmin);
@@ -32,7 +32,7 @@ async function getOrderById(req, res) {
   }
 }
 
-async function updateOrderStatus(req, res) {
+export async function updateOrderStatus(req, res) {
   try {
     const { estado } = req.body;
     const order = await orderService.updateOrderStatus(req.params.id, estado);
@@ -41,5 +41,3 @@ async function updateOrderStatus(req, res) {
     res.status(500).json({ error: "Error al actualizar pedido" });
   }
 }
-
-module.exports = { getOrders, getMyOrders, getOrderById, updateOrderStatus };

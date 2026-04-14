@@ -6,10 +6,7 @@ function badRequest(message) {
     return Object.assign(new Error(message), { status: 400 });
 }
 
-/**
- * Valida que un valor pertenezca a una lista de opciones permitidas.
- */
-function assertEnum(value, allowed, fieldName) {
+export function assertEnum(value, allowed, fieldName) {
     if (!allowed.includes(value)) {
         throw badRequest(
             `${fieldName} inválido. Valores permitidos: ${allowed.join(", ")}`
@@ -18,10 +15,7 @@ function assertEnum(value, allowed, fieldName) {
     return value;
 }
 
-/**
- * Valida que un valor sea un número positivo (> 0).
- */
-function assertPositiveNumber(value, fieldName) {
+export function assertPositiveNumber(value, fieldName) {
     const n = Number(value);
     if (!Number.isFinite(n) || n <= 0) {
         throw badRequest(`${fieldName} debe ser un número positivo`);
@@ -29,10 +23,7 @@ function assertPositiveNumber(value, fieldName) {
     return n;
 }
 
-/**
- * Valida que un valor sea un entero no negativo (>= 0).
- */
-function assertNonNegativeInt(value, fieldName) {
+export function assertNonNegativeInt(value, fieldName) {
     const n = Number(value);
     if (!Number.isInteger(n) || n < 0) {
         throw badRequest(`${fieldName} debe ser un entero no negativo`);
@@ -40,10 +31,7 @@ function assertNonNegativeInt(value, fieldName) {
     return n;
 }
 
-/**
- * Valida que un string no esté vacío y respete una longitud máxima.
- */
-function assertString(value, fieldName, { min = 1, max = 255 } = {}) {
+export function assertString(value, fieldName, { min = 1, max = 255 } = {}) {
     if (typeof value !== "string") {
         throw badRequest(`${fieldName} debe ser texto`);
     }
@@ -57,15 +45,6 @@ function assertString(value, fieldName, { min = 1, max = 255 } = {}) {
     return trimmed;
 }
 
-// Enums del dominio — centralizados aquí para evitar duplicación
-const USER_ROLES = ["admin", "cliente"];
-const ORDER_STATES = ["pendiente", "pagado", "rechazado", "cancelado", "enviado", "entregado"];
-
-module.exports = {
-    assertEnum,
-    assertPositiveNumber,
-    assertNonNegativeInt,
-    assertString,
-    USER_ROLES,
-    ORDER_STATES,
-};
+// Enums del dominio
+export const USER_ROLES = ["admin", "cliente"];
+export const ORDER_STATES = ["pendiente", "pagado", "rechazado", "cancelado", "enviado", "entregado"];
