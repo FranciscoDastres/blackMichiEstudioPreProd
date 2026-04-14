@@ -12,6 +12,7 @@
     "test-db": "node lib/test-db.js"
   },
   "dependencies": {
+    "@sentry/node": "^10.48.0",
     "@supabase/supabase-js": "^2.98.0",
     "axios": "^1.13.2",
     "cloudinary": "^2.9.0",
