@@ -5,6 +5,7 @@ const isProd = process.env.NODE_ENV === "production";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.FROM_EMAIL || "pedidos@blackmichiestudio.cl";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@blackmichiestudio.cl";
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://blackmichiestudio.cl";
 
 async function sendEmail({ to, subject, html }) {
     if (!isProd) {
@@ -40,12 +41,14 @@ export async function emailConfirmacionPago(pedido, items) {
         </tr>`
     ).join("");
 
+    const trackingUrl = `${FRONTEND_URL}/payment/return?pedidoId=${pedido.id}&token=${encodeURIComponent(pedido.flow_token)}`;
+
     await sendEmail({
         to: pedido.comprador_email,
-        subject: `✅ Pedido #${pedido.id} confirmado — Black Michi Estudio`,
+        subject: `Pedido #${pedido.id} confirmado — Black Michi Estudio`,
         html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#111;color:#fff;padding:32px;border-radius:12px">
-            <h2 style="color:#a855f7">¡Pago recibido! 🎉</h2>
+            <h2 style="color:#a855f7">Pago recibido</h2>
             <p>Hola <strong>${pedido.comprador_nombre}</strong>, tu pedido fue confirmado.</p>
             <table style="width:100%;border-collapse:collapse;margin:24px 0">
                 <thead>
@@ -58,8 +61,11 @@ export async function emailConfirmacionPago(pedido, items) {
                 <tbody>${itemsHtml}</tbody>
             </table>
             <p style="font-size:18px">Total pagado: <strong>$${Number(pedido.total).toLocaleString("es-CL")}</strong></p>
-            <p style="color:#999;font-size:13px">Dirección de envío: ${pedido.direccion_envio}</p>
+            <p style="color:#999;font-size:13px">Direccion de envio: ${pedido.direccion_envio}</p>
             <p style="color:#999;font-size:13px">Te avisaremos cuando tu pedido sea despachado.</p>
+            <div style="margin:24px 0;text-align:center">
+                <a href="${trackingUrl}" style="display:inline-block;background:#a855f7;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Ver estado de mi pedido</a>
+            </div>
         </div>`
     });
 }
@@ -84,17 +90,60 @@ export async function emailNuevoPedidoAdmin(pedido, items) {
 }
 
 export async function emailPedidoEnviado(pedido) {
+    const trackingUrl = `${FRONTEND_URL}/payment/return?pedidoId=${pedido.id}&token=${encodeURIComponent(pedido.flow_token)}`;
+
     await sendEmail({
         to: pedido.comprador_email,
-        subject: `📦 Tu pedido #${pedido.id} fue enviado — Black Michi Estudio`,
+        subject: `Tu pedido #${pedido.id} fue enviado — Black Michi Estudio`,
         html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#111;color:#fff;padding:32px;border-radius:12px">
-            <h2 style="color:#a855f7">Tu pedido está en camino 🚚</h2>
+            <h2 style="color:#a855f7">Tu pedido esta en camino</h2>
             <p>Hola <strong>${pedido.comprador_nombre}</strong>, tu pedido fue despachado.</p>
             ${pedido.numero_seguimiento
-                ? `<p>Número de seguimiento: <strong style="color:#a855f7">${pedido.numero_seguimiento}</strong></p>`
+                ? `<p>Numero de seguimiento: <strong style="color:#a855f7">${pedido.numero_seguimiento}</strong></p>`
                 : ""}
-            <p style="color:#999;font-size:13px">Dirección de envío: ${pedido.direccion_envio}</p>
+            <p style="color:#999;font-size:13px">Direccion de envio: ${pedido.direccion_envio}</p>
+            <div style="margin:24px 0;text-align:center">
+                <a href="${trackingUrl}" style="display:inline-block;background:#a855f7;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Ver estado de mi pedido</a>
+            </div>
+        </div>`
+    });
+}
+
+export async function emailPedidoEntregado(pedido) {
+    const trackingUrl = `${FRONTEND_URL}/payment/return?pedidoId=${pedido.id}&token=${encodeURIComponent(pedido.flow_token)}`;
+
+    await sendEmail({
+        to: pedido.comprador_email,
+        subject: `Pedido #${pedido.id} entregado — Black Michi Estudio`,
+        html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#111;color:#fff;padding:32px;border-radius:12px">
+            <h2 style="color:#a855f7">Pedido entregado</h2>
+            <p>Hola <strong>${pedido.comprador_nombre}</strong>, tu pedido fue entregado exitosamente.</p>
+            <p>Esperamos que disfrutes tu compra. Si tienes alguna consulta, no dudes en escribirnos.</p>
+            <div style="margin:24px 0;text-align:center">
+                <a href="${trackingUrl}" style="display:inline-block;background:#a855f7;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Ver detalle del pedido</a>
+            </div>
+            <div style="margin:24px 0;text-align:center">
+                <a href="${FRONTEND_URL}/productos" style="color:#a855f7;text-decoration:none;font-size:14px">Seguir comprando</a>
+            </div>
+        </div>`
+    });
+}
+
+export async function emailBienvenida(nombre, email) {
+    await sendEmail({
+        to: email,
+        subject: `Bienvenido/a a Black Michi Estudio`,
+        html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#111;color:#fff;padding:32px;border-radius:12px">
+            <h2 style="color:#a855f7">Bienvenido/a, ${nombre}</h2>
+            <p>Gracias por registrarte en Black Michi Estudio.</p>
+            <p>Somos un estudio de impresion 3D especializado en figuras de cultura pop, anime y ciencia ficcion. Cada pieza es unica y hecha con cuidado.</p>
+            <div style="margin:24px 0;text-align:center">
+                <a href="${FRONTEND_URL}/productos" style="display:inline-block;background:#a855f7;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Explorar productos</a>
+            </div>
+            <p style="color:#999;font-size:13px">Si tienes dudas, visita nuestras <a href="${FRONTEND_URL}/preguntas-frecuentes" style="color:#a855f7">preguntas frecuentes</a>.</p>
         </div>`
     });
 }
