@@ -1,4 +1,6 @@
 // index.js — Black Michi Estudio Backend
+import "./instrument.js";
+import * as Sentry from "@sentry/node";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -9,6 +11,7 @@ import compression from "compression";
 import { fileURLToPath } from "url";
 import "dotenv/config";
 import logger from "./lib/logger.js";
+import db from "./lib/db.js";
 
 import * as keepAlive from "./lib/keepAlive.js";
 import * as cleanupJobs from "./lib/cleanupJobs.js";
@@ -190,6 +193,29 @@ app.use(
 app.get("/", (req, res) => res.json({ status: "ok" }));
 app.get("/health", (req, res) => res.json({ status: "healthy" }));
 
+app.get("/api/health", async (req, res) => {
+  const startedAt = Date.now();
+  const checks = { database: { status: "unknown" } };
+  let allHealthy = true;
+
+  try {
+    const t0 = Date.now();
+    await db.query("SELECT 1");
+    checks.database = { status: "ok", latencyMs: Date.now() - t0 };
+  } catch (err) {
+    allHealthy = false;
+    checks.database = { status: "error", error: isProd ? "db_unavailable" : err.message };
+  }
+
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? "ok" : "degraded",
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    responseTimeMs: Date.now() - startedAt,
+    checks,
+  });
+});
+
 // ─────────────────────────────────────────────
 // SEO: SITEMAP + ROBOTS
 // ─────────────────────────────────────────────
@@ -312,6 +338,13 @@ try {
 // 404
 // ─────────────────────────────────────────────
 app.use("*", (req, res) => res.status(404).json({ error: "Ruta no encontrada" }));
+
+// ─────────────────────────────────────────────
+// SENTRY ERROR HANDLER (antes del global)
+// ─────────────────────────────────────────────
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // ─────────────────────────────────────────────
 // ERROR GLOBAL
