@@ -2,6 +2,7 @@ import db from "../lib/db.js";
 import { createClient } from "@supabase/supabase-js";
 import { OAuth2Client } from "google-auth-library";
 import logger from "../lib/logger.js";
+import * as emailService from "./emailService.js";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
 if (!GOOGLE_CLIENT_ID) throw new Error("Falta GOOGLE_CLIENT_ID en variables de entorno");
@@ -45,6 +46,8 @@ export async function register(nombre, email, password) {
 
     const { data: session, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
     if (loginError) throw new Error(loginError.message);
+
+    emailService.emailBienvenida(nombre, email);
 
     return {
         user: result.rows[0],
@@ -114,12 +117,14 @@ export async function googleLogin(idToken) {
             );
             result = byEmail;
         } else {
+            const displayName = name || email.split("@")[0];
             result = await db.query(
                 `INSERT INTO usuarios (auth_id, nombre, email, rol)
                  VALUES ($1, $2, $3, 'cliente')
                  RETURNING id, nombre, email, rol`,
-                [authUser.id, name || email.split("@")[0], email]
+                [authUser.id, displayName, email]
             );
+            emailService.emailBienvenida(displayName, email);
         }
     }
 
