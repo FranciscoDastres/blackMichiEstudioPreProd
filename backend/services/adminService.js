@@ -59,10 +59,11 @@ export async function updateOrderStatus(id, estado, numero_seguimiento = null) {
         }
     }
 
-    if (estado === 'enviado') {
+    if (estado === 'enviado' || estado === 'entregado') {
         const result = await db.query(`SELECT * FROM pedidos WHERE id = $1`, [id]);
         if (result.rows.length > 0) {
-            emailService.emailPedidoEnviado(result.rows[0]);
+            if (estado === 'enviado') emailService.emailPedidoEnviado(result.rows[0]);
+            if (estado === 'entregado') emailService.emailPedidoEntregado(result.rows[0]);
         }
     }
 
