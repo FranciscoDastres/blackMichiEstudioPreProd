@@ -1,5 +1,10 @@
+import { Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import LazyImage from "../LazyImage/LazyImage";
 import { getImageUrl } from "../../utils/getImageUrl";
+import { useFavorites } from "../../contexts/FavoritesContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const CLP = new Intl.NumberFormat("es-CL", {
   style: "currency",
@@ -27,6 +32,28 @@ export default function ProductCard({
   const avgRating = product.promedio_calificacion
     ? Math.round(parseFloat(product.promedio_calificacion))
     : 0;
+  const stock = Number(product.stock ?? 99);
+  const lowStock = stock > 0 && stock < 5;
+
+  const { isFavorite, toggle } = useFavorites();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const fav = isFavorite(product.id);
+
+  const handleFavClick = async (e) => {
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Inicia sesión para guardar favoritos");
+      navigate("/login");
+      return;
+    }
+    try {
+      await toggle(product.id);
+      toast.success(fav ? "Quitado de favoritos" : "Agregado a favoritos");
+    } catch {
+      toast.error("No se pudo actualizar favoritos");
+    }
+  };
 
   return (
     <div
@@ -53,6 +80,27 @@ export default function ProductCard({
             className="hover-image w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           />
         )}
+
+        {/* Botón favorito */}
+        <button
+          type="button"
+          aria-label={fav ? "Quitar de favoritos" : "Agregar a favoritos"}
+          onClick={handleFavClick}
+          className="absolute top-2 right-2 w-9 h-9 rounded-full bg-background/90 backdrop-blur border border-border shadow-sm flex items-center justify-center hover:bg-background transition-colors z-10"
+        >
+          <Heart
+            className={`w-4 h-4 transition-colors ${
+              fav ? "text-rose-500 fill-rose-500" : "text-muted"
+            }`}
+          />
+        </button>
+
+        {/* Badge pocos disponibles */}
+        {lowStock && (
+          <span className="absolute top-2 left-2 bg-amber-500/90 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
+            ¡Pocos disponibles!
+          </span>
+        )}
       </div>
 
       {/* Contenido */}
@@ -65,6 +113,11 @@ export default function ProductCard({
           {[...Array(5)].map((_, i) => (
             <StarIcon key={i} filled={i < avgRating} />
           ))}
+          {product.total_valoraciones > 0 && (
+            <span className="ml-1 text-xs text-muted">
+              ({product.total_valoraciones})
+            </span>
+          )}
         </div>
 
         <div className="mb-3">
