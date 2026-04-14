@@ -1,10 +1,11 @@
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import { User, ShoppingBag, Shield, LogOut, Store, MessageSquare } from 'lucide-react';
+import { User, ShoppingBag, Shield, LogOut, Store, MessageSquare, Heart } from 'lucide-react';
 
 const navItems = [
     { to: '/cuenta/perfil', label: 'Mi Perfil', icon: User },
     { to: '/cuenta/pedidos', label: 'Pedidos', icon: ShoppingBag },
+    { to: '/cuenta/favoritos', label: 'Favoritos', icon: Heart },
     { to: '/cuenta/resenas', label: 'Reseñas', icon: MessageSquare },
     { to: '/cuenta/seguridad', label: 'Seguridad', icon: Shield },
 ];
