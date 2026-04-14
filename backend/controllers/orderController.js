@@ -1,11 +1,12 @@
 import * as orderService from "../services/orderService.js";
+import logger from "../lib/logger.js";
 
 export async function getOrders(req, res) {
   try {
     const orders = await orderService.getOrders();
     res.json(orders);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en orderController");
     res.status(500).json({ error: "Error al obtener pedidos" });
   }
 }
@@ -16,7 +17,7 @@ export async function getMyOrders(req, res) {
     const orders = await orderService.getMyOrders(usuarioId);
     res.json(orders);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en orderController");
     res.status(500).json({ error: "Error al obtener tus pedidos" });
   }
 }

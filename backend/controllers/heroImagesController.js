@@ -1,6 +1,7 @@
 // backend/controllers/heroImagesController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en heroImagesService.js
 import * as heroImagesService from "../services/heroImagesService.js";
+import logger from "../lib/logger.js";
 
 // ✅ Obtener hero images (Admin)
 export async function getHeroImages(req, res) {
@@ -8,7 +9,7 @@ export async function getHeroImages(req, res) {
     const images = await heroImagesService.getHeroImages();
     res.json(images);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en heroImagesController");
     res.status(500).json({ error: "Error obteniendo imágenes" });
   }
 }
@@ -19,7 +20,7 @@ export async function getPublicHeroImages(req, res) {
     const images = await heroImagesService.getPublicHeroImages();
     res.json(images);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en heroImagesController");
     res.status(500).json({ error: "Error obteniendo imágenes" });
   }
 }
@@ -32,7 +33,7 @@ export async function getFirstHeroImage(req, res) {
     res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
     res.json(image);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en heroImagesController");
     res.status(500).json({ error: "Error obteniendo imagen" });
   }
 }
@@ -64,7 +65,7 @@ export async function uploadHeroImage(req, res) {
       data: result,
     });
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en heroImagesController");
     res.status(400).json({ error: error.message || "Error subiendo imagen" });
   }
 }
@@ -81,7 +82,7 @@ export async function deleteHeroImage(req, res) {
     await heroImagesService.deleteHeroImage(section);
     res.json({ ok: true, message: `${section} eliminado correctamente` });
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en heroImagesController");
     res.status(400).json({ error: error.message });
   }
 }

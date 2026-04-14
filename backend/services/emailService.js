@@ -1,4 +1,5 @@
 import axios from "axios";
+import logger from "../lib/logger.js";
 
 const isProd = process.env.NODE_ENV === "production";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -7,14 +8,12 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@blackmichiestudio.cl";
 
 async function sendEmail({ to, subject, html }) {
     if (!isProd) {
-        console.log(`\n📧 [EMAIL DEV] Para: ${to}`);
-        console.log(`   Asunto: ${subject}`);
-        console.log(`   (En producción se enviaría via Resend)\n`);
+        logger.debug({ to, subject }, "Email (dev mode, no enviado)");
         return;
     }
 
     if (!RESEND_API_KEY) {
-        console.warn("⚠️ RESEND_API_KEY no configurada — email no enviado");
+        logger.warn("RESEND_API_KEY no configurada — email no enviado");
         return;
     }
 
@@ -28,7 +27,7 @@ async function sendEmail({ to, subject, html }) {
             headers: { Authorization: `Bearer ${RESEND_API_KEY}` }
         });
     } catch (error) {
-        console.error("❌ Error enviando email:", error.response?.data || error.message);
+        logger.error({ err: error, to, subject }, "Error enviando email");
     }
 }
 

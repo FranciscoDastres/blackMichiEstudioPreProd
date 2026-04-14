@@ -1,6 +1,7 @@
 import db from "../lib/db.js";
 import { createClient } from "@supabase/supabase-js";
 import { OAuth2Client } from "google-auth-library";
+import logger from "../lib/logger.js";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
 if (!GOOGLE_CLIENT_ID) throw new Error("Falta GOOGLE_CLIENT_ID en variables de entorno");
@@ -172,7 +173,7 @@ export async function forgotPassword(email) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${frontendUrl}/reset-password`,
     });
-    if (error) console.warn('⚠️ forgotPassword error (puede que el email no exista):', error.message);
+    if (error) logger.warn({ err: error }, "forgotPassword error (puede que el email no exista)");
 }
 
 export async function resetPassword(token, newPassword) {

@@ -1,6 +1,7 @@
 // backend/controllers/adminController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en adminService.js
 import * as adminService from "../services/adminService.js";
+import logger from "../lib/logger.js";
 import {
   assertEnum,
   USER_ROLES,
@@ -13,7 +14,7 @@ export async function getAllProducts(req, res) {
     const products = await adminService.getAllProducts();
     res.json(products);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en adminController");
     res.status(500).json({ error: "Error obteniendo productos" });
   }
 }
@@ -24,7 +25,7 @@ export async function getAllOrders(req, res) {
     const orders = await adminService.getAllOrders();
     res.json(orders);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en adminController");
     res.status(500).json({ error: "Error obteniendo pedidos" });
   }
 }
@@ -41,7 +42,7 @@ export async function updateOrderStatus(req, res) {
     await adminService.updateOrderStatus(id, estado, numero_seguimiento || null);
     res.json({ ok: true });
   } catch (error) {
-    console.error("❌ Error actualizando pedido:", error);
+    logger.error({ err: error }, "Error actualizando pedido");
     res.status(error.status || 500).json({ error: error.message || "Error actualizando pedido" });
   }
 }
@@ -52,7 +53,7 @@ export async function getStats(req, res) {
     const stats = await adminService.getStats();
     res.json(stats);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en adminController");
     res.status(500).json({ error: "Error obteniendo estadísticas" });
   }
 }
@@ -63,7 +64,7 @@ export async function getAllUsers(req, res) {
     const users = await adminService.getAllUsers();
     res.json(users);
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en adminController");
     res.status(500).json({ error: "Error obteniendo usuarios" });
   }
 }
@@ -80,7 +81,7 @@ export async function deleteUser(req, res) {
     await adminService.deleteUser(id);
     res.json({ ok: true, message: "Usuario eliminado" });
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en adminController");
     res.status(500).json({ error: "Error eliminando usuario" });
   }
 }
@@ -97,7 +98,7 @@ export async function updateUserRole(req, res) {
     const updatedUser = await adminService.updateUserRole(id, rol);
     res.json({ ok: true, user: updatedUser, message: "Rol actualizado" });
   } catch (error) {
-    console.error("❌ Error:", error);
+    logger.error({ err: error }, "Error en adminController");
     res.status(error.status || 500).json({ error: error.message || "Error actualizando rol" });
   }
 }

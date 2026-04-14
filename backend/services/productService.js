@@ -1,5 +1,6 @@
 import db from "../lib/db.js";
 import * as cloudinaryService from "./cloudinaryService.js";
+import logger from "../lib/logger.js";
 
 // ===============================
 // CACHE SIMPLE (30 segundos)
@@ -36,7 +37,7 @@ const deleteCloudinaryImages = async (urls = []) => {
             const publicId = extractPublicId(url);
             if (!publicId) return Promise.resolve();
             return cloudinaryService.deleteFile(publicId).catch((err) =>
-                console.warn(`⚠️ No se pudo eliminar de Cloudinary (${publicId}):`, err.message)
+                logger.warn({ publicId, err }, "No se pudo eliminar de Cloudinary")
             );
         })
     );
@@ -216,7 +217,7 @@ export async function deleteProduct(id) {
         );
         if (parseInt(remaining.rows[0].count) === 0) {
             await db.query("DELETE FROM categorias WHERE id=$1", [categoria_id]);
-            console.log(`🗑️ Categoría ID ${categoria_id} eliminada por quedar sin productos`);
+            logger.info({ categoriaId: categoria_id }, "Categoría eliminada por quedar sin productos");
         }
     }
 

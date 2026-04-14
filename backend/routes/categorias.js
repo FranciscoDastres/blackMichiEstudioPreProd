@@ -1,5 +1,6 @@
 import express from 'express';
 import db from '../lib/db.js';
+import logger from '../lib/logger.js';
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.get('/', async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        console.error('❌ Error en GET /categorias:', error);
+        logger.error({ err: error }, "Error en GET /categorias");
         res.status(500).json({ error: 'Error al obtener categorías' });
     }
 });
@@ -35,7 +36,7 @@ router.get('/:id', async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('❌ Error en GET /categorias/:id:', error);
+        logger.error({ err: error }, "Error en GET /categorias/:id");
         res.status(500).json({ error: 'Error al obtener productos de la categoría' });
     }
 });

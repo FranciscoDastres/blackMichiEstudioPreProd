@@ -1,4 +1,5 @@
 import db from "../lib/db.js";
+import logger from "../lib/logger.js";
 import flowService from "./flowService.js";
 import * as emailService from "./emailService.js";
 import { invalidateCache } from "./productService.js";
@@ -141,10 +142,7 @@ export async function procesarWebhook(token, rawBody, rawHeaders, ip) {
         [token]
     );
     if (existente.rows.length > 0) {
-        console.log('↩️  Webhook Flow duplicado ignorado (idempotencia)', {
-            token: token.substring(0, 8) + '…',
-            pedidoId: existente.rows[0].pedido_id,
-        });
+        logger.info({ pedidoId: existente.rows[0].pedido_id }, "Webhook Flow duplicado ignorado (idempotencia)");
         return { pedidoId: existente.rows[0].pedido_id, estado: 'duplicado' };
     }
 
@@ -156,12 +154,7 @@ export async function procesarWebhook(token, rawBody, rawHeaders, ip) {
     const webhookId = webhookResult.rows[0].id;
 
     const payment = await flowService.getPaymentStatus(token);
-    console.log('💳 Estado del pago:', {
-        flowOrder: payment.flowOrder,
-        commerceOrder: payment.commerceOrder,
-        status: payment.status,
-        amount: payment.amount,
-    });
+    logger.info({ flowOrder: payment.flowOrder, commerceOrder: payment.commerceOrder, status: payment.status, amount: payment.amount }, "Estado del pago");
 
     const statusMap = { 1: 'pendiente', 2: 'pagado', 3: 'rechazado', 4: 'cancelado' };
     const nuevoEstado = statusMap[payment.status] || 'pendiente';
@@ -194,7 +187,7 @@ export async function procesarWebhook(token, rawBody, rawHeaders, ip) {
     const pedido = updateResult.rows[0];
 
     if (payment.status === 2) {
-        console.log('✅ Pago confirmado — descontando stock, Pedido #' + pedido.id);
+        logger.info({ pedidoId: pedido.id }, "Pago confirmado — descontando stock");
         const itemsResult = await db.query(
             'SELECT producto_id, cantidad FROM pedido_items WHERE pedido_id = $1',
             [pedido.id]
@@ -207,7 +200,7 @@ export async function procesarWebhook(token, rawBody, rawHeaders, ip) {
                 [item.cantidad, item.producto_id, item.cantidad]
             );
             if (updated.rows.length === 0) {
-                console.warn(`⚠️ Stock insuficiente para producto ${item.producto_id}`);
+                logger.warn({ productoId: item.producto_id }, "Stock insuficiente al descontar");
             }
         }
         invalidateCache();

@@ -1,6 +1,7 @@
 // backend/controllers/paymentController.js
 import flowService from '../services/flowService.js';
 import * as paymentService from '../services/paymentService.js';
+import logger from '../lib/logger.js';
 
 export async function createPayment(req, res) {
     const { items, email, nombre, notas, telefono, direccion } = req.body;
@@ -22,7 +23,7 @@ export async function createPayment(req, res) {
         const result = await paymentService.crearPago({ items, email, nombre, notas, telefono, direccion });
         res.json({ success: true, ...result });
     } catch (err) {
-        console.error('❌ Error creando pago:', err);
+        logger.error({ err }, "Error creando pago");
         let message = 'Error al procesar el pago. Por favor intenta nuevamente.';
         if (err.message?.includes('Flow')) message = 'Error al conectar con Flow. Verifica tu conexión.';
         else if (err.message?.includes('database')) message = 'Error de base de datos. Por favor intenta más tarde.';
@@ -39,7 +40,7 @@ export async function createPayment(req, res) {
 
 export async function flowReturn(req, res) {
     const token = req.body?.token || req.query?.token;
-    console.log('🔙 Usuario retornó de Flow');
+    logger.info("Usuario retornó de Flow");
     try {
         const pedidoId = await paymentService.getPedidoByFlowToken(token);
         if (pedidoId) {
@@ -47,22 +48,22 @@ export async function flowReturn(req, res) {
         }
         res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&error=not_found`);
     } catch (err) {
-        console.error('❌ Error en flow/return:', err);
+        logger.error({ err }, "Error en flow/return");
         res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&error=server`);
     }
 }
 
 export async function flowConfirmation(req, res) {
     const token = req.body.token;
-    console.log('📥 Webhook Flow recibido:', { timestamp: new Date().toISOString() });
+    logger.info("Webhook Flow recibido");
 
     if (!token || typeof token !== 'string' || token.length < 8) {
-        console.error('❌ Token inválido en webhook');
+        logger.warn("Token inválido en webhook");
         return res.status(400).send('Token required');
     }
 
     if (!flowService.validateCallback(req.body)) {
-        console.error('❌ Firma inválida en webhook Flow');
+        logger.warn("Firma inválida en webhook Flow");
         return res.status(400).send('Invalid signature');
     }
 
@@ -70,7 +71,7 @@ export async function flowConfirmation(req, res) {
         await paymentService.procesarWebhook(token, req.body, req.headers, req.ip || req.connection?.remoteAddress);
         res.sendStatus(200);
     } catch (err) {
-        console.error('❌ Error procesando webhook:', err);
+        logger.error({ err }, "Error procesando webhook");
         res.sendStatus(err.status === 404 ? 404 : 500);
     }
 }
@@ -109,7 +110,7 @@ export async function getPedidoStatus(req, res) {
             },
         });
     } catch (err) {
-        console.error('❌ Error obteniendo pedido:', err);
+        logger.error({ err }, "Error obteniendo pedido");
         res.status(500).json({ success: false, error: 'Error al obtener el pedido' });
     }
 }

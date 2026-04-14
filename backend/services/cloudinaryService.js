@@ -1,5 +1,6 @@
 import cloudinaryPkg from "cloudinary";
 import sharp from "sharp";
+import logger from "../lib/logger.js";
 
 const cloudinary = cloudinaryPkg.v2;
 
@@ -72,7 +73,7 @@ export async function uploadProductImage(fileBuffer, productName) {
 
         return { folder, images };
     } catch (error) {
-        console.error("❌ Error uploadProductImage:", error);
+        logger.error({ err: error }, "Error uploadProductImage");
         throw error;
     }
 }
@@ -91,10 +92,10 @@ export async function uploadHeroImage(fileBuffer, section) {
 
         const url = await uploadBuffer(optimized, publicId, folder);
 
-        console.log("✅ Hero subido a Cloudinary:", url);
+        logger.info({ url }, "Hero subido a Cloudinary");
         return { url, path: `${folder}/${publicId}` };
     } catch (error) {
-        console.error("❌ Error uploadHeroImage:", error);
+        logger.error({ err: error }, "Error uploadHeroImage");
         throw error;
     }
 }
@@ -105,7 +106,7 @@ export async function uploadLogo(fileBuffer) {
         const url = await uploadBuffer(optimized, "logo", "blackmichi/logo");
         return { url, path: "blackmichi/logo/logo" };
     } catch (error) {
-        console.error("❌ Error uploadLogo:", error);
+        logger.error({ err: error }, "Error uploadLogo");
         throw error;
     }
 }
@@ -118,7 +119,7 @@ export async function deleteFile(publicId) {
         }
         return { success: true };
     } catch (error) {
-        console.error("❌ Error eliminando archivo:", error);
+        logger.error({ err: error }, "Error eliminando archivo Cloudinary");
         throw error;
     }
 }
@@ -132,7 +133,7 @@ export async function listFiles(folder) {
         });
         return result.resources;
     } catch (error) {
-        console.error("❌ Error listando archivos:", error);
+        logger.error({ err: error }, "Error listando archivos Cloudinary");
         throw error;
     }
 }

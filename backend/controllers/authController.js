@@ -1,6 +1,7 @@
 // backend/controllers/authController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en authService.js
 import * as authService from "../services/authService.js";
+import logger from "../lib/logger.js";
 
 // ✅ Registro
 export async function register(req, res) {
@@ -12,7 +13,7 @@ export async function register(req, res) {
     const result = await authService.register(nombre, email, password);
     res.json(result);
   } catch (err) {
-    console.error("❌ Error registro:", err);
+    logger.error({ err }, "Error registro");
     res.status(400).json({ error: err.message || "Error al registrar usuario" });
   }
 }
@@ -27,7 +28,7 @@ export async function login(req, res) {
     const result = await authService.login(email, password);
     res.json(result);
   } catch (err) {
-    console.error("❌ Error login:", err);
+    logger.error({ err }, "Error login");
     res.status(400).json({ error: err.message || "Error en el login" });
   }
 }
@@ -36,15 +37,15 @@ export async function login(req, res) {
 export async function googleLogin(req, res) {
   try {
     const { token } = req.body;
-    console.log("🔵 Google Login request recibido, token:", token ? `${token.substring(0, 20)}...` : "FALTA");
+    logger.debug("Google Login request recibido");
     if (!token) {
       return res.status(400).json({ error: "Token de Google requerido" });
     }
     const result = await authService.googleLogin(token);
-    console.log("🟢 Google Login exitoso para:", result?.user?.email);
+    logger.info({ email: result?.user?.email }, "Google Login exitoso");
     res.json(result);
   } catch (err) {
-    console.error("❌ Error Google Login:", err.message);
+    logger.error({ err }, "Error Google Login");
     res.status(400).json({ error: err.message || "Error en Google Login" });
   }
 }
@@ -54,7 +55,7 @@ export async function me(req, res) {
   try {
     res.json({ user: req.user });
   } catch (err) {
-    console.error("❌ Error en /me:", err);
+    logger.error({ err }, "Error en /me");
     res.status(500).json({ error: "Error al obtener usuario" });
   }
 }
@@ -66,7 +67,7 @@ export async function logout(req, res) {
     res.json({ success: true });
   } catch (err) {
     // Aunque falle en Supabase, el frontend igual limpia su localStorage
-    console.error("❌ Error en logout:", err);
+    logger.error({ err }, "Error en logout");
     res.json({ success: true });
   }
 }
@@ -79,7 +80,7 @@ export async function forgotPassword(req, res) {
     await authService.forgotPassword(email);
     res.json({ success: true, message: 'Si el email existe, recibirás un enlace para restablecer tu contraseña' });
   } catch (err) {
-    console.error('❌ Error forgotPassword:', err);
+    logger.error({ err }, "Error forgotPassword");
     res.json({ success: true });
   }
 }
@@ -94,7 +95,7 @@ export async function resetPassword(req, res) {
     await authService.resetPassword(token, newPassword);
     res.json({ success: true });
   } catch (err) {
-    console.error('❌ Error resetPassword:', err);
+    logger.error({ err }, "Error resetPassword");
     res.status(400).json({ error: err.message || 'Error al restablecer la contraseña' });
   }
 }
@@ -112,7 +113,7 @@ export async function changePassword(req, res) {
     await authService.changePassword(req.user.auth_id, req.user.email, currentPassword, newPassword);
     res.json({ success: true });
   } catch (err) {
-    console.error('❌ Error cambiando contraseña:', err);
+    logger.error({ err }, "Error cambiando contraseña");
     res.status(400).json({ error: err.message || 'Error al cambiar contraseña' });
   }
 }

@@ -1,6 +1,7 @@
 // backend/controllers/productosController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en productService.js
 import * as productService from "../services/productService.js";
+import logger from "../lib/logger.js";
 import {
   assertString,
   assertPositiveNumber,
@@ -27,7 +28,7 @@ export async function createProduct(req, res) {
 
     res.status(201).json({ ok: true, message: "Producto creado correctamente" });
   } catch (err) {
-    console.error("❌ Error creando producto:", err);
+    logger.error({ err }, "Error creando producto");
     res.status(err.status || 500).json({ error: err.message || "Error creando producto" });
   }
 }
@@ -56,7 +57,7 @@ export async function updateProduct(req, res) {
 
     res.json({ ok: true, data: result });
   } catch (err) {
-    console.error("❌ Error actualizando producto:", err);
+    logger.error({ err }, "Error actualizando producto");
     const status = err.status || (err.message?.includes("no encontrado") ? 404 : 500);
     res.status(status).json({ error: err.message || "Error actualizando producto" });
   }
@@ -74,7 +75,7 @@ export async function deleteProduct(req, res) {
     await productService.deleteProduct(id);
     res.json({ ok: true, message: "Producto eliminado" });
   } catch (err) {
-    console.error("❌ Error eliminando producto:", err);
+    logger.error({ err }, "Error eliminando producto");
     res.status(500).json({ error: err.message || "Error eliminando producto" });
   }
 }
@@ -85,7 +86,7 @@ export async function getAllProducts(req, res) {
     const products = await productService.getAllProducts();
     res.json(products);
   } catch (err) {
-    console.error("❌ Error obteniendo productos:", err);
+    logger.error({ err }, "Error obteniendo productos");
     res.status(500).json({ error: err.message || "Error obteniendo productos" });
   }
 }
@@ -102,7 +103,7 @@ export async function getProductById(req, res) {
     const product = await productService.getProductById(id);
     res.json(product);
   } catch (err) {
-    console.error("❌ Error obteniendo producto:", err);
+    logger.error({ err }, "Error obteniendo producto");
     res.status(err.message?.includes("no encontrado") ? 404 : 500).json({
       error: err.message || "Error obteniendo producto",
     });

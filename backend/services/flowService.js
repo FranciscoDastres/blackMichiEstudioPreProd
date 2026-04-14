@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import axios from "axios";
 import "dotenv/config";
+import logger from "../lib/logger.js";
 
 class FlowService {
     constructor() {
@@ -10,12 +11,7 @@ class FlowService {
             ? 'https://www.flow.cl/api'
             : 'https://sandbox.flow.cl/api';
 
-        console.log('🔧 Flow Service inicializado:', {
-            hasApiKey: !!this.apiKey,
-            hasSecretKey: !!this.secretKey,
-            apiKeyStart: this.apiKey?.substring(0, 10) + '***',
-            baseURL: this.baseURL
-        });
+        logger.info({ hasApiKey: !!this.apiKey, hasSecretKey: !!this.secretKey, baseURL: this.baseURL }, "Flow Service inicializado");
     }
 
     sign(params) {
@@ -29,15 +25,13 @@ class FlowService {
         const sortedKeys = Object.keys(cleanParams).sort();
         const dataToSign = sortedKeys.map(key => `${key}${cleanParams[key]}`).join('');
 
-        console.log('🔐 String a firmar:', dataToSign);
-        console.log('🔐 Keys incluidas:', sortedKeys);
+        logger.debug({ keys: sortedKeys }, "Flow: firmando request");
 
         return crypto.createHmac('sha256', this.secretKey).update(dataToSign).digest('hex');
     }
 
     async createPayment(paymentData) {
-        console.log('\n🚀 === INICIO createPayment ===');
-        console.log('📦 Datos recibidos:', JSON.stringify(paymentData, null, 2));
+        logger.info({ commerceOrder: paymentData.commerceOrder, amount: paymentData.amount }, "Flow: creando pago");
 
         const params = {
             apiKey: this.apiKey,
@@ -53,10 +47,10 @@ class FlowService {
 
         params.s = this.sign(params);
 
-        console.log('📤 Parámetros finales:', params);
+        logger.debug({ commerceOrder: params.commerceOrder }, "Flow: parámetros listos");
 
         try {
-            console.log('🌐 POST to:', `${this.baseURL}/payment/create`);
+            logger.debug({ url: `${this.baseURL}/payment/create` }, "Flow: POST request");
 
             const formData = new URLSearchParams();
             Object.keys(params).forEach(key => {
@@ -72,26 +66,24 @@ class FlowService {
             const data = response.data;
 
             if (!data || !data.token || !data.url) {
-                console.error('❌ Flow respuesta inválida o sin token:', data);
+                logger.error({ data }, "Flow: respuesta inválida o sin token");
                 throw new Error(
                     `Flow no retornó token/url. Código: ${data?.code}, Mensaje: ${data?.message || 'Sin mensaje'}`
                 );
             }
 
-            console.log('✅ Flow response SUCCESS:', data);
+            logger.info({ flowOrder: data.flowOrder }, "Flow: pago creado exitosamente");
             return data;
 
         } catch (error) {
             if (!error.response) {
                 throw error;
             }
-            console.error('❌ Flow ERROR:', {
+            logger.error({
                 status: error.response?.status,
-                statusText: error.response?.statusText,
                 errorMessage: error.response?.data?.message,
                 errorCode: error.response?.data?.code,
-                fullError: error.response?.data
-            });
+            }, "Flow: error en createPayment");
             throw new Error(`Error creando pago Flow: ${error.response?.data?.message || error.message}`);
         }
     }
@@ -117,28 +109,25 @@ class FlowService {
 
     validateCallback(params) {
         try {
-            console.log('🔐 Validando callback de Flow:', params);
+            logger.debug("Flow: validando callback");
 
             const { s: receivedSignature, ...dataToSign } = params;
 
             if (!receivedSignature) {
-                console.log('❌ No hay firma en el callback');
+                logger.warn("Flow: callback sin firma");
                 return false;
             }
 
-            console.log('📦 Datos a firmar:', dataToSign);
-            console.log('📝 Firma recibida:', receivedSignature);
+            logger.debug("Flow: verificando firma de callback");
 
             const expectedSignature = this.sign(dataToSign);
-            console.log('📝 Firma esperada:', expectedSignature);
-
             const isValid = receivedSignature === expectedSignature;
-            console.log(isValid ? '✅ Firma válida' : '❌ Firma inválida');
+            if (!isValid) logger.warn("Flow: firma inválida en callback");
 
             return isValid;
 
         } catch (error) {
-            console.error('❌ Error validando firma:', error);
+            logger.error({ err: error }, "Flow: error validando firma");
             return false;
         }
     }

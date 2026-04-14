@@ -1,5 +1,6 @@
 // backend/controllers/clientController.js
 import * as clientService from '../services/clientService.js';
+import logger from '../lib/logger.js';
 
 // ===== PERFIL =====
 
@@ -9,7 +10,7 @@ export async function getPerfil(req, res) {
         if (!perfil) return res.status(404).json({ error: 'Usuario no encontrado' });
         res.json(perfil);
     } catch (err) {
-        console.error('Error getPerfil:', err);
+        logger.error({ err }, "Error getPerfil");
         res.status(500).json({ error: 'Error al obtener perfil' });
     }
 }
@@ -20,7 +21,7 @@ export async function updatePerfil(req, res) {
         const perfil = await clientService.updatePerfil(req.user.id, { nombre, telefono, direccion_defecto });
         res.json(perfil);
     } catch (err) {
-        console.error('Error updatePerfil:', err);
+        logger.error({ err }, "Error updatePerfil");
         res.status(400).json({ error: 'Error al actualizar perfil' });
     }
 }
@@ -32,7 +33,7 @@ export async function getPedidos(req, res) {
         const pedidos = await clientService.getPedidos(req.user.id);
         res.json(pedidos);
     } catch (err) {
-        console.error('Error getPedidos:', err);
+        logger.error({ err }, "Error getPedidos");
         res.status(500).json({ error: 'Error al obtener pedidos' });
     }
 }
@@ -43,7 +44,7 @@ export async function getPedidoById(req, res) {
         if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
         res.json(pedido);
     } catch (err) {
-        console.error('Error getPedidoById:', err);
+        logger.error({ err }, "Error getPedidoById");
         res.status(500).json({ error: 'Error al obtener pedido' });
     }
 }
@@ -53,7 +54,7 @@ export async function cancelarPedido(req, res) {
         await clientService.cancelarPedido(req.params.id, req.user.id);
         res.json({ message: 'Pedido cancelado correctamente' });
     } catch (err) {
-        console.error('Error cancelarPedido:', err);
+        logger.error({ err }, "Error cancelarPedido");
         res.status(err.status || 400).json({ error: err.message || 'Error al cancelar pedido' });
     }
 }
@@ -65,7 +66,7 @@ export async function getMisResenas(req, res) {
         const resenas = await clientService.getMisResenas(req.user.id);
         res.json(resenas);
     } catch (err) {
-        console.error('Error getMisResenas:', err);
+        logger.error({ err }, "Error getMisResenas");
         res.status(500).json({ error: 'Error al obtener reseñas' });
     }
 }

@@ -1,5 +1,6 @@
 import pg from "pg";
 import "dotenv/config";
+import logger from "./logger.js";
 
 const { Pool } = pg;
 
@@ -14,7 +15,7 @@ if (connectionString) {
   };
 } else {
   if (!process.env.DB_PASSWORD) {
-    console.error("❌ DB_PASSWORD es obligatorio cuando no se usa DATABASE_URL");
+    logger.fatal("DB_PASSWORD es obligatorio cuando no se usa DATABASE_URL");
     process.exit(1);
   }
   config = {
@@ -27,21 +28,20 @@ if (connectionString) {
   };
 }
 
-console.log('Database config:', {
+logger.info({
   mode: connectionString ? 'URL' : 'local/manual',
-  connectionString: connectionString ? 'used' : 'not used',
-  host: config.host || 'connectionString'
-});
+  host: config.host || 'connectionString',
+}, "Database config");
 
 const pool = new Pool(config);
 
 // Event handlers
 pool.on('connect', () => {
-  console.log('✅ Conectado a PostgreSQL');
+  logger.info("Conectado a PostgreSQL");
 });
 
 pool.on('error', (err) => {
-  console.error('❌ Error inesperado en PostgreSQL:', err);
+  logger.error({ err }, "Error inesperado en PostgreSQL");
 });
 
 // Función helper para queries
@@ -51,13 +51,11 @@ const query = async (text, params) => {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Query ejecutada:', { duration: `${duration}ms`, rows: res.rowCount });
-    }
+    logger.debug({ duration: `${duration}ms`, rows: res.rowCount }, "Query ejecutada");
 
     return res;
   } catch (error) {
-    console.error('❌ Error en query DB:', error.message);
+    logger.error({ err: error }, "Error en query DB");
     throw error;
   }
 };

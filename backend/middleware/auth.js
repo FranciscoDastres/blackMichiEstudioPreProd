@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import db from "../lib/db.js";
+import logger from "../lib/logger.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -24,7 +25,7 @@ export async function requireAuth(req, res, next) {
     req.user = result.rows[0];
     next();
   } catch (err) {
-    console.error(err);
+    logger.error({ err }, "Error validando token");
     res.status(401).json({ error: "Token inválido" });
   }
 }

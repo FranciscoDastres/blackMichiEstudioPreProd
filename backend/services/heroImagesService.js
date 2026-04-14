@@ -1,5 +1,6 @@
 import db from "../lib/db.js";
 import * as cloudinaryService from "./cloudinaryService.js";
+import logger from "../lib/logger.js";
 
 export async function getHeroImages() {
     const result = await db.query(
@@ -96,7 +97,7 @@ export async function uploadHeroImage(buffer, section, title, subtitle, buttonTe
             [title, subtitle, buttonText, categoria, section]
         );
 
-        console.log(`📝 Texto actualizado para ${section} (sin nueva imagen)`);
+        logger.info({ section }, "Texto hero actualizado (sin nueva imagen)");
 
         return {
             image_url: existing.rows[0].image_url,
@@ -108,11 +109,11 @@ export async function uploadHeroImage(buffer, section, title, subtitle, buttonTe
         };
     }
 
-    console.log(`📤 Subiendo hero image: ${section}`);
+    logger.info({ section }, "Subiendo hero image");
 
     const uploadResult = await cloudinaryService.uploadHeroImage(buffer, section);
 
-    console.log(`✅ Subido a Cloudinary: ${uploadResult.url}`);
+    logger.info({ url: uploadResult.url }, "Hero subido a Cloudinary");
 
     const oldImageResult = await db.query(
         `SELECT image_url FROM hero_images WHERE section = $1`,
@@ -134,7 +135,7 @@ export async function uploadHeroImage(buffer, section, title, subtitle, buttonTe
         [section, uploadResult.url, title, subtitle, buttonText, categoria]
     );
 
-    console.log(`📝 Base de datos actualizada para ${section}`);
+    logger.info({ section }, "Hero image actualizada en DB");
 
     if (oldImage && oldImage.includes("cloudinary.com")) {
         try {
@@ -144,10 +145,10 @@ export async function uploadHeroImage(buffer, section, title, subtitle, buttonTe
                     .replace(/\.[^/.]+$/, "")
                     .replace(/^v\d+\//, "");
                 await cloudinaryService.deleteFile(publicId);
-                console.log(`🗑️ Imagen anterior eliminada de Cloudinary`);
+                logger.info("Imagen hero anterior eliminada de Cloudinary");
             }
         } catch (deleteError) {
-            console.warn("⚠️ No se pudo eliminar imagen anterior:", deleteError.message);
+            logger.warn({ err: deleteError }, "No se pudo eliminar imagen hero anterior");
         }
     }
 
@@ -185,10 +186,10 @@ export async function deleteHeroImage(section) {
                     .replace(/\.[^/.]+$/, "")
                     .replace(/^v\d+\//, "");
                 await cloudinaryService.deleteFile(publicId);
-                console.log(`🗑️ Imagen eliminada de Cloudinary`);
+                logger.info("Imagen hero eliminada de Cloudinary");
             }
         } catch (deleteError) {
-            console.warn("⚠️ No se pudo eliminar de Cloudinary:", deleteError.message);
+            logger.warn({ err: deleteError }, "No se pudo eliminar hero de Cloudinary");
         }
     }
 

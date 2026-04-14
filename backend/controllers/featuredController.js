@@ -1,6 +1,7 @@
 // backend/controllers/featuredController.js
 // ✅ SOLO HTTP HANDLING - La lógica está en featuredService.js
 import * as featuredService from "../services/featuredService.js";
+import logger from "../lib/logger.js";
 
 // ✅ Obtener productos destacados
 export async function getFeaturedProducts(req, res) {
@@ -8,7 +9,7 @@ export async function getFeaturedProducts(req, res) {
     const products = await featuredService.getFeaturedProducts();
     res.json(products);
   } catch (error) {
-    console.error("Error:", error);
+    logger.error({ err: error }, "Error en featuredController");
     res.status(500).json({ message: "Error obteniendo productos destacados" });
   }
 }
@@ -25,7 +26,7 @@ export async function addFeaturedProduct(req, res) {
     await featuredService.addFeaturedProduct(producto_id, position);
     res.status(201).json({ message: "Producto destacado agregado" });
   } catch (error) {
-    console.error("Error:", error);
+    logger.error({ err: error }, "Error en featuredController");
     res.status(500).json({ message: "Error agregando producto destacado" });
   }
 }
@@ -42,7 +43,7 @@ export async function removeFeaturedProduct(req, res) {
     await featuredService.removeFeaturedProduct(id);
     res.json({ message: "Producto destacado eliminado" });
   } catch (error) {
-    console.error("Error:", error);
+    logger.error({ err: error }, "Error en featuredController");
     res.status(500).json({ message: "Error eliminando producto destacado" });
   }
 }

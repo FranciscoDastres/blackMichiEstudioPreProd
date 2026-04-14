@@ -8,6 +8,7 @@ import fs from "fs";
 import compression from "compression";
 import { fileURLToPath } from "url";
 import "dotenv/config";
+import logger from "./lib/logger.js";
 
 import * as keepAlive from "./lib/keepAlive.js";
 import * as cleanupJobs from "./lib/cleanupJobs.js";
@@ -33,7 +34,7 @@ const isProd = process.env.NODE_ENV === "production";
 // Evitar doble arranque en Render (CRÍTICO)
 // ─────────────────────────────────────────────
 if (process.env.RENDER === "true" && process.argv[1] !== __filename) {
-  console.log("⛔ Render detuvo doble instancia.");
+  logger.warn("Render detuvo doble instancia");
   process.exit(0);
 }
 
@@ -44,13 +45,13 @@ const requiredEnvVars = ["DATABASE_URL"];
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
 if (missingVars.length > 0) {
   if (isProd && !process.env.DATABASE_URL) {
-    console.error(`❌ Variables de entorno críticas faltantes: ${missingVars.join(", ")}`);
+    logger.fatal({ missingVars }, "Variables de entorno críticas faltantes");
     process.exit(1);
   }
-  console.warn(`⚠️  Variables faltantes: ${missingVars.join(", ")}`);
+  logger.warn({ missingVars }, "Variables de entorno faltantes");
 }
 
-console.log("✅ Pool de conexión a BD inicializado");
+logger.info("Pool de conexión a BD inicializado");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -111,7 +112,7 @@ app.use((req, res, next) => {
       if (allowedOrigins.includes(origin) || VERCEL_PREVIEW_PATTERN.test(origin)) {
         return callback(null, true);
       }
-      console.warn("❌ CORS bloqueado:", origin);
+      logger.warn({ origin }, "CORS bloqueado");
       return callback(new Error("Origen no permitido por CORS"));
     },
     credentials: true,
@@ -189,6 +190,81 @@ app.get("/", (req, res) => res.json({ status: "ok" }));
 app.get("/health", (req, res) => res.json({ status: "healthy" }));
 
 // ─────────────────────────────────────────────
+// SEO: SITEMAP + ROBOTS
+// ─────────────────────────────────────────────
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://blackmichiestudio.cl";
+
+app.get("/sitemap.xml", async (req, res) => {
+  try {
+    const result = await db.query(
+      "SELECT id, updated_at FROM productos WHERE activo = true ORDER BY updated_at DESC"
+    );
+    const catResult = await db.query("SELECT id, nombre FROM categorias ORDER BY nombre");
+
+    const staticPages = [
+      { loc: "/", priority: "1.0", changefreq: "daily" },
+      { loc: "/productos", priority: "0.9", changefreq: "daily" },
+      { loc: "/faq", priority: "0.4", changefreq: "monthly" },
+      { loc: "/privacidad", priority: "0.3", changefreq: "yearly" },
+      { loc: "/terminos", priority: "0.3", changefreq: "yearly" },
+    ];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
+    for (const page of staticPages) {
+      xml += `  <url>
+    <loc>${FRONTEND_URL}${page.loc}</loc>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>
+`;
+    }
+
+    for (const row of result.rows) {
+      const lastmod = row.updated_at
+        ? new Date(row.updated_at).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0];
+      xml += `  <url>
+    <loc>${FRONTEND_URL}/producto/${row.id}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+`;
+    }
+
+    for (const cat of catResult.rows) {
+      xml += `  <url>
+    <loc>${FRONTEND_URL}/categoria/${encodeURIComponent(cat.nombre)}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    }
+
+    xml += `</urlset>`;
+
+    res.set("Content-Type", "application/xml");
+    res.set("Cache-Control", "public, max-age=3600");
+    res.send(xml);
+  } catch (err) {
+    logger.error({ err }, "Error generando sitemap");
+    res.status(500).send("Error generando sitemap");
+  }
+});
+
+app.get("/robots.txt", (req, res) => {
+  const backendUrl = process.env.BACKEND_URL || "https://api.blackmichiestudio.cl";
+  res.set("Content-Type", "text/plain");
+  res.send(`User-agent: *
+Allow: /
+
+Sitemap: ${backendUrl}/sitemap.xml
+`);
+});
+
+// ─────────────────────────────────────────────
 // RATE LIMITERS
 // ─────────────────────────────────────────────
 const authLimiter = rateLimit({
@@ -225,9 +301,9 @@ try {
   app.use("/api/orders", requireAuth, orderRoutes);
   app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
 
-  console.log("✅ Todas las rutas montadas correctamente");
+  logger.info("Todas las rutas montadas correctamente");
 } catch (error) {
-  console.error("❌ Error al montar rutas:", error);
+  logger.error({ err: error }, "Error al montar rutas");
 }
 
 // ─────────────────────────────────────────────
@@ -242,7 +318,7 @@ app.use((err, req, res, next) => {
   if (err.message === "Origen no permitido por CORS") {
     return res.status(403).json({ error: "Origen no permitido" });
   }
-  console.error("❌ Error global:", err.message);
+  logger.error({ err, method: req.method, url: req.originalUrl }, "Error global");
   res.status(err.status || 500).json({ error: isProd ? "Error interno" : err.message });
 });
 
@@ -250,10 +326,7 @@ app.use((err, req, res, next) => {
 // INICIAR SERVIDOR — FIX RENDER
 // ─────────────────────────────────────────────
 const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Servidor corriendo en puerto: ${PORT}`);
-  console.log(`🛡️ Helmet activo`);
-  console.log(`📦 Entorno: ${process.env.NODE_ENV}`);
-  console.log(`🔒 CORS permitido: ${allowedOrigins.join(", ")}`);
+  logger.info({ port: PORT, env: process.env.NODE_ENV, cors: allowedOrigins }, "Servidor iniciado");
   cleanupJobs.start();
 });
 
@@ -267,7 +340,7 @@ if (!process.env.RENDER) {
 // ─────────────────────────────────────────────
 process.on("SIGTERM", () => {
   server.close(() => {
-    console.log("✅ Servidor cerrado");
+    logger.info("Servidor cerrado");
     process.exit(0);
   });
 });
