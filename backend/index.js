@@ -12,6 +12,7 @@ import { fileURLToPath } from "url";
 import "dotenv/config";
 import logger from "./lib/logger.js";
 import db from "./lib/db.js";
+import { runMigrations } from "./lib/migrate.js";
 
 import * as keepAlive from "./lib/keepAlive.js";
 import * as cleanupJobs from "./lib/cleanupJobs.js";
@@ -360,10 +361,17 @@ app.use((err, req, res, next) => {
 // ─────────────────────────────────────────────
 // INICIAR SERVIDOR — FIX RENDER
 // ─────────────────────────────────────────────
-const server = app.listen(PORT, "0.0.0.0", () => {
-  logger.info({ port: PORT, env: process.env.NODE_ENV, cors: allowedOrigins }, "Servidor iniciado");
-  cleanupJobs.start();
-});
+let server;
+try {
+  await runMigrations();
+  server = app.listen(PORT, "0.0.0.0", () => {
+    logger.info({ port: PORT, env: process.env.NODE_ENV, cors: allowedOrigins }, "Servidor iniciado");
+    cleanupJobs.start();
+  });
+} catch (err) {
+  logger.fatal({ err }, "Fallo al aplicar migraciones — servidor no inicia");
+  process.exit(1);
+}
 
 // keepAlive SOLO en local
 if (!process.env.RENDER) {
