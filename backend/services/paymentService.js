@@ -1,4 +1,4 @@
-import db from "../lib/db.js";
+import db, { pool } from "../lib/db.js";
 import logger from "../lib/logger.js";
 import flowService from "./flowService.js";
 import * as emailService from "./emailService.js";
@@ -10,10 +10,12 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
     const randomSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
     const commerceOrder = `BMS-${timestamp}-${randomSuffix}`;
 
-    await db.query('BEGIN');
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+
         const productIds = items.map(item => item.id);
-        const productosDB = await db.query(
+        const productosDB = await client.query(
             'SELECT id, precio, stock, activo FROM productos WHERE id = ANY($1)',
             [productIds]
         );
@@ -23,17 +25,15 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
         for (const item of items) {
             const prod = preciosMap[item.id];
             if (!prod) {
-                await db.query('ROLLBACK');
                 throw Object.assign(new Error(`Producto ${item.id} no encontrado.`), { status: 400 });
             }
             if (!prod.activo) {
-                await db.query('ROLLBACK');
                 throw Object.assign(new Error('El producto ya no está disponible.'), { status: 400 });
             }
             totalCalculado += Number(prod.precio) * item.quantity;
         }
 
-        const configResult = await db.query(
+        const configResult = await client.query(
             `SELECT valor FROM configuracion WHERE clave = 'costo_envio'`
         );
         const costoEnvio = configResult.rows.length > 0 ? Number(configResult.rows[0].valor) : 3500;
@@ -44,7 +44,6 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
         if (cuponCodigo) {
             const resultadoCupon = await cuponService.validarCupon(cuponCodigo, totalCalculado);
             if (!resultadoCupon.valido) {
-                await db.query('ROLLBACK');
                 throw Object.assign(new Error(resultadoCupon.error || 'Cupón inválido'), { status: 400 });
             }
             cuponAplicado = resultadoCupon.cupon;
@@ -53,13 +52,13 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
 
         totalCalculado = Math.max(0, totalCalculado - descuento) + costoEnvio;
 
-        const userResult = await db.query(
+        const userResult = await client.query(
             'SELECT id FROM usuarios WHERE email = $1',
             [email.trim().toLowerCase()]
         );
         const usuarioId = userResult.rows.length > 0 ? userResult.rows[0].id : null;
 
-        const pedidoResult = await db.query(
+        const pedidoResult = await client.query(
             `INSERT INTO pedidos (
                 usuario_id, comprador_nombre, comprador_email, comprador_telefono,
                 direccion_envio, total, costo_envio, descuento, cupon_codigo, cupon_id,
@@ -93,7 +92,6 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
             }));
 
         if (stockInsuficiente.length > 0) {
-            await db.query('ROLLBACK');
             throw Object.assign(
                 new Error('Stock insuficiente para algunos productos'),
                 { status: 400, productos_sin_stock: stockInsuficiente }
@@ -101,7 +99,7 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
         }
 
         for (const item of items) {
-            await db.query(
+            await client.query(
                 `INSERT INTO pedido_items (
                     pedido_id, producto_id, producto_titulo, producto_imagen,
                     cantidad, precio_unitario, subtotal
@@ -128,8 +126,8 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
             urlReturn: `${process.env.BACKEND_URL}/api/payments/flow/return`,
         });
 
-        await db.query('UPDATE pedidos SET flow_token = $1 WHERE id = $2', [flowResponse.token, pedidoId]);
-        await db.query('COMMIT');
+        await client.query('UPDATE pedidos SET flow_token = $1 WHERE id = $2', [flowResponse.token, pedidoId]);
+        await client.query('COMMIT');
 
         return {
             paymentUrl: `${flowResponse.url}?token=${flowResponse.token}`,
@@ -140,8 +138,10 @@ export async function crearPago({ items, email, nombre, notas, telefono, direcci
             total: totalCalculado,
         };
     } catch (err) {
-        await db.query('ROLLBACK');
+        await client.query('ROLLBACK').catch(() => {});
         throw err;
+    } finally {
+        client.release();
     }
 }
 
@@ -178,75 +178,106 @@ export async function procesarWebhook(token, rawBody, rawHeaders, ip) {
     const statusMap = { 1: 'pendiente', 2: 'pagado', 3: 'rechazado', 4: 'cancelado' };
     const nuevoEstado = statusMap[payment.status] || 'pendiente';
 
-    const updateResult = await db.query(
-        `UPDATE pedidos
-         SET flow_order = $1, flow_status = $2, estado = $3, flow_payment_data = $4,
-             fecha_pago = CASE WHEN $5::text = 'pagado' THEN NOW() ELSE fecha_pago END,
-             updated_at = NOW()
-         WHERE commerce_order = $6
-         RETURNING id, comprador_email, comprador_nombre, total`,
-        [
-            String(payment.flowOrder),
-            parseInt(payment.status),
-            nuevoEstado,
-            JSON.stringify(payment),
-            nuevoEstado,
-            String(payment.commerceOrder),
-        ]
-    );
+    const client = await pool.connect();
+    let pedido;
+    let pedidoCompleto = null;
+    let itemsRows = null;
+    try {
+        await client.query('BEGIN');
 
-    if (updateResult.rows.length === 0) {
-        await db.query(
-            'UPDATE flow_webhooks SET processing_error = $1, flow_order = $2 WHERE id = $3',
-            ['Order not found', payment.flowOrder, webhookId]
+        const updateResult = await client.query(
+            `UPDATE pedidos
+             SET flow_order = $1, flow_status = $2, estado = $3, flow_payment_data = $4,
+                 fecha_pago = CASE WHEN $5::text = 'pagado' THEN NOW() ELSE fecha_pago END,
+                 updated_at = NOW()
+             WHERE commerce_order = $6
+             RETURNING id, comprador_email, comprador_nombre, total, cupon_id`,
+            [
+                String(payment.flowOrder),
+                parseInt(payment.status),
+                nuevoEstado,
+                JSON.stringify(payment),
+                nuevoEstado,
+                String(payment.commerceOrder),
+            ]
         );
-        throw Object.assign(new Error('Pedido no encontrado'), { status: 404 });
+
+        if (updateResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            await db.query(
+                'UPDATE flow_webhooks SET processing_error = $1, flow_order = $2 WHERE id = $3',
+                ['Order not found', payment.flowOrder, webhookId]
+            );
+            throw Object.assign(new Error('Pedido no encontrado'), { status: 404 });
+        }
+
+        pedido = updateResult.rows[0];
+
+        if (payment.status === 2) {
+            logger.info({ pedidoId: pedido.id }, "Pago confirmado — descontando stock");
+            const itemsResult = await client.query(
+                'SELECT producto_id, cantidad FROM pedido_items WHERE pedido_id = $1',
+                [pedido.id]
+            );
+            for (const item of itemsResult.rows) {
+                const updated = await client.query(
+                    `UPDATE productos SET stock = stock - $1, updated_at = NOW()
+                     WHERE id = $2 AND stock >= $3
+                     RETURNING titulo, stock`,
+                    [item.cantidad, item.producto_id, item.cantidad]
+                );
+                if (updated.rows.length === 0) {
+                    logger.warn({ productoId: item.producto_id }, "Stock insuficiente al descontar");
+                }
+            }
+
+            // Incrementar uso del cupón dentro de la misma transacción
+            if (pedido.cupon_id) {
+                await client.query(
+                    `UPDATE cupones SET usos_actuales = usos_actuales + 1, updated_at = NOW()
+                     WHERE id = $1`,
+                    [pedido.cupon_id]
+                );
+            }
+
+            // Cargar datos para emails antes de cerrar la transacción
+            const [itemsForEmail, pedidoFull] = await Promise.all([
+                client.query('SELECT producto_titulo, cantidad, precio_unitario FROM pedido_items WHERE pedido_id = $1', [pedido.id]),
+                client.query('SELECT * FROM pedidos WHERE id = $1', [pedido.id]),
+            ]);
+            itemsRows = itemsForEmail.rows;
+            pedidoCompleto = pedidoFull.rows[0];
+        }
+
+        await client.query(
+            `UPDATE flow_webhooks SET processed = true, pedido_id = $1, flow_order = $2, flow_status = $3
+             WHERE id = $4`,
+            [pedido.id, payment.flowOrder, payment.status, webhookId]
+        );
+
+        await client.query('COMMIT');
+    } catch (err) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw err;
+    } finally {
+        client.release();
     }
 
-    const pedido = updateResult.rows[0];
-
     if (payment.status === 2) {
-        logger.info({ pedidoId: pedido.id }, "Pago confirmado — descontando stock");
-        const itemsResult = await db.query(
-            'SELECT producto_id, cantidad FROM pedido_items WHERE pedido_id = $1',
-            [pedido.id]
-        );
-        for (const item of itemsResult.rows) {
-            const updated = await db.query(
-                `UPDATE productos SET stock = stock - $1, updated_at = NOW()
-                 WHERE id = $2 AND stock >= $3
-                 RETURNING titulo, stock`,
-                [item.cantidad, item.producto_id, item.cantidad]
-            );
-            if (updated.rows.length === 0) {
-                logger.warn({ productoId: item.producto_id }, "Stock insuficiente al descontar");
-            }
-        }
         invalidateCache();
 
-        // Incrementar uso del cupón si aplica
-        const cuponRow = await db.query(
-            'SELECT cupon_id FROM pedidos WHERE id = $1',
-            [pedido.id]
-        );
-        if (cuponRow.rows[0]?.cupon_id) {
-            await cuponService.incrementarUso(cuponRow.rows[0].cupon_id);
+        // Emails fuera de la transacción: si fallan no debe revertir el pago.
+        // Pero SÍ deben loguearse — antes se enviaban sin await y los errores se perdían.
+        try {
+            await emailService.emailConfirmacionPago(pedidoCompleto, itemsRows);
+        } catch (err) {
+            logger.error({ err, pedidoId: pedido.id }, "Falló email de confirmación al cliente");
         }
-    }
-
-    await db.query(
-        `UPDATE flow_webhooks SET processed = true, pedido_id = $1, flow_order = $2, flow_status = $3
-         WHERE id = $4`,
-        [pedido.id, payment.flowOrder, payment.status, webhookId]
-    );
-
-    if (payment.status === 2) {
-        const [itemsResult, pedidoCompleto] = await Promise.all([
-            db.query('SELECT producto_titulo, cantidad, precio_unitario FROM pedido_items WHERE pedido_id = $1', [pedido.id]),
-            db.query('SELECT * FROM pedidos WHERE id = $1', [pedido.id]),
-        ]);
-        emailService.emailConfirmacionPago(pedidoCompleto.rows[0], itemsResult.rows);
-        emailService.emailNuevoPedidoAdmin(pedidoCompleto.rows[0], itemsResult.rows);
+        try {
+            await emailService.emailNuevoPedidoAdmin(pedidoCompleto, itemsRows);
+        } catch (err) {
+            logger.error({ err, pedidoId: pedido.id }, "Falló email de notificación al admin");
+        }
     }
 
     return { pedidoId: pedido.id, estado: nuevoEstado };
