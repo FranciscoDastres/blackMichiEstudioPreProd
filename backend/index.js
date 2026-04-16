@@ -183,7 +183,6 @@ app.use(
       else if (filePath.endsWith(".png")) res.setHeader("Content-Type", "image/png");
 
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-      res.setHeader("Access-Control-Allow-Origin", "*");
     },
   })
 );
