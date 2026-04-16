@@ -1,5 +1,6 @@
 import db from "../lib/db.js";
 import * as emailService from "./emailService.js";
+import logger from "../lib/logger.js";
 
 export async function getAllProducts() {
     const result = await db.query(`
@@ -62,8 +63,12 @@ export async function updateOrderStatus(id, estado, numero_seguimiento = null) {
     if (estado === 'enviado' || estado === 'entregado') {
         const result = await db.query(`SELECT * FROM pedidos WHERE id = $1`, [id]);
         if (result.rows.length > 0) {
-            if (estado === 'enviado') emailService.emailPedidoEnviado(result.rows[0]);
-            if (estado === 'entregado') emailService.emailPedidoEntregado(result.rows[0]);
+            try {
+                if (estado === 'enviado') await emailService.emailPedidoEnviado(result.rows[0]);
+                if (estado === 'entregado') await emailService.emailPedidoEntregado(result.rows[0]);
+            } catch (err) {
+                logger.error({ err, pedidoId: id, estado }, "Falló email de cambio de estado");
+            }
         }
     }
 
