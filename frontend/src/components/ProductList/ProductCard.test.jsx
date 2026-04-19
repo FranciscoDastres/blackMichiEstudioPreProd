@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
 import ProductCard from './ProductCard'
 
 // Mock de LazyImage para simplificar el test (no necesitamos IntersectionObserver)
@@ -8,6 +9,19 @@ vi.mock('../LazyImage/LazyImage', () => ({
   default: ({ src, alt, className }) => (
     <img src={src} alt={alt} className={className} />
   ),
+}))
+
+// Mock de FavoritesContext — evita necesitar el Provider y llamadas a API
+vi.mock('../../contexts/FavoritesContext', () => ({
+  useFavorites: () => ({
+    isFavorite: () => false,
+    toggle: vi.fn(),
+  }),
+}))
+
+// Mock de AuthContext — usuario no logueado por defecto
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: null }),
 }))
 
 const mockProduct = {
@@ -28,7 +42,11 @@ const defaultProps = {
 }
 
 function renderCard(overrides = {}) {
-  return render(<ProductCard {...defaultProps} {...overrides} />)
+  return render(
+    <MemoryRouter>
+      <ProductCard {...defaultProps} {...overrides} />
+    </MemoryRouter>
+  )
 }
 
 describe('ProductCard', () => {
@@ -66,7 +84,7 @@ describe('ProductCard', () => {
   // ─── Estrellas de rating ──────────────────────────────────────
   it('renderiza 5 estrellas siempre', () => {
     renderCard()
-    const stars = document.querySelectorAll('svg')
+    const stars = document.querySelectorAll('svg polygon')
     expect(stars).toHaveLength(5)
   })
 
