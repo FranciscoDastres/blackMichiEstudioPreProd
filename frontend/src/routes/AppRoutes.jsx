@@ -49,10 +49,11 @@ function LoadingFallback() {
   );
 }
 
-// Fallback de contenido — usado DENTRO de Layout para no remontar el Header
+// Fallback de contenido — usado DENTRO de Layout para no remontar el Header.
+// min-h-screen empuja el Footer fuera del viewport durante la carga → evita CLS en footer.
 function PageLoadingFallback() {
   return (
-    <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-muted-foreground">Cargando...</p>
