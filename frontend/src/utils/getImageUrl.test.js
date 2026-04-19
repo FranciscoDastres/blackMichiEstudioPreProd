@@ -31,6 +31,18 @@ describe('getImageUrl', () => {
       const result = getImageUrl(cloudinaryUrl, 300)
       expect(result).toContain('blackmichi/productos/foto.jpg')
     })
+
+    it('agrega c_fill cuando crop="fill" con width y height', () => {
+      const result = getImageUrl(cloudinaryUrl, 300, 240, 80, 'fill')
+      expect(result).toContain('c_fill')
+      expect(result).toContain('w_300')
+      expect(result).toContain('h_240')
+    })
+
+    it('no agrega c_fill si solo hay width (sin height)', () => {
+      const result = getImageUrl(cloudinaryUrl, 300, null, 80, 'fill')
+      expect(result).not.toContain('c_fill')
+    })
   })
 
   // ─── Supabase ──────────────────────────────────────────────────
