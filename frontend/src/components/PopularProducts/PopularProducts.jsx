@@ -87,6 +87,8 @@ function PopularProducts() {
             <p className="text-lg text-muted-foreground mb-6">
               Los artículos más populares de nuestra colección
             </p>
+            {/* Reserva el espacio de los category tabs para evitar CLS cuando cargan */}
+            <div className="h-[38px]" aria-hidden="true" />
           </div>
           <div className="flex justify-center items-center h-[600px]">
             <div className="relative">
@@ -94,6 +96,8 @@ function PopularProducts() {
               <div className="absolute inset-0 animate-ping rounded-full border-2 border-accent/30"></div>
             </div>
           </div>
+          {/* Reserva el espacio del scroll indicator */}
+          <div className="mt-6 h-[28px]" aria-hidden="true" />
         </div>
       </div>
     );
