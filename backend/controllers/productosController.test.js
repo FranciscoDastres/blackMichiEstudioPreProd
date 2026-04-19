@@ -151,7 +151,7 @@ describe("getAllProducts", () => {
     ];
     mockProductService.getAllProducts.mockResolvedValue(products);
 
-    const req = {};
+    const req = { query: {} };
     const res = mockRes();
 
     await getAllProducts(req, res);
@@ -162,7 +162,7 @@ describe("getAllProducts", () => {
   it("retorna 500 si hay error", async () => {
     mockProductService.getAllProducts.mockRejectedValue(new Error("fail"));
 
-    const req = {};
+    const req = { query: {} };
     const res = mockRes();
 
     await getAllProducts(req, res);
