@@ -191,7 +191,7 @@ function PopularProducts() {
                       loading="lazy"
                       decoding="async"
                       srcSet={`${getImageUrl(primaryImage, 300, 240, 80)} 300w, ${getImageUrl(primaryImage, 600, 480, 80)} 600w`}
-                      sizes="(max-width:768px) 100vw, 300px"
+                      sizes="300px"
                       className="w-full h-full object-cover"
                     />
                     {additionalImages.length > 0 && (
@@ -203,7 +203,7 @@ function PopularProducts() {
                         loading="lazy"
                         decoding="async"
                         srcSet={`${getImageUrl(additionalImages[0], 300, 240, 80)} 300w, ${getImageUrl(additionalImages[0], 600, 480, 80)} 600w`}
-                        sizes="(max-width:768px) 100vw, 300px"
+                        sizes="300px"
                         className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       />
                     )}
