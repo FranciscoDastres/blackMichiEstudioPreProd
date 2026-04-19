@@ -106,27 +106,41 @@ export async function googleLogin(idToken) {
     const { email, name } = ticket.getPayload();
     if (!email) throw new Error("No se pudo obtener el email de Google");
 
-    const { data: listData } = await supabase.auth.admin.listUsers({
-        perPage: 1,
-        page: 1,
-        filter: `email=${email}`,
-    });
-
-    const existingUser = listData?.users?.find(u => u.email === email);
-
+    // Buscar auth_id en nuestra propia DB primero (más confiable que listUsers filter)
     let authUser;
+    const dbCheck = await db.query(
+        "SELECT auth_id FROM usuarios WHERE email = $1",
+        [email]
+    );
 
-    if (!existingUser) {
+    if (dbCheck.rows[0]?.auth_id) {
+        const { data: userData } = await supabase.auth.admin.getUserById(dbCheck.rows[0].auth_id);
+        authUser = userData?.user || null;
+    }
+
+    if (!authUser) {
+        // No está en nuestra DB — intentar crear en Supabase Auth
         const { data, error } = await supabase.auth.admin.createUser({
             email,
             email_confirm: true,
         });
 
-        if (error) throw new Error("Error creando usuario: " + error.message);
-
-        authUser = data.user;
-    } else {
-        authUser = existingUser;
+        if (error) {
+            if (error.message.includes('already been registered')) {
+                // Existe en Supabase Auth pero no en nuestra DB — buscar con listUsers
+                const { data: listData } = await supabase.auth.admin.listUsers({
+                    perPage: 1,
+                    page: 1,
+                    filter: `email=${email}`,
+                });
+                authUser = listData?.users?.find(u => u.email === email);
+                if (!authUser) throw new Error("No se pudo recuperar el usuario existente");
+            } else {
+                throw new Error("Error creando usuario: " + error.message);
+            }
+        } else {
+            authUser = data.user;
+        }
     }
 
     let result = await db.query(
