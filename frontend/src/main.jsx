@@ -2,7 +2,6 @@
 import React, { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "sonner";
 import * as Sentry from "@sentry/react";
@@ -29,36 +28,32 @@ reportWebVitals();
 initHoverImageLoading();
 initIntersectionObserver();
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
 ReactDOM.createRoot(document.getElementById("root")).render(
   <StrictMode>
     <HelmetProvider>
     <ErrorBoundary>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <AuthProvider>
-            <FavoritesProvider>
-            <CartProvider>
-              <App />
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-                theme="dark"
-                toastOptions={{
-                  style: {
-                    background: "rgba(20, 20, 20, 0.95)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    color: "#fff",
-                  },
-                }}
-              />
-            </CartProvider>
-            </FavoritesProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </GoogleOAuthProvider>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AuthProvider>
+          <FavoritesProvider>
+          <CartProvider>
+            <App />
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              theme="dark"
+              toastOptions={{
+                style: {
+                  background: "rgba(20, 20, 20, 0.95)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  color: "#fff",
+                },
+              }}
+            />
+          </CartProvider>
+          </FavoritesProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ErrorBoundary>
     </HelmetProvider>
   </StrictMode>

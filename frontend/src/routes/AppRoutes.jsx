@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import Layout from "../components/Layout/Layout";
 import { lazyWithRetry } from "../utils/lazyWithRetry";
 
@@ -86,12 +87,16 @@ export default function AppRoutes() {
       } />
       <Route path="/login" element={
         <Suspense fallback={<LoadingFallback />}>
-          <Login />
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <Login />
+          </GoogleOAuthProvider>
         </Suspense>
       } />
       <Route path="/register" element={
         <Suspense fallback={<LoadingFallback />}>
-          <Register />
+          <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <Register />
+          </GoogleOAuthProvider>
         </Suspense>
       } />
       <Route path="/forgot-password" element={
