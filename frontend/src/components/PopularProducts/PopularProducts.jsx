@@ -184,25 +184,25 @@ function PopularProducts() {
                   {/* Imagen */}
                   <div className="relative w-full h-60 bg-secondary/10 overflow-hidden flex-shrink-0">
                     <img
-                      src={getImageUrl(primaryImage, 300, 240, 80)}
+                      src={getImageUrl(primaryImage, 300, 240, 80, "fill")}
                       alt={product.titulo}
                       width="300"
                       height="240"
                       loading="lazy"
                       decoding="async"
-                      srcSet={`${getImageUrl(primaryImage, 300, 240, 80)} 300w, ${getImageUrl(primaryImage, 600, 480, 80)} 600w`}
+                      srcSet={`${getImageUrl(primaryImage, 300, 240, 80, "fill")} 300w, ${getImageUrl(primaryImage, 600, 480, 80, "fill")} 600w`}
                       sizes="300px"
                       className="w-full h-full object-cover"
                     />
                     {additionalImages.length > 0 && (
                       <img
-                        src={getImageUrl(additionalImages[0], 300, 240, 80)}
+                        src={getImageUrl(additionalImages[0], 300, 240, 80, "fill")}
                         alt="Vista alternativa"
                         width="300"
                         height="240"
                         loading="lazy"
                         decoding="async"
-                        srcSet={`${getImageUrl(additionalImages[0], 300, 240, 80)} 300w, ${getImageUrl(additionalImages[0], 600, 480, 80)} 600w`}
+                        srcSet={`${getImageUrl(additionalImages[0], 300, 240, 80, "fill")} 300w, ${getImageUrl(additionalImages[0], 600, 480, 80, "fill")} 600w`}
                         sizes="300px"
                         className="w-full h-full object-cover absolute top-0 left-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
                       />
