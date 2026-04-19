@@ -49,26 +49,14 @@ export default function SecondaryHeroSection() {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
 
-  if (loading) {
-    return (
-      <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
-        <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
-          <div className="lg:col-span-2 h-[380px] rounded-3xl border border-border bg-secondary/20 animate-pulse" />
-          <div className="h-[380px] rounded-3xl border border-border bg-secondary/20 opacity-70" />
-        </div>
-      </div>
-    );
-  }
-
-  if (slides.length === 0) {
-    return null;
-  }
-
   return (
     <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
       <div className="w-full max-w-[1800px] grid grid-cols-1 lg:grid-cols-3 gap-6 items-end">
 
-        {/* Carousel Principal (2/3) */}
+        {/* Carousel Principal (2/3) — placeholder estable si carga o sin datos */}
+        {loading || slides.length === 0 ? (
+          <div className={`lg:col-span-2 h-[380px] rounded-3xl border border-border bg-secondary/20 ${loading ? 'animate-pulse' : ''}`} />
+        ) : (
         <div className="lg:col-span-2 relative rounded-3xl overflow-hidden shadow-2xl border border-border h-[380px]">
           <Swiper
             modules={[Navigation, Autoplay]}
@@ -164,6 +152,7 @@ export default function SecondaryHeroSection() {
             ))}
           </Swiper>
         </div>
+        )}
 
         {/* Sidebar Promocional (1/3) */}
         <div className="relative rounded-3xl border border-white/30 shadow-2xl bg-gradient-to-b from-background via-secondary/5 to-background px-9 pt-9 pb-9 flex flex-col gap-4 h-auto lg:h-[380px]">
