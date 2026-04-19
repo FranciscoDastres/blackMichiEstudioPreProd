@@ -19,9 +19,6 @@ export default function useOrders() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            // 🔴 DIAGNÓSTICO: MUESTRA EL ESTADO TAL COMO VIENE DEL BACKEND
-            console.log("🔍 Datos RAW del backend:", response.data);
-
             const rawData = Array.isArray(response.data) ? response.data : [];
 
             const formattedOrders = rawData.map(order => ({
@@ -33,7 +30,6 @@ export default function useOrders() {
             }));
 
             setOrders(formattedOrders);
-            console.log("✅ Pedidos formateados (post-normalización):", formattedOrders);
         } catch (err) {
             console.error("[useOrders] Error:", err.response?.status, err.response?.data, err.message);
             setError(err.response?.data?.message || "Error al cargar pedidos");

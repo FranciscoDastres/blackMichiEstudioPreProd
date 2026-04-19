@@ -86,15 +86,12 @@ export function CartProvider({ children }) {
   // ✅ FIX: Limpiar localStorage PRIMERO de forma síncrona,
   // luego actualizar el estado React
   const clearCart = useCallback(() => {
-    console.log('🗑️ clearCart ejecutado');
-
     // 1. Borrar de localStorage de forma síncrona e inmediata
     try {
       localStorage.removeItem(CART_KEY);
       localStorage.removeItem('pendingOrder');
-      console.log('✅ localStorage limpiado de forma síncrona');
-    } catch (error) {
-      console.error('❌ Error limpiando localStorage:', error);
+    } catch {
+      // si localStorage falla, no rompas la app
     }
 
     // 2. Actualizar estado React (dispara el useEffect pero ya está vacío)

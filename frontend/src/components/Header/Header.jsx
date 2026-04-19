@@ -63,7 +63,6 @@ function Header() {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      console.log('🔄 Storage cambió - actualizando header');
     };
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('cart-cleared', handleStorageChange);

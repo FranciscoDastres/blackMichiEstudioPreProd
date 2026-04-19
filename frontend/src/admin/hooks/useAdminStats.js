@@ -9,7 +9,6 @@ export default function useAdminStats() {
         setLoading(true);
         try {
             const res = await api.get("/admin/stats");
-            console.log('✅ Stats cargados:', res.data);
             setStats({
                 totalSales: res.data.totalVentas || 0,
                 orders: res.data.totalPedidos || 0,
