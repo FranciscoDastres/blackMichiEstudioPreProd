@@ -14,6 +14,18 @@
   <link rel="preconnect" href="https://blackmichiestudiopreprod.onrender.com" crossorigin>
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 
+  <!-- Preload LCP hero image — evita element render delay en mobile -->
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dp89agr1s/image/upload/f_webp,w_900,h_590,q_85/v1773980518/blackmichi/hero/section1.webp"
+    imagesrcset="https://res.cloudinary.com/dp89agr1s/image/upload/f_webp,w_400,h_260,q_80/v1773980518/blackmichi/hero/section1.webp 400w,
+                 https://res.cloudinary.com/dp89agr1s/image/upload/f_webp,w_629,h_412,q_85/v1773980518/blackmichi/hero/section1.webp 629w,
+                 https://res.cloudinary.com/dp89agr1s/image/upload/f_webp,w_900,h_590,q_85/v1773980518/blackmichi/hero/section1.webp 900w"
+    imagesizes="(max-width: 640px) 400px, (max-width: 1024px) 629px, 900px"
+    fetchpriority="high"
+  />
+
   <!-- DNS Prefetch -->
   <link rel="dns-prefetch" href="https://blackmichiestudiopreprod.onrender.com">
   <link rel="dns-prefetch" href="https://res.cloudinary.com">
