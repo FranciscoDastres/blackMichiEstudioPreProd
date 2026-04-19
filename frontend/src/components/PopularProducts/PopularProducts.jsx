@@ -78,7 +78,7 @@ function PopularProducts() {
     return (
       <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
         <div className="w-full max-w-[1800px]">
-          <div className="mb-10">
+          <div className="mb-8 pt-4">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
               <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
                 Productos Populares
