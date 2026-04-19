@@ -74,8 +74,8 @@ export default function SecondaryHeroSection() {
                 <div className="relative h-[380px] overflow-hidden bg-background">
 
                   <img
-                    src={getImageUrl(image, 629, 412, 85)}
-                    srcSet={`${getImageUrl(image, 400, 260, 80)} 400w, ${getImageUrl(image, 629, 412, 85)} 629w`}
+                    src={getImageUrl(image, 629, 412, 60, "fill")}
+                    srcSet={`${getImageUrl(image, 400, 260, 60, "fill")} 400w, ${getImageUrl(image, 629, 412, 60, "fill")} 629w`}
                     sizes="(max-width: 640px) 400px, 629px"
                     alt=""
                     aria-hidden="true"
