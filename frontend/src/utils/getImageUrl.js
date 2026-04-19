@@ -7,12 +7,15 @@
  * - Si la URL es de Supabase (imágenes viejas) → las sirve tal cual
  * - Si es una ruta relativa → construye la URL del backend
  */
-export function getImageUrl(imagePath, width = null, height = null, quality = 75) {
+export function getImageUrl(imagePath, width = null, height = null, quality = 75, crop = null) {
     if (!imagePath) return "/placeholder.svg";
 
     // ── Cloudinary: transformaciones nativas ──────────────────────────────────
     if (imagePath.includes("res.cloudinary.com")) {
         const transforms = ["f_webp"];
+        // c_fill recorta al tamaño exacto (igual que CSS object-cover) → evita servir
+        // imágenes más grandes de lo que el navegador va a mostrar
+        if (crop && width && height) transforms.push(`c_${crop}`);
         if (width) transforms.push(`w_${width}`);
         if (height) transforms.push(`h_${height}`);
         if (quality) transforms.push(`q_${quality}`);
