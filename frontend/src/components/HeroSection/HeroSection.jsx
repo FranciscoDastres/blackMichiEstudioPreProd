@@ -106,8 +106,8 @@ export default function HeroSection() {
                             <div className="relative h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] overflow-hidden bg-background">
 
                                 <img
-                                    src={getImageUrl(image_url, 629, 412, 85)}
-                                    srcSet={`${getImageUrl(image_url, 400, 260, 80)} 400w, ${getImageUrl(image_url, 629, 412, 85)} 629w, ${getImageUrl(image_url, 900, 590, 85)} 900w`}
+                                    src={getImageUrl(image_url, 629, 412, 60, "fill")}
+                                    srcSet={`${getImageUrl(image_url, 400, 260, 60, "fill")} 400w, ${getImageUrl(image_url, 629, 412, 60, "fill")} 629w, ${getImageUrl(image_url, 900, 590, 60, "fill")} 900w`}
                                     sizes="(max-width: 640px) 400px, (max-width: 1024px) 629px, 900px"
                                     alt=""
                                     aria-hidden="true"
