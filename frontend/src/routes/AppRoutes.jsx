@@ -35,6 +35,7 @@ const AdminProductEdit = lazyWithRetry(() => import("../admin/pages/Products/Pro
 
 const UserRoutes = lazyWithRetry(() => import("../user/user.routes"));
 
+// Fallback con Layout completo — solo para rutas admin donde AdminLayout es lazy
 function LoadingFallback() {
   return (
     <Layout>
@@ -45,6 +46,18 @@ function LoadingFallback() {
         </div>
       </div>
     </Layout>
+  );
+}
+
+// Fallback de contenido — usado DENTRO de Layout para no remontar el Header
+function PageLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-[600px]">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    </div>
   );
 }
 
@@ -64,26 +77,34 @@ function SuccessRouteWrapper() {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* PÚBLICAS */}
+      {/* PÚBLICAS — Layout fuera de Suspense para evitar CLS en main */}
       <Route path="/" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Layout><Home /></Layout>
-        </Suspense>
+        <Layout>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Home />
+          </Suspense>
+        </Layout>
       } />
       <Route path="/productos" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Layout><ProductList /></Layout>
-        </Suspense>
+        <Layout>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ProductList />
+          </Suspense>
+        </Layout>
       } />
       <Route path="/producto/:productId" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Layout><ProductDetail /></Layout>
-        </Suspense>
+        <Layout>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ProductDetail />
+          </Suspense>
+        </Layout>
       } />
       <Route path="/checkout" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Layout><Checkout /></Layout>
-        </Suspense>
+        <Layout>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Checkout />
+          </Suspense>
+        </Layout>
       } />
       <Route path="/login" element={
         <Suspense fallback={<LoadingFallback />}>
@@ -115,19 +136,25 @@ export default function AppRoutes() {
 
       {/* POLÍTICAS Y AYUDA */}
       <Route path="/terminos-y-condiciones" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Layout><TermsAndConditions /></Layout>
-        </Suspense>
+        <Layout>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <TermsAndConditions />
+          </Suspense>
+        </Layout>
       } />
       <Route path="/preguntas-frecuentes" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Layout><FAQ /></Layout>
-        </Suspense>
+        <Layout>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <FAQ />
+          </Suspense>
+        </Layout>
       } />
       <Route path="/politica-privacidad" element={
-        <Suspense fallback={<LoadingFallback />}>
-          <Layout><PrivacyPolicy /></Layout>
-        </Suspense>
+        <Layout>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PrivacyPolicy />
+          </Suspense>
+        </Layout>
       } />
 
       {/* ADMIN */}
