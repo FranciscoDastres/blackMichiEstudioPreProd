@@ -3,10 +3,10 @@ import axios from "axios";
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 if (!baseURL) {
-  console.error('❌ ERROR CRÍTICO: VITE_API_BASE_URL no está definida');
+  throw new Error('VITE_API_BASE_URL no está definida. Verifica el archivo .env antes de hacer build.');
 }
 
-const finalBaseURL = baseURL || "http://localhost:3000";
+const finalBaseURL = baseURL;
 const finalURL = finalBaseURL.endsWith('/api') ? finalBaseURL : `${finalBaseURL}/api`;
 
 const api = axios.create({
