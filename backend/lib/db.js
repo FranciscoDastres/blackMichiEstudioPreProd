@@ -4,17 +4,18 @@ import logger from "./logger.js";
 
 const { Pool } = pg;
 
-// Prioriza DATABASE_URL, luego PG_URI
 const connectionString = process.env.DATABASE_URL || process.env.PG_URI;
 
 let config;
+
+// Determinamos si necesitamos SSL (En producción o si usamos conexión remota)
+const isProduction = process.env.NODE_ENV === 'production' || connectionString?.includes('supabase.co') || connectionString?.includes('render.com');
+
 if (connectionString) {
-  // Supabase pooler usa CA intermedia propia — rejectUnauthorized:false mantiene
-  // el cifrado SSL pero omite verificación de cadena. Pendiente: configurar
-  // ssl.ca con el certificado raíz de Supabase para habilitar verificación completa.
   config = {
     connectionString,
-    ssl: { rejectUnauthorized: false }
+    // Forzamos SSL con rejectUnauthorized: false para evitar el error de certificado autofirmado
+    ssl: isProduction ? { rejectUnauthorized: false } : false
   };
 } else {
   if (!process.env.DB_PASSWORD) {
@@ -27,13 +28,14 @@ if (connectionString) {
     database: process.env.DB_NAME || 'blackmichiestudio',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: isProduction ? { rejectUnauthorized: false } : false
   };
 }
 
 logger.info({
   mode: connectionString ? 'URL' : 'local/manual',
   host: config.host || 'connectionString',
+  ssl: !!config.ssl
 }, "Database config");
 
 const pool = new Pool(config);
@@ -47,22 +49,18 @@ pool.on('error', (err) => {
   logger.error({ err }, "Error inesperado en PostgreSQL");
 });
 
-// Función helper para queries
 const query = async (text, params) => {
   const start = Date.now();
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-
     logger.debug({ duration: `${duration}ms`, rows: res.rowCount }, "Query ejecutada");
-
     return res;
   } catch (error) {
-    logger.error({ err: error }, "Error en query DB");
+    logger.error({ err: error, sql: text }, "Error en query DB");
     throw error;
   }
 };
 
-// Exportar tanto el pool como la función query
 export { query, pool };
 export default { query, pool };
