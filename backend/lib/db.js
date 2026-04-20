@@ -11,7 +11,7 @@ let config;
 if (connectionString) {
   config = {
     connectionString,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: true }
   };
 } else {
   if (!process.env.DB_PASSWORD) {
@@ -24,7 +24,7 @@ if (connectionString) {
     database: process.env.DB_NAME || 'blackmichiestudio',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false
   };
 }
 
