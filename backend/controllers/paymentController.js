@@ -62,6 +62,11 @@ export async function flowConfirmation(req, res) {
         return res.status(400).send('Token required');
     }
 
+    if (!flowService.validateCallback(req.body)) {
+        logger.warn({ ip: req.ip }, "Webhook Flow rechazado: firma inválida");
+        return res.status(400).send('Invalid signature');
+    }
+
     try {
         await paymentService.procesarWebhook(token, req.body, req.headers, req.ip || req.connection?.remoteAddress);
         res.sendStatus(200);
