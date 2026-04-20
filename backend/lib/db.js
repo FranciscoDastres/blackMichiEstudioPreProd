@@ -9,9 +9,12 @@ const connectionString = process.env.DATABASE_URL || process.env.PG_URI;
 
 let config;
 if (connectionString) {
+  // Supabase pooler usa CA intermedia propia — rejectUnauthorized:false mantiene
+  // el cifrado SSL pero omite verificación de cadena. Pendiente: configurar
+  // ssl.ca con el certificado raíz de Supabase para habilitar verificación completa.
   config = {
     connectionString,
-    ssl: { rejectUnauthorized: true }
+    ssl: { rejectUnauthorized: false }
   };
 } else {
   if (!process.env.DB_PASSWORD) {
@@ -24,7 +27,7 @@ if (connectionString) {
     database: process.env.DB_NAME || 'blackmichiestudio',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   };
 }
 
