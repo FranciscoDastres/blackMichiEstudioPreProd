@@ -7,17 +7,19 @@ const DEFAULT_DESC =
 const BASE_URL = "https://blackmichiestudio.cl";
 const DEFAULT_IMAGE = `${BASE_URL}/og-image.jpg`;
 
-/**
- * Hook SEO que renderiza <Helmet> con meta tags, Open Graph y JSON-LD opcional.
- *
- * @param {Object} options
- * @param {string} [options.title]
- * @param {string} [options.description]
- * @param {string} [options.path] - path relativo, ej: "/productos/123"
- * @param {string} [options.image] - URL absoluta de la imagen para OG
- * @param {string} [options.type] - og:type, default "website"
- * @param {Object} [options.jsonLd] - objeto Schema.org para JSON-LD
- */
+interface SeoOptions {
+  title?: string;
+  description?: string;
+  /** Path relativo, ej: "/productos/123" */
+  path?: string;
+  /** URL absoluta de la imagen para OG */
+  image?: string;
+  /** og:type, default "website" */
+  type?: string;
+  /** Objeto Schema.org para JSON-LD */
+  jsonLd?: Record<string, unknown>;
+}
+
 export default function useSEO({
   title,
   description,
@@ -25,7 +27,7 @@ export default function useSEO({
   image,
   type = "website",
   jsonLd,
-} = {}) {
+}: SeoOptions = {}) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
   const desc = description || DEFAULT_DESC;
   const canonical = `${BASE_URL}${path}`;
