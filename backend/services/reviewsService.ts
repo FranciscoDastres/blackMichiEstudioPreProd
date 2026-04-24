@@ -1,6 +1,6 @@
 import db from "../lib/db.js";
 
-export async function getByProducto(productoId) {
+export async function getByProducto(productoId: number | string): Promise<unknown[]> {
     const result = await db.query(
         `SELECT v.id, v.calificacion, v.comentario, v.created_at,
                 u.nombre AS usuario_nombre, u.email AS usuario_email
@@ -13,7 +13,16 @@ export async function getByProducto(productoId) {
     return result.rows;
 }
 
-export async function create(usuarioId, { producto_id, calificacion, comentario }) {
+export interface CreateReviewData {
+    producto_id: number | string;
+    calificacion: number;
+    comentario?: string | null;
+}
+
+export async function create(
+    usuarioId: number,
+    { producto_id, calificacion, comentario }: CreateReviewData
+): Promise<unknown> {
     const ordenEntregada = await db.query(
         `SELECT 1 FROM pedido_items pi
          JOIN pedidos p ON pi.pedido_id = p.id
