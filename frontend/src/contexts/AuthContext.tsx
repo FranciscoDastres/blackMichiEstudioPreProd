@@ -7,6 +7,8 @@ export interface AuthUser {
   nombre?: string;
   rol?: string;
   auth_id?: string;
+  telefono?: string;
+  direccion_defecto?: string;
 }
 
 interface AuthResult {
