@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch index.js",
     "dev:ts": "tsx watch index.ts",
-    "start": "node index.js",
+    "start": "tsx index.ts",
     "start:ts": "tsx index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
