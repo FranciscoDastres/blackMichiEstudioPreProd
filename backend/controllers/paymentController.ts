@@ -79,10 +79,17 @@ export async function flowConfirmation(req: Request, res: Response): Promise<voi
     return;
   }
 
-  if (!flowService.validateCallback(req.body)) {
-    logger.warn({ ip: req.ip, bodyKeys: Object.keys(req.body) }, "Webhook Flow rechazado: firma inválida");
-    res.status(400).send("Invalid signature");
-    return;
+  const signatureValid = flowService.validateCallback(req.body);
+  const isProduction = process.env.FLOW_ENV === "production";
+
+  if (!signatureValid) {
+    logger.warn({ ip: req.ip, bodyKeys: Object.keys(req.body), env: process.env.FLOW_ENV }, "Webhook Flow: firma inválida o ausente");
+    if (isProduction) {
+      res.status(400).send("Invalid signature");
+      return;
+    }
+    // En sandbox Flow no envía el campo `s` — se procesa igual y se verifica el estado con la API
+    logger.info("Webhook Flow sandbox: continuando sin firma");
   }
 
   try {
