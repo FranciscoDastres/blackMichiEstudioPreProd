@@ -49,6 +49,16 @@ export async function flowReturn(req: Request, res: Response): Promise<void> {
   try {
     const pedidoId = await paymentService.getPedidoByFlowToken(token as string);
     if (pedidoId) {
+      // Fallback: si el webhook de confirmación falló (firma inválida, timeout, etc.)
+      // procesarWebhook es idempotente — si ya fue procesado, retorna temprano sin duplicar
+      paymentService.procesarWebhook(
+        token as string,
+        { token, _source: "return_fallback" },
+        req.headers,
+        req.ip || req.socket?.remoteAddress || ""
+      ).catch((err) => {
+        logger.warn({ err }, "flowReturn: fallback de webhook falló (no crítico)");
+      });
       res.redirect(`${process.env.FRONTEND_URL}/payment/return?token=${token}&pedidoId=${pedidoId}`);
       return;
     }
@@ -70,7 +80,7 @@ export async function flowConfirmation(req: Request, res: Response): Promise<voi
   }
 
   if (!flowService.validateCallback(req.body)) {
-    logger.warn({ ip: req.ip }, "Webhook Flow rechazado: firma inválida");
+    logger.warn({ ip: req.ip, bodyKeys: Object.keys(req.body) }, "Webhook Flow rechazado: firma inválida");
     res.status(400).send("Invalid signature");
     return;
   }
