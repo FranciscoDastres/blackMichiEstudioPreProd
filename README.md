@@ -2,7 +2,7 @@
 
 E-commerce fullstack para servicios de impresión 3D personalizada. Incluye tienda pública, panel de administración completo y área privada de usuario.
 
-> **Demo:** _[agregar URL cuando esté deployado]_  
+> **Demo:** https://black-michi-estudio-pre-prod.vercel.app/  
 > **Stack:** React · Node.js · PostgreSQL · Supabase · Cloudinary · Docker
 
 ---
