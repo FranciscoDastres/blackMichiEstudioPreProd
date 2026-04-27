@@ -10,7 +10,7 @@ import { lazy, ComponentType } from "react";
  * los nuevos chunks. Si ya recargamos antes, dejamos que el error suba al
  * ErrorBoundary (para evitar loops de recarga infinita).
  */
-export function lazyWithRetry<T extends ComponentType<unknown>>(
+export function lazyWithRetry<T extends ComponentType<any>>(
   componentImport: () => Promise<{ default: T }>
 ) {
   return lazy(async () => {
