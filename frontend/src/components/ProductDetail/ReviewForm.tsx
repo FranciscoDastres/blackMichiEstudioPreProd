@@ -2,19 +2,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { User, MessageSquare } from "lucide-react";
 import api from "../../services/api";
-
-interface OptimisticReview {
-  id: string | number;
-  calificacion: number;
-  comentario: string;
-  usuario_nombre: string;
-  created_at: string;
-  _optimistic?: boolean;
-}
+import type { Review, OnReviewChange } from "../../types/review";
 
 interface ReviewFormProps {
   productId: number;
-  onNewReview: (data: OptimisticReview | OptimisticReview[], action: "add" | "remove" | "replace") => void;
+  onNewReview: OnReviewChange;
   currentUser?: { nombre?: string } | null;
 }
 
@@ -33,7 +25,7 @@ export default function ReviewForm({ productId, onNewReview, currentUser }: Revi
     setIsSubmitting(true);
 
     // Optimistic update
-    const optimistic: OptimisticReview = {
+    const optimistic: Review = {
       id: `temp-${Date.now()}`,
       calificacion: rating,
       comentario: reviewText.trim(),
@@ -51,7 +43,7 @@ export default function ReviewForm({ productId, onNewReview, currentUser }: Revi
       });
 
       // Refetch para tener los datos reales
-      const updated = await api.get<OptimisticReview[]>(`/reviews?producto_id=${productId}`);
+      const updated = await api.get<Review[]>(`/reviews?producto_id=${productId}`);
       if (Array.isArray(updated.data)) onNewReview(updated.data, "replace");
 
       setReviewText("");
