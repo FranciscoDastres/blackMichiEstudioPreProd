@@ -17,6 +17,10 @@ export default function Register() {
   const { register, loginWithGoogle } = useAuth();
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) {
+      setMessage("No se recibió credencial de Google");
+      return;
+    }
     setSubmitting(true);
     setMessage("");
     const res = await loginWithGoogle(credentialResponse.credential);
