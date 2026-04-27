@@ -17,6 +17,7 @@ import { getImageUrl } from "../../utils/getImageUrl";
 import { useFavorites } from "../../contexts/FavoritesContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { RawProduct } from "../../contexts/CartContext";
+import type { Review } from "../../types/review";
 
 const CLP = new Intl.NumberFormat("es-CL", {
   style: "currency",
@@ -34,10 +35,6 @@ interface ApiProduct {
   descripcion?: string;
   imagen_principal?: string;
   categoria_nombre?: string;
-}
-
-interface Review {
-  id: string | number;
 }
 
 interface ProductInfoProps {
