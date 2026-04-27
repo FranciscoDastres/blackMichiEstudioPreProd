@@ -1,15 +1,7 @@
 import { Link } from "react-router-dom";
 import { Star, Sparkles, Shield, User } from "lucide-react";
 import ReviewForm from "./ReviewForm";
-
-interface Review {
-  id: string | number;
-  calificacion?: number;
-  comentario?: string;
-  usuario_nombre?: string;
-  created_at?: string;
-  _optimistic?: boolean;
-}
+import type { Review, OnReviewChange } from "../../types/review";
 
 interface ReviewsListProps {
   reviews: Review[];
@@ -97,7 +89,7 @@ interface ProductTabsProps {
   isLoggedIn: boolean;
   currentUser?: { nombre?: string } | null;
   productId: number;
-  onNewReview: (data: Review | Review[], action: "add" | "remove" | "replace") => void;
+  onNewReview: OnReviewChange;
 }
 
 export default function ProductTabs({
