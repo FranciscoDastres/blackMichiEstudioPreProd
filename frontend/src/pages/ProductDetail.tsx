@@ -12,6 +12,7 @@ import useCart from "../hooks/useCart";
 import { useAuth } from "../contexts/AuthContext";
 import { getImageUrl } from "../utils/getImageUrl";
 import useSEO from "../hooks/useSEO";
+import type { Review, ReviewAction } from "../types/review";
 
 interface ApiProduct {
   id: number;
@@ -25,13 +26,6 @@ interface ApiProduct {
   categoria_nombre?: string;
 }
 
-interface Review {
-  id: number;
-  calificacion: number;
-  [key: string]: unknown;
-}
-
-type ReviewAction = "add" | "remove" | "replace";
 
 export default function ProductDetail() {
   const { productId } = useParams<{ productId: string }>();
