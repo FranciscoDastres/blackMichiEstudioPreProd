@@ -93,7 +93,7 @@ export async function flowConfirmation(req: Request, res: Response): Promise<voi
   }
 
   try {
-    await paymentService.procesarWebhook(token, req.body, req.headers, req.ip || (req.socket?.remoteAddress));
+    await paymentService.procesarWebhook(token, req.body, req.headers, req.ip || req.socket?.remoteAddress || "");
     res.sendStatus(200);
   } catch (err: any) {
     logger.error({ err }, "Error procesando webhook");
