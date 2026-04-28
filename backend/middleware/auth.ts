@@ -31,7 +31,7 @@ export async function requireAuth(
     }
 
     const result = await db.query(
-      "SELECT id, nombre, email, rol, auth_id FROM usuarios WHERE auth_id = $1",
+      "SELECT id, nombre, email, rol, auth_id, telefono, direccion_defecto FROM usuarios WHERE auth_id = $1",
       [data.user.id]
     );
 
