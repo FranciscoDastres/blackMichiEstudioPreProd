@@ -139,12 +139,6 @@ export async function uploadHeroImage(
 
     logger.info({ url: uploadResult.url }, "Hero subido a Cloudinary");
 
-    const oldImageResult = await db.query(
-        `SELECT image_url FROM hero_images WHERE section = $1`,
-        [section]
-    );
-    const oldImage: string | undefined = oldImageResult.rows[0]?.image_url;
-
     await db.query(
         `INSERT INTO hero_images (section, image_url, title, subtitle, button_text, categoria, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, NOW())
@@ -161,20 +155,9 @@ export async function uploadHeroImage(
 
     logger.info({ section }, "Hero image actualizada en DB");
 
-    if (oldImage && oldImage.includes("cloudinary.com")) {
-        try {
-            const urlParts = oldImage.split("/upload/");
-            if (urlParts[1]) {
-                const publicId = urlParts[1]
-                    .replace(/\.[^/.]+$/, "")
-                    .replace(/^v\d+\//, "");
-                await cloudinaryService.deleteFile(publicId);
-                logger.info("Imagen hero anterior eliminada de Cloudinary");
-            }
-        } catch (deleteError) {
-            logger.warn({ err: deleteError }, "No se pudo eliminar imagen hero anterior");
-        }
-    }
+    // No se borra la imagen anterior: uploadBuffer usa overwrite:true con el mismo
+    // public_id (blackmichi/hero/sectionN), así que Cloudinary ya la reemplaza solo.
+    // Borrar manualmente aquí elimina la imagen recién subida.
 
     return {
         image_url: uploadResult.url,
