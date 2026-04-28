@@ -264,8 +264,7 @@ export default function Checkout() {
       nombre.trim() !== "" &&
       email.trim() !== "" &&
       telefono.trim() !== "+56 " &&
-      direccion.trim() !== "" &&
-      Object.values(errors).every(error => error === "")
+      direccion.trim() !== ""
     );
   };
 
