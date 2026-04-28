@@ -163,9 +163,9 @@ export default function SecondaryHeroSection() {
                             className="p-3 flex items-center justify-center"
                             aria-label={`Ir al slide ${idx + 1}`}
                           >
-                            <span className={`block h-2 w-5 rounded-full transition-[transform,background-color,opacity] duration-300 origin-center ${activeIndex === idx
-                              ? 'bg-accent scale-x-100 opacity-100'
-                              : 'bg-muted scale-x-[0.4] opacity-60'
+                            <span className={`block w-2.5 h-2.5 rounded-full transition-colors duration-300 ${activeIndex === idx
+                              ? 'bg-foreground'
+                              : 'bg-foreground/30'
                               }`}
                             />
                           </button>
