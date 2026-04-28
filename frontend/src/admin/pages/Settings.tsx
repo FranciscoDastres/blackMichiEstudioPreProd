@@ -45,7 +45,7 @@ export default function Settings() {
 
     const fetchHeroImages = async () => {
         try {
-            const { data } = await api.get<Record<SectionKey, { imageUrl?: string; title?: string; subtitle?: string; buttonText?: string; categoria?: string }>>("/admin/hero-images");
+            const { data } = await api.get<Record<SectionKey, { image_url?: string; title?: string; subtitle?: string; button_text?: string; categoria?: string }>>("/hero-images");
 
             const newPreviews: SectionPreviews = defaultPreviews();
             const newFormData: SectionFormDataMap = defaultFormData();
@@ -53,11 +53,11 @@ export default function Settings() {
             SECTION_KEYS.forEach((key) => {
                 if (data[key]) {
                     const section = data[key];
-                    newPreviews[key] = section.imageUrl || null;
+                    newPreviews[key] = section.image_url || null;
                     newFormData[key] = {
                         title: section.title || "",
                         subtitle: section.subtitle || "",
-                        buttonText: section.buttonText || "Ver Colección",
+                        buttonText: section.button_text || "Ver Colección",
                         categoria: section.categoria || "",
                     };
                 }
@@ -110,7 +110,7 @@ export default function Settings() {
             formDataToSend.append("buttonText", formData[section].buttonText);
             formDataToSend.append("categoria", formData[section].categoria);
 
-            const { data } = await api.post<{ data?: { imageUrl?: string } }>("/admin/hero-images", formDataToSend, {
+            const { data } = await api.post<{ data?: { image_url?: string } }>("/hero-images", formDataToSend, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
@@ -120,8 +120,8 @@ export default function Settings() {
             });
             setHeroImages((prev) => ({ ...prev, [section]: null }));
 
-            if (data?.data?.imageUrl) {
-                setPreviews((prev) => ({ ...prev, [section]: data.data!.imageUrl! }));
+            if (data?.data?.image_url) {
+                setPreviews((prev) => ({ ...prev, [section]: data.data!.image_url! }));
             }
         } catch (err) {
             console.error("Error subiendo:", err);
