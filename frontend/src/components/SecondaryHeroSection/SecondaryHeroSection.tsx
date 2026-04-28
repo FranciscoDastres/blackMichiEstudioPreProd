@@ -152,7 +152,7 @@ export default function SecondaryHeroSection() {
 
                     {/* ✅ TOUCH TARGETS CORREGIDOS */}
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
-                      <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2">
+                      <div className="flex items-center gap-1">
                         {slides.map((_, idx) => (
                           <button
                             key={idx}
@@ -160,12 +160,12 @@ export default function SecondaryHeroSection() {
                               const swiperEl = document.querySelector('.swiper') as HTMLElement & { swiper?: { slideToLoop: (idx: number) => void } };
                               if (swiperEl?.swiper) swiperEl.swiper.slideToLoop(idx);
                             }}
-                            className="p-1 flex items-center justify-center"
+                            className="p-3 flex items-center justify-center"
                             aria-label={`Ir al slide ${idx + 1}`}
                           >
-                            <span className={`block rounded-full transition-all duration-300 origin-center ${activeIndex === idx
-                              ? 'bg-black w-5 h-2.5 opacity-100'
-                              : 'bg-black/30 w-2.5 h-2.5 opacity-100'
+                            <span className={`block h-2 w-5 rounded-full transition-[transform,background-color,opacity] duration-300 origin-center ${activeIndex === idx
+                              ? 'bg-accent scale-x-100 opacity-100'
+                              : 'bg-muted scale-x-[0.4] opacity-60'
                               }`}
                             />
                           </button>
