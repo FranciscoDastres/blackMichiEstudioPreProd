@@ -37,7 +37,7 @@ export default function Checkout() {
   const seo = useSEO({ title: "Checkout", path: "/checkout" });
 
   const { cart, cartTotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [notas, setNotas] = useState("");
   const [email, setEmail] = useState("");
   const [nombre, setNombre] = useState("");
@@ -299,6 +299,16 @@ export default function Checkout() {
 
     setLoading(true);
     setErrors(prev => ({ ...prev, general: "" }));
+
+    if (user) {
+      api.put("/client/perfil", {
+        nombre: nombre.trim(),
+        telefono: telefono.trim(),
+        direccion_defecto: direccion.trim(),
+      }).then(res => {
+        updateUser({ nombre: res.data.nombre, telefono: res.data.telefono, direccion_defecto: res.data.direccion_defecto });
+      }).catch(() => {});
+    }
 
     try {
       const response = await api.post("/payments/flow/create", {
