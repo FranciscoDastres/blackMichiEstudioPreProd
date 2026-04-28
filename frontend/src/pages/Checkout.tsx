@@ -21,6 +21,18 @@ interface CuponAplicado {
   valor: number;
 }
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  const rest = digits.startsWith('56') ? digits.slice(2) : digits;
+  let formatted = '+56 ';
+  if (rest.length > 0) {
+    formatted += rest.charAt(0);
+    if (rest.length > 1) formatted += ' ' + rest.slice(1, 5);
+    if (rest.length > 5) formatted += ' ' + rest.slice(5, 9);
+  }
+  return formatted;
+}
+
 export default function Checkout() {
   const seo = useSEO({ title: "Checkout", path: "/checkout" });
 
@@ -68,13 +80,13 @@ export default function Checkout() {
     if (!user) return;
     if (user.nombre) setNombre(user.nombre);
     if (user.email) setEmail(user.email);
-    if (user.telefono) setTelefono(user.telefono);
+    if (user.telefono) setTelefono(formatPhone(user.telefono));
     if (user.direccion_defecto) setDireccion(user.direccion_defecto);
     // Si no tenemos telefono/direccion_defecto en el token, los buscamos del perfil
     if (!user.telefono || !user.direccion_defecto) {
       api.get('/client/perfil').then(res => {
         if (res.data.telefono && !telefono.trim().replace('+56 ', '')) {
-          setTelefono(res.data.telefono);
+          setTelefono(formatPhone(res.data.telefono));
         }
         if (res.data.direccion_defecto && !direccion) {
           setDireccion(res.data.direccion_defecto);
