@@ -440,7 +440,7 @@ function Header() {
                 <div className="flex space-x-4 xl:space-x-6 overflow-x-auto scrollbar-hide h-[36px] items-center">
                   {loading
                     ? Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="w-20 h-6 bg-muted animate-pulse rounded"></div>
+                      <div key={i} className="w-20 h-6 bg-border animate-pulse rounded"></div>
                     ))
                     : categories.map((category) => (
                       <button
