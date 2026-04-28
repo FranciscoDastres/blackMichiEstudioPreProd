@@ -48,18 +48,27 @@ const FALLBACK_SLIDES: Slide[] = [
 
 export default function HeroSection() {
   const navigate = useNavigate();
-  // Inicia con fallbacks para renderizar de inmediato (sin esperar API → sin CLS ni LCP tardío)
-  const [slides, setSlides] = useState<Slide[]>(FALLBACK_SLIDES);
+  const [slides, setSlides] = useState<Slide[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [heroReady, setHeroReady] = useState(false);
 
   useEffect(() => {
     api.get<Slide[]>("/hero-images/public")
       .then(({ data }) => {
         const allSlides = Array.isArray(data) ? data.slice(0, 3) : [];
-        if (allSlides.length) setSlides(allSlides);
+        setSlides(allSlides.length ? allSlides : FALLBACK_SLIDES);
       })
-      .catch(() => { /* mantiene fallback */ });
+      .catch(() => { setSlides(FALLBACK_SLIDES); })
+      .finally(() => setHeroReady(true));
   }, []);
+
+  if (!heroReady) {
+    return (
+      <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
+        <div className="w-full max-w-[1800px] rounded-3xl bg-secondary/40 border border-border h-[300px] sm:h-[380px] md:h-[460px] xl:h-[560px] animate-pulse" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex justify-center pt-0 px-4 sm:px-8">
