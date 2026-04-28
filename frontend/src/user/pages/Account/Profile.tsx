@@ -11,12 +11,13 @@ interface FieldConfig {
     icon: LucideIcon;
     type: string;
     disabled?: boolean;
+    placeholder?: string;
 }
 
 const fieldConfig: Record<ProfileField, FieldConfig> = {
     nombre:            { label: "Nombre",               icon: User,   type: "text"  },
     email:             { label: "Email",                 icon: Mail,   type: "email", disabled: true },
-    telefono:          { label: "Teléfono",              icon: Phone,  type: "text"  },
+    telefono:          { label: "Teléfono",              icon: Phone,  type: "text",  placeholder: "+56 9 XXXX XXXX" },
     direccion_defecto: { label: "Dirección por defecto", icon: MapPin, type: "text"  },
 };
 
@@ -34,10 +35,19 @@ export default function Profile() {
     });
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState("");
+    const [phoneError, setPhoneError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setPhoneError("");
+        if (form.telefono) {
+            const clean = form.telefono.replace(/\s/g, '');
+            if (!/^\+569\d{8}$/.test(clean)) {
+                setPhoneError("Formato inválido. Usa +56 9 XXXX XXXX");
+                return;
+            }
+        }
         try {
             const { data } = await api.put<{ nombre: string; telefono: string; direccion_defecto: string }>("/client/perfil", {
                 nombre:            form.nombre,
@@ -65,7 +75,7 @@ export default function Profile() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5 max-w-md">
-                {(Object.entries(fieldConfig) as [ProfileField, FieldConfig][]).map(([field, { label, icon: Icon, type, disabled }]) => (
+                {(Object.entries(fieldConfig) as [ProfileField, FieldConfig][]).map(([field, { label, icon: Icon, type, disabled, placeholder }]) => (
                     <div key={field}>
                         <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                             {label}
@@ -76,10 +86,14 @@ export default function Profile() {
                                 type={type}
                                 disabled={disabled}
                                 value={form[field]}
+                                placeholder={placeholder}
                                 onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                                className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                className={`w-full bg-gray-800 border rounded-xl pl-11 pr-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition-all disabled:opacity-60 disabled:cursor-not-allowed ${field === 'telefono' && phoneError ? 'border-red-500' : 'border-gray-700'}`}
                             />
                         </div>
+                        {field === 'telefono' && phoneError && (
+                            <p className="text-red-400 text-xs mt-1">{phoneError}</p>
+                        )}
                     </div>
                 ))}
 
