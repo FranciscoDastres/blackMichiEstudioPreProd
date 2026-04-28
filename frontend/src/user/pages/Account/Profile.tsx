@@ -27,11 +27,14 @@ export default function Profile() {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (!user) return;
-        if (user.nombre && !nombre) setNombre(user.nombre);
-        if (user.telefono && !telefono) setTelefono(formatPhone(user.telefono));
-        if (user.direccion_defecto && !direccion) setDireccion(user.direccion_defecto);
-    }, [user]);
+        api.get<{ nombre: string; telefono: string | null; direccion_defecto: string | null }>("/client/perfil")
+            .then(({ data }) => {
+                if (data.nombre)            setNombre(data.nombre);
+                if (data.telefono)          setTelefono(formatPhone(data.telefono));
+                if (data.direccion_defecto) setDireccion(data.direccion_defecto);
+            })
+            .catch(() => {});
+    }, []);
 
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value;
