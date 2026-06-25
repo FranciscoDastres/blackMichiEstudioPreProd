@@ -221,7 +221,7 @@ app.get("/api/health", async (_req: Request, res: Response) => {
 // ─────────────────────────────────────────────
 // SEO: SITEMAP + ROBOTS
 // ─────────────────────────────────────────────
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://blackmichiestudio.cl";
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://black-michi-estudio-pre-prod.vercel.app";
 
 app.get("/sitemap.xml", async (_req: Request, res: Response) => {
   try {
@@ -233,9 +233,9 @@ app.get("/sitemap.xml", async (_req: Request, res: Response) => {
     const staticPages = [
       { loc: "/", priority: "1.0", changefreq: "daily" },
       { loc: "/productos", priority: "0.9", changefreq: "daily" },
-      { loc: "/faq", priority: "0.4", changefreq: "monthly" },
-      { loc: "/privacidad", priority: "0.3", changefreq: "yearly" },
-      { loc: "/terminos", priority: "0.3", changefreq: "yearly" },
+      { loc: "/preguntas-frecuentes", priority: "0.4", changefreq: "monthly" },
+      { loc: "/politica-privacidad", priority: "0.3", changefreq: "yearly" },
+      { loc: "/terminos-y-condiciones", priority: "0.3", changefreq: "yearly" },
     ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -284,7 +284,7 @@ app.get("/sitemap.xml", async (_req: Request, res: Response) => {
 });
 
 app.get("/robots.txt", (_req: Request, res: Response) => {
-  const backendUrl = process.env.BACKEND_URL || "https://api.blackmichiestudio.cl";
+  const backendUrl = process.env.BACKEND_URL || "https://blackmichiestudiopreprod.onrender.com";
   res.set("Content-Type", "text/plain");
   res.send(`User-agent: *
 Allow: /
