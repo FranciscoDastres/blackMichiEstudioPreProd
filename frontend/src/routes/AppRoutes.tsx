@@ -5,8 +5,8 @@ import Layout from "../components/Layout/Layout";
 import { lazyWithRetry } from "../utils/lazyWithRetry";
 
 import NotFound from "../components/NotFound/NotFound";
-import PaymentReceipt from "../components/PaymentReceipt/PaymentReceipt";
 import PrivateRoute from "./PrivateRoute";
+import Home from "../pages/Home";
 
 const ProductDetail = lazyWithRetry(() => import("../pages/ProductDetail"));
 const ProductList = lazyWithRetry(() => import("../pages/ProductList"));
@@ -16,10 +16,10 @@ const ForgotPassword = lazyWithRetry(() => import("../pages/ForgotPassword"));
 const ResetPassword = lazyWithRetry(() => import("../pages/ResetPassword"));
 const Checkout = lazyWithRetry(() => import("../pages/Checkout"));
 const Success = lazyWithRetry(() => import("../pages/Success"));
-const Home = lazyWithRetry(() => import("../pages/Home"));
 const TermsAndConditions = lazyWithRetry(() => import("../pages/TermsAndConditions"));
 const FAQ = lazyWithRetry(() => import("../pages/FAQ"));
 const PrivacyPolicy = lazyWithRetry(() => import("../pages/PrivacyPolicy"));
+const PaymentReceipt = lazyWithRetry(() => import("../components/PaymentReceipt/PaymentReceipt"));
 
 const AdminLayout = lazyWithRetry(() => import("../admin/layout/AdminLayout"));
 const AdminDashboard = lazyWithRetry(() => import("../admin/pages/Dashboard"));
@@ -80,9 +80,7 @@ export default function AppRoutes() {
       {/* PÚBLICAS */}
       <Route path="/" element={
         <Layout>
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Home />
-          </Suspense>
+          <Home />
         </Layout>
       } />
       <Route path="/productos" element={
@@ -132,7 +130,11 @@ export default function AppRoutes() {
       } />
 
       <Route path="/success" element={<SuccessRouteWrapper />} />
-      <Route path="/payment/return" element={<PaymentReceipt />} />
+      <Route path="/payment/return" element={
+        <Suspense fallback={<LoadingFallback />}>
+          <PaymentReceipt />
+        </Suspense>
+      } />
 
       {/* POLÍTICAS Y AYUDA */}
       <Route path="/terminos-y-condiciones" element={
