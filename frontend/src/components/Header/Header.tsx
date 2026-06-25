@@ -148,7 +148,8 @@ function Header() {
           <Link to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
             <img
               src="/logoBlackMichiEstudio.webp"
-              alt="Black Michi Studio"
+              alt=""
+              aria-hidden="true"
               width="36"
               height="36"
               className="h-9 w-9"
@@ -220,7 +221,7 @@ function Header() {
                 )}
               </div>
             ) : (
-              <Link to="/login" className="p-2 hover:text-primary transition-colors">
+              <Link to="/login" aria-label="Iniciar sesión" className="p-2 hover:text-primary transition-colors">
                 <User className="w-5 h-5" />
               </Link>
             )}
@@ -283,7 +284,8 @@ function Header() {
             <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200">
               <img
                 src="/logoBlackMichiEstudio.webp"
-                alt="Black Michi Studio"
+                alt=""
+                aria-hidden="true"
                 width="48"
                 height="48"
                 className="h-12 w-12"
@@ -427,7 +429,6 @@ function Header() {
               <div className="flex items-center space-x-6 xl:space-x-10">
                 <div className="relative">
                   <button
-                    aria-label="Abrir menú de categorías"
                     onClick={() => setSidebarOpen(true)}
                     className="flex items-center space-x-2 transition-colors duration-200 font-semibold text-foreground"
                   >
