@@ -6,7 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import useSEO from "../hooks/useSEO";
 
 export default function Register() {
-  const seo = useSEO({ title: "Crear Cuenta", path: "/registro" });
+  const seo = useSEO({ title: "Crear Cuenta", path: "/register" });
 
   const [formData, setFormData] = useState({ nombre: "", email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
