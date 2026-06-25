@@ -152,7 +152,7 @@ const highlights: Highlight[] = [
 ];
 
 export default function PrivacyPolicy() {
-    const seo = useSEO({ title: "Política de Privacidad", path: "/privacidad" });
+    const seo = useSEO({ title: "Política de Privacidad", path: "/politica-privacidad" });
 
     const navigate = useNavigate();
 
