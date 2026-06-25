@@ -1,12 +1,7 @@
-// SecondaryHeroSection.tsx
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Autoplay } from 'swiper/modules';
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, Sparkles, Headphones, Palette, ChevronRight } from 'lucide-react';
 import api from "../../services/api";
-import 'swiper/css';
-import 'swiper/css/navigation';
 import { getImageUrl } from "../../utils/getImageUrl";
 
 interface HeroSlide {
@@ -70,10 +65,22 @@ export default function SecondaryHeroSection() {
     fetchHeroProducts();
   }, []);
 
+  useEffect(() => {
+    if (slides.length <= 1) return;
+
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % slides.length);
+    }, 6000);
+
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
   const handleWhatsAppClick = () => {
     const mensaje = "¡Hola Black Michi Studio! Me interesa solicitar un diseño personalizado. ¿Me podrían ayudar?";
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
+
+  const currentSlide = slides[activeIndex] || slides[0];
 
   return (
     <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
@@ -84,99 +91,77 @@ export default function SecondaryHeroSection() {
           <div className={`lg:col-span-2 h-[380px] rounded-3xl border border-border bg-secondary/20 ${loading ? 'animate-pulse' : ''}`} />
         ) : (
           <div className="lg:col-span-2 relative rounded-3xl overflow-hidden shadow-2xl border border-border h-[380px]">
-            <Swiper
-              modules={[Navigation, Autoplay]}
-              spaceBetween={0}
-              slidesPerView={1}
-              centeredSlides
-              loop
-              autoplay={{ delay: 6000, disableOnInteraction: false }}
-              speed={800}
-              onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
-              className="w-full h-full"
-            >
-              {slides.map(({ id, title, subtitle, image, button_text }, index) => (
-                <SwiperSlide key={id}>
-                  <div className="relative h-[380px] overflow-hidden bg-background">
+            <div className="relative h-[380px] overflow-hidden bg-background">
+              <img
+                src={getImageUrl(currentSlide.image, 629, 412, 60, "fill")}
+                srcSet={`${getImageUrl(currentSlide.image, 400, 260, 60, "fill")} 400w, ${getImageUrl(currentSlide.image, 629, 412, 60, "fill")} 629w`}
+                sizes="(max-width: 640px) 400px, 629px"
+                alt=""
+                aria-hidden="true"
+                fetchPriority="auto"
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover opacity-40 scale-110"
+                style={{ objectPosition: 'left center' }}
+              />
 
-                    <img
-                      src={getImageUrl(image, 629, 412, 60, "fill")}
-                      srcSet={`${getImageUrl(image, 400, 260, 60, "fill")} 400w, ${getImageUrl(image, 629, 412, 60, "fill")} 629w`}
-                      sizes="(max-width: 640px) 400px, 629px"
-                      alt=""
-                      aria-hidden="true"
-                      fetchPriority={index === 0 ? "high" : "auto"}
-                      loading={index === 0 ? "eager" : "lazy"}
-                      className="absolute inset-0 w-full h-full object-cover opacity-40 scale-110"
-                      style={{ objectPosition: 'left center' }}
-                    />
+              <div className="absolute inset-0 bg-gradient-to-l from-background/90 via-background/40 to-transparent z-10" />
 
-                    <div className="absolute inset-0 bg-gradient-to-l from-background/90 via-background/40 to-transparent z-10" />
+              <img
+                src={getImageUrl(currentSlide.image, 407, 380, 90)}
+                srcSet={`${getImageUrl(currentSlide.image, 300, 280, 85)} 300w, ${getImageUrl(currentSlide.image, 407, 380, 90)} 407w`}
+                sizes="(max-width: 640px) 300px, 407px"
+                alt={currentSlide.title}
+                fetchPriority="auto"
+                loading="lazy"
+                decoding="async"
+                className="hidden sm:block absolute left-[8%] top-0 h-full w-auto object-contain z-20"
+              />
 
-                    <img
-                      src={getImageUrl(image, 407, 380, 90)}
-                      srcSet={`${getImageUrl(image, 300, 280, 85)} 300w, ${getImageUrl(image, 407, 380, 90)} 407w`}
-                      sizes="(max-width: 640px) 300px, 407px"
-                      alt={title}
-                      fetchPriority={index === 0 ? "high" : "auto"}
-                      loading={index === 0 ? "eager" : "lazy"}
-                      className="hidden sm:block absolute left-[8%] top-0 h-full w-auto object-contain z-20"
-                    />
-
-                    {/* Texto centrado verticalmente — sin el botón */}
-                    <div className="relative z-30 h-full flex items-center justify-end">
-                      <div className="w-full px-6 md:px-12 lg:px-20 xl:px-28 flex justify-end">
-                        <div className="text-right space-y-3 md:space-y-4 max-w-lg">
-                          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
-                            <span className="bg-gradient-to-l from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                              {title}
-                            </span>
-                          </h2>
-                          <p className="text-base sm:text-lg md:text-xl text-muted-foreground font-light">
-                            {subtitle}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Botón fijo en la parte baja del slide — posición constante */}
-                    <div className="absolute bottom-10 right-0 z-30 w-full px-6 md:px-12 lg:px-20 xl:px-28 flex justify-end">
-                      <button
-                        onClick={() => navigate("/productos")}
-                        className="group inline-flex items-center gap-2 px-6 py-3 bg-sky-700 text-white font-semibold rounded-full border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-0.5 transition-all duration-300"
-                      >
-                        <span className="text-sm">{button_text}</span>
-                        <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                      </button>
-                    </div>
-
-                    {/* ✅ TOUCH TARGETS CORREGIDOS */}
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
-                      <div className="flex items-center gap-1">
-                        {slides.map((_, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              const swiperEl = document.querySelector('.swiper') as HTMLElement & { swiper?: { slideToLoop: (idx: number) => void } };
-                              if (swiperEl?.swiper) swiperEl.swiper.slideToLoop(idx);
-                            }}
-                            className="p-3 flex items-center justify-center"
-                            aria-label={`Ir al slide ${idx + 1}`}
-                          >
-                            <span className={`block w-2.5 h-2.5 rounded-full transition-colors duration-300 ${activeIndex === idx
-                              ? 'bg-foreground'
-                              : 'bg-foreground/30'
-                              }`}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
+              <div className="relative z-30 h-full flex items-center justify-end">
+                <div className="w-full px-6 md:px-12 lg:px-20 xl:px-28 flex justify-end">
+                  <div className="text-right space-y-3 md:space-y-4 max-w-lg">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+                      <span className="bg-gradient-to-l from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+                        {currentSlide.title}
+                      </span>
+                    </h2>
+                    <p className="text-base sm:text-lg md:text-xl text-muted-foreground font-light">
+                      {currentSlide.subtitle}
+                    </p>
                   </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+                </div>
+              </div>
+
+              <div className="absolute bottom-10 right-0 z-30 w-full px-6 md:px-12 lg:px-20 xl:px-28 flex justify-end">
+                <button
+                  onClick={() => navigate("/productos")}
+                  className="group inline-flex items-center gap-2 px-6 py-3 bg-sky-700 text-white font-semibold rounded-full border-2 border-sky-400/50 hover:border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <span className="text-sm">{currentSlide.button_text}</span>
+                  <ChevronRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
+              </div>
+
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30">
+                <div className="flex items-center gap-1">
+                  {slides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveIndex(idx)}
+                      className="p-3 flex items-center justify-center"
+                      aria-label={`Ir al slide ${idx + 1}`}
+                    >
+                      <span className={`block w-2.5 h-2.5 rounded-full transition-colors duration-300 ${activeIndex === idx
+                        ? 'bg-foreground'
+                        : 'bg-foreground/30'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -219,10 +204,10 @@ export default function SecondaryHeroSection() {
             </p>
             <button
               onClick={handleWhatsAppClick}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-600 text-white font-bold rounded-full transition-all duration-300 text-sm"
-              style={{ boxShadow: "0 0 20px rgba(34, 197, 94, 0.35)" }}
-              onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 35px rgba(34, 197, 94, 0.65)"}
-              onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(34, 197, 94, 0.35)"}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-700 text-white font-bold rounded-full transition-all duration-300 text-sm"
+              style={{ boxShadow: "0 0 20px rgba(21, 128, 61, 0.35)" }}
+              onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 35px rgba(21, 128, 61, 0.65)"}
+              onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(21, 128, 61, 0.35)"}
             >
               <MessageCircle className="w-5 h-5" />
               Consultar por WhatsApp
