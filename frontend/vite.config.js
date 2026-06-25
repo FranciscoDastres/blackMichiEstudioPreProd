@@ -12,6 +12,16 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
   },
   build: {
+    modulePreload: {
+      resolveDependencies: (_filename, deps, { hostType }) => {
+        if (hostType !== 'html') return deps;
+
+        return deps.filter((dep) => {
+          const basename = dep.split('/').pop() || dep;
+          return !/^(admin|user)-/.test(basename);
+        });
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {
@@ -29,12 +39,6 @@ export default defineConfig({
           }
           if (id.includes('node_modules/axios')) {
             return 'api';
-          }
-          if (id.includes('/admin/')) {
-            return 'admin';
-          }
-          if (id.includes('/user/')) {
-            return 'user';
           }
         },
       }
