@@ -123,9 +123,9 @@ function PopularProducts() {
       <div className="w-full flex justify-center pt-0 px-4 sm:px-8 mb-16">
         <div className="w-full max-w-[1800px] text-center py-20">
           <Zap className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-muted-foreground">
+          <h2 className="text-xl font-medium text-muted-foreground">
             No hay productos disponibles
-          </h3>
+          </h2>
         </div>
       </div>
     );
