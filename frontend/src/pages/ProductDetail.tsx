@@ -38,6 +38,10 @@ export default function ProductDetail() {
 
   const { addToCart, isStockExceeded } = useCart();
   const { user, isAuthenticated: isLoggedIn } = useAuth();
+  const siteUrl = (
+    (import.meta.env.VITE_SITE_URL as string | undefined) ||
+    (typeof window !== "undefined" ? window.location.origin : "https://black-michi-estudio-pre-prod.vercel.app")
+  ).replace(/\/$/, "");
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -128,7 +132,7 @@ export default function ProductDetail() {
             product.stock > 0
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
-          url: `https://blackmichiestudio.cl/producto/${product.id}`,
+          url: `${siteUrl}/producto/${product.id}`,
         },
         ...(reviews.length > 0 && {
           aggregateRating: {
