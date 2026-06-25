@@ -125,7 +125,7 @@ const highlights: Highlight[] = [
 ];
 
 export default function TermsAndConditions() {
-    const seo = useSEO({ title: "Términos y Condiciones", path: "/terminos" });
+    const seo = useSEO({ title: "Términos y Condiciones", path: "/terminos-y-condiciones" });
 
     const navigate = useNavigate();
 
