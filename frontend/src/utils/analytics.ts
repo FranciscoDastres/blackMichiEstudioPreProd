@@ -1,4 +1,4 @@
-import { onCLS, onINP, onLCP, onFCP, onTTFB, type Metric } from "web-vitals";
+import type { Metric } from "web-vitals";
 
 declare global {
   interface Window {
@@ -7,17 +7,49 @@ declare global {
   }
 }
 
+function runWhenIdle(callback: () => void): void {
+  if (typeof window === "undefined") return;
+
+  const schedule = window.requestIdleCallback || ((cb) => window.setTimeout(cb, 1500));
+  if (document.readyState === "complete") {
+    schedule(callback);
+    return;
+  }
+
+  window.addEventListener("load", () => schedule(callback), { once: true });
+}
+
 export function initAnalytics(): void {
   const domain = import.meta.env.VITE_PLAUSIBLE_DOMAIN;
   if (!domain || typeof document === "undefined") return;
   if (document.querySelector('script[data-plausible]')) return;
 
-  const script = document.createElement("script");
-  script.defer = true;
-  script.setAttribute("data-domain", domain);
-  script.setAttribute("data-plausible", "true");
-  script.src = import.meta.env.VITE_PLAUSIBLE_SRC || "https://plausible.io/js/script.js";
-  document.head.appendChild(script);
+  runWhenIdle(() => {
+    const script = document.createElement("script");
+    script.defer = true;
+    script.setAttribute("data-domain", domain);
+    script.setAttribute("data-plausible", "true");
+    script.src = import.meta.env.VITE_PLAUSIBLE_SRC || "https://plausible.io/js/script.js";
+    document.head.appendChild(script);
+  });
+}
+
+export function initClarity(): void {
+  const clarityId = import.meta.env.VITE_CLARITY_ID;
+  if (!import.meta.env.PROD || !clarityId || typeof document === "undefined") return;
+  if (document.querySelector("script[data-clarity]")) return;
+
+  runWhenIdle(() => {
+    window.clarity = window.clarity || ((...args: unknown[]) => {
+      ((window.clarity as unknown as { q?: unknown[] }).q ||= []).push(args);
+    }) as Window["clarity"];
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.clarity.ms/tag/${clarityId}`;
+    script.setAttribute("data-clarity", "true");
+    document.head.appendChild(script);
+  });
 }
 
 function sendVital(metric: Metric): void {
@@ -41,9 +73,13 @@ function sendVital(metric: Metric): void {
 }
 
 export function reportWebVitals(): void {
-  onCLS(sendVital);
-  onINP(sendVital);
-  onLCP(sendVital);
-  onFCP(sendVital);
-  onTTFB(sendVital);
+  runWhenIdle(() => {
+    import("web-vitals").then(({ onCLS, onINP, onLCP, onFCP, onTTFB }) => {
+      onCLS(sendVital);
+      onINP(sendVital);
+      onLCP(sendVital);
+      onFCP(sendVital);
+      onTTFB(sendVital);
+    });
+  });
 }
