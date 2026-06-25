@@ -91,7 +91,7 @@ function FAQItem({ faq, isOpen, onToggle }: FAQItemProps) {
 }
 
 export default function FAQ() {
-    const seo = useSEO({ title: "Preguntas Frecuentes", path: "/faq" });
+    const seo = useSEO({ title: "Preguntas Frecuentes", path: "/preguntas-frecuentes" });
 
     const navigate = useNavigate();
     const [openId, setOpenId] = useState<number | null>(null);
